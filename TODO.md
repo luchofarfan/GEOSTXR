@@ -4,7 +4,7 @@
 
 ### 1. Project Setup & Basic Structure (2 hours)
 
-- [ ] Initialize Next.js 14 project with TypeScript
+- [x] Initialize Next.js 14 project with TypeScript
 - [ ] Configure Tailwind CSS for basic styling
 - [ ] Set up basic project structure and folder organization
 - [ ] Create environment configuration files
