@@ -6,6 +6,3 @@ node_modules
 /ios
 /capacitor.config.json
 /capacitor.config.ts
-/package.json
-/package-lock.json
-/package.json
