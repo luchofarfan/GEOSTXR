@@ -1,0 +1,11 @@
+node_modules
+.next
+/dist
+/www
+/android
+/ios
+/capacitor.config.json
+/capacitor.config.ts
+/package.json
+/package-lock.json
+/package.json
