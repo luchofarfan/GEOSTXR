@@ -3,9 +3,13 @@ export const GEOSTXR_CONFIG = {
   // Virtual Geometry
   CYLINDER: {
     DIAMETER: 6.35, // cm
-    HEIGHT: 15, // cm
+    HEIGHT: 30, // cm
     RADIUS: 3.175, // cm
     AXIS_ALIGNMENT: 'z' as const,
+    COLOR: 0x00BFFF, // Blue color
+    OPACITY: 0.1, // 10% opacity for better visibility
+    BORDER_COLOR: 0x000000, // Black borders
+    BORDER_WIDTH: 2,
   },
   
   // BOH Lines
