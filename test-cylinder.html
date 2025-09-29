@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEOSTXR - Test Cilindro Virtual</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .camera-section {
+            flex: 1;
+            position: relative;
+            background: #1a1a1a;
+        }
+        .controls-section {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-left: 1px solid #333;
+        }
+        .status {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="camera-section" id="camera-section">
+            <div class="status">
+                <div>🎥 Cámara: <span id="camera-status">Inactiva</span></div>
+                <div>🎯 Cilindro: <span id="cylinder-status">Oculto</span></div>
+            </div>
+            <div id="three-container" style="width: 100%; height: 100%;"></div>
+        </div>
+        
+        <div class="controls-section">
+            <h2>GEOSTXR - Cilindro Virtual</h2>
+            
+            <div>
+                <label class="label">Visibilidad</label>
+                <button class="button" onclick="toggleCylinder()" id="toggle-btn">Mostrar Cilindro</button>
+            </div>
+            
+            <div>
+                <label class="label">Opacidad: <span id="opacity-value">30%</span></label>
+                <input type="range" class="slider" id="opacity-slider" min="0" max="100" value="30" onchange="updateOpacity(this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Posición X: <span id="pos-x-value">0.00</span></label>
+                <input type="range" class="slider" id="pos-x-slider" min="-5" max="5" step="0.1" value="0" onchange="updatePosition('x', this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Posición Y: <span id="pos-y-value">0.00</span></label>
+                <input type="range" class="slider" id="pos-y-slider" min="-5" max="5" step="0.1" value="0" onchange="updatePosition('y', this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Posición Z: <span id="pos-z-value">0.00</span></label>
+                <input type="range" class="slider" id="pos-z-slider" min="-5" max="5" step="0.1" value="0" onchange="updatePosition('z', this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Rotación X: <span id="rot-x-value">0°</span></label>
+                <input type="range" class="slider" id="rot-x-slider" min="-180" max="180" value="0" onchange="updateRotation('x', this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Rotación Y: <span id="rot-y-value">0°</span></label>
+                <input type="range" class="slider" id="rot-y-slider" min="-180" max="180" value="0" onchange="updateRotation('y', this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Rotación Z: <span id="rot-z-value">0°</span></label>
+                <input type="range" class="slider" id="rot-z-slider" min="-180" max="180" value="0" onchange="updateRotation('z', this.value)">
+            </div>
+            
+            <div>
+                <label class="label">Escala: <span id="scale-value">3.00</span></label>
+                <input type="range" class="slider" id="scale-slider" min="0.1" max="5" step="0.1" value="3" onchange="updateScale(this.value)">
+            </div>
+            
+            <button class="button" onclick="resetCylinder()">Resetear a Valores por Defecto</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Variables globales
+        let scene, camera, renderer, cylinder, isVisible = false;
+        let container = document.getElementById('three-container');
+        
+        // Configuración del cilindro
+        const CYLINDER_CONFIG = {
+            DIAMETER: 6.35,
+            HEIGHT: 30,
+            RADIUS: 3.175,
+            COLOR: 0x00BFFF,
+            OPACITY: 0.1
+        };
+        
+        // Inicializar Three.js
+        function initThreeJS() {
+            // Scene
+            scene = new THREE.Scene();
+            
+            // Camera - positioned at (0, 50, 15) looking at center of cylinder
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 50, 15); // Position at (0, 50, 15) for better view
+            camera.lookAt(0, 0, 15); // Look at center of cylinder (z=15)
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Crear cilindro
+            createCylinder();
+            
+            // Animation loop
+            animate();
+        }
+        
+        // Crear cilindro
+        function createCylinder() {
+            // Geometry
+            const geometry = new THREE.CylinderGeometry(
+                CYLINDER_CONFIG.RADIUS,
+                CYLINDER_CONFIG.RADIUS,
+                CYLINDER_CONFIG.HEIGHT,
+                32,
+                1,
+                true
+            );
+            
+            // Rotate to align with Z-axis
+            geometry.rotateX(Math.PI / 2);
+            
+            // Material
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x0066CC, // Darker blue for better contrast
+                transparent: true,
+                opacity: 0.3, // 30% opacity for better visibility over camera feed
+                side: THREE.DoubleSide,
+                wireframe: false
+            });
+            
+            // Create cylinder group to keep cylinder and borders together
+            cylinderGroup = new THREE.Group();
+            cylinderGroup.position.set(0, 0, 15); // Centered at z=15
+            cylinderGroup.scale.set(3, 3, 3); // Scale to 3/4 of scene
+            
+            // Mesh
+            cylinder = new THREE.Mesh(geometry, material);
+            cylinder.position.set(0, 0, 0);
+            cylinderGroup.add(cylinder);
+            
+            // Add borders to the group
+            addBorders(cylinderGroup);
+            
+            // Add the group to the scene
+            scene.add(cylinderGroup);
+        }
+        
+        // Agregar bordes resaltados
+        function addBorders(group) {
+            const radius = CYLINDER_CONFIG.RADIUS;
+            const height = CYLINDER_CONFIG.HEIGHT;
+            
+            // Border material
+            const borderMaterial = new THREE.LineBasicMaterial({
+                color: 0x000000,
+                linewidth: 3
+            });
+            
+            // Vertical line at 0° (front)
+            const frontVerticalGeometry = new THREE.BufferGeometry();
+            const frontVerticalPoints = [
+                new THREE.Vector3(radius, 0, height / 2),   // Top front
+                new THREE.Vector3(radius, 0, -height / 2)   // Bottom front
+            ];
+            frontVerticalGeometry.setFromPoints(frontVerticalPoints);
+            const frontVertical = new THREE.Line(frontVerticalGeometry, borderMaterial);
+            group.add(frontVertical);
+            
+            // Vertical line at 180° (back)
+            const backVerticalGeometry = new THREE.BufferGeometry();
+            const backVerticalPoints = [
+                new THREE.Vector3(-radius, 0, height / 2),  // Top back
+                new THREE.Vector3(-radius, 0, -height / 2)   // Bottom back
+            ];
+            backVerticalGeometry.setFromPoints(backVerticalPoints);
+            const backVertical = new THREE.Line(backVerticalGeometry, borderMaterial);
+            group.add(backVertical);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        
+        // Toggle cylinder visibility
+        function toggleCylinder() {
+            isVisible = !isVisible;
+            cylinderGroup.visible = isVisible;
+            
+            const btn = document.getElementById('toggle-btn');
+            const status = document.getElementById('cylinder-status');
+            
+            if (isVisible) {
+                btn.textContent = 'Ocultar Cilindro';
+                status.textContent = 'Visible';
+            } else {
+                btn.textContent = 'Mostrar Cilindro';
+                status.textContent = 'Oculto';
+            }
+        }
+        
+        // Update opacity
+        function updateOpacity(value) {
+            const opacity = value / 100;
+            cylinder.material.opacity = opacity;
+            document.getElementById('opacity-value').textContent = value + '%';
+        }
+        
+        // Update position
+        function updatePosition(axis, value) {
+            const pos = parseFloat(value);
+            cylinderGroup.position[axis] = pos;
+            document.getElementById('pos-' + axis + '-value').textContent = pos.toFixed(2);
+        }
+        
+        // Update rotation
+        function updateRotation(axis, value) {
+            const rot = parseFloat(value) * Math.PI / 180;
+            cylinderGroup.rotation[axis] = rot;
+            document.getElementById('rot-' + axis + '-value').textContent = value + '°';
+        }
+        
+        // Update scale
+        function updateScale(value) {
+            const scale = parseFloat(value);
+            cylinderGroup.scale.set(scale, scale, scale);
+            document.getElementById('scale-value').textContent = scale.toFixed(2);
+        }
+        
+        // Reset cylinder
+        function resetCylinder() {
+            cylinderGroup.visible = true;
+            cylinder.material.opacity = 0.3;
+            cylinderGroup.position.set(0, 0, 0);
+            cylinderGroup.rotation.set(0, 0, 0);
+            cylinderGroup.scale.set(3, 3, 3);
+            
+            // Update UI
+            document.getElementById('opacity-slider').value = 30;
+            document.getElementById('opacity-value').textContent = '30%';
+            
+            document.getElementById('pos-x-slider').value = 0;
+            document.getElementById('pos-y-slider').value = 0;
+            document.getElementById('pos-z-slider').value = 0;
+            document.getElementById('pos-x-value').textContent = '0.00';
+            document.getElementById('pos-y-value').textContent = '0.00';
+            document.getElementById('pos-z-value').textContent = '0.00';
+            
+            document.getElementById('rot-x-slider').value = 0;
+            document.getElementById('rot-y-slider').value = 0;
+            document.getElementById('rot-z-slider').value = 0;
+            document.getElementById('rot-x-value').textContent = '0°';
+            document.getElementById('rot-y-value').textContent = '0°';
+            document.getElementById('rot-z-value').textContent = '0°';
+            
+            document.getElementById('scale-slider').value = 3;
+            document.getElementById('scale-value').textContent = '3.00';
+            
+            isVisible = true;
+            document.getElementById('toggle-btn').textContent = 'Ocultar Cilindro';
+            document.getElementById('cylinder-status').textContent = 'Visible';
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            initThreeJS();
+        });
+    </script>
+</body>
+</html>

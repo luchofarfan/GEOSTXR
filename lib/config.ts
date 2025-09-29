@@ -30,38 +30,40 @@ export const GEOSTXR_CONFIG = {
     },
     DISPLACEMENT_RANGE: 20, // +/- degrees around Z-axis
   },
-
+  
   // Point Trios
-  POINT_TRIOS: {
-    MAX_TRIOS: 100,
-    SELECTION_COLOR: 0x00FF00, // Green for selection
-    SELECTION_SIZE: 0.2, // cm
+  TRIOS: {
+    MAX_COUNT: 100,
+    COLORS: {
+      TRIO1: '#3B82F6',
+      TRIO2: '#10B981',
+      TRIO3: '#F59E0B',
+    },
   },
-
-  // Planes
-  PLANES: {
-    MAX_PLANES: 100,
-    MATERIAL_OPACITY: 0.5,
-    MATERIAL_COLOR: 0xFFFF00, // Yellow
+  
+  // Depth Calculation
+  DEPTH: {
+    MANUAL_RANGE: {
+      MIN: 0.1, // cm
+      MAX: 100, // cm
+    },
+    AUTO_CALCULATION: true,
+    CYLINDER_REFERENCE: true,
   },
-
-  // Ellipses
-  ELLIPSES: {
-    MAX_ELLIPSES: 100,
-    LINE_WIDTH: 2,
-    LINE_COLOR: 0xFF00FF, // Magenta
-  },
-
-  // Measurements
-  MEASUREMENTS: {
-    ALPHA_ANGLE_COLOR: 0x8B5CF6, // Purple
-    BETA_ANGLE_COLOR: 0xEF4444, // Red
-    AC_ANGLE_COLOR: 0xF59E0B, // Orange
-  },
-
+  
   // Performance
   PERFORMANCE: {
-    TARGET_FPS: 30,
-    MAX_ELEMENTS_PER_SCENE: 100,
+    MAX_FPS: 30,
+    MEMORY_LIMIT: 100, // MB
+    OPTIMIZATION: true,
   },
-} as const
+  
+  // UI
+  UI: {
+    THEME: 'dark' as const,
+    ANIMATIONS: true,
+    RESPONSIVE: true,
+  },
+} as const;
+
+export type GEOSTXRConfig = typeof GEOSTXR_CONFIG;

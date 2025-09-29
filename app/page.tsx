@@ -9,6 +9,7 @@ import { CameraView } from "@/components/camera-view"
 import { ControlPanel } from "@/components/control-panel"
 import { MeasurementReport } from "@/components/measurement-report"
 import { PointManager } from "@/components/point-manager"
+import { CameraWithCylinder } from "@/components/camera/camera-with-cylinder"
 
 export default function GeoStVRApp() {
   const [isRecording, setIsRecording] = useState(false)
@@ -34,6 +35,7 @@ export default function GeoStVRApp() {
   const [capturedImages, setCapturedImages] = useState<string[]>([])
   const [requestingPermission, setRequestingPermission] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [showVirtualCylinder, setShowVirtualCylinder] = useState(false)
 
   const handleAddPoint = (x: number, y: number) => {
     // Get current trio points
@@ -208,17 +210,21 @@ export default function GeoStVRApp() {
             transition: 'width 0.3s ease-in-out'
           }}
         >
-          <CameraView
-            onAddPoint={handleAddPoint}
-            measurementPoints={measurementPoints}
-            isRecording={isRecording}
-            activeMode={activeMode}
-            onCylinderDetection={handleCylinderDetection}
-            shouldStartCamera={cameraStartRequested}
-            onPermissionRequest={handlePermissionRequest}
-            onCaptureImage={captureImage}
-            onCameraStarted={handleCameraStarted}
-          />
+          {showVirtualCylinder ? (
+            <CameraWithCylinder />
+          ) : (
+            <CameraView
+              onAddPoint={handleAddPoint}
+              measurementPoints={measurementPoints}
+              isRecording={isRecording}
+              activeMode={activeMode}
+              onCylinderDetection={handleCylinderDetection}
+              shouldStartCamera={cameraStartRequested}
+              onPermissionRequest={handlePermissionRequest}
+              onCaptureImage={captureImage}
+              onCameraStarted={handleCameraStarted}
+            />
+          )}
 
           {/* Vertical Alignment Guide */}
           <div className={`cylinder-alignment-guide ${cylinderDetected ? 'active' : ''}`} />
@@ -254,6 +260,15 @@ export default function GeoStVRApp() {
             >
               <Layers className="h-4 w-4" />
               Calculate
+            </Button>
+            <Button
+              variant={showVirtualCylinder ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowVirtualCylinder(!showVirtualCylinder)}
+              className="gap-2"
+            >
+              <Target className="h-4 w-4" />
+              {showVirtualCylinder ? "Hide Cylinder" : "Show Cylinder"}
             </Button>
           </div>
 
