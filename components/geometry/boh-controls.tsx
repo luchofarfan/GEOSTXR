@@ -7,9 +7,10 @@ interface BOHControlsProps {
   state: BOHLinesState
   actions: BOHLinesActions
   className?: string
+  trioManager?: any // Optional trio manager from usePointTrios hook
 }
 
-export default function BOHControls({ state, actions, className = '' }: BOHControlsProps) {
+export default function BOHControls({ state, actions, className = '', trioManager }: BOHControlsProps) {
   const {
     line1Angle,
     line2Angle,

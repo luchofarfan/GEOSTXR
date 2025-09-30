@@ -1,20 +1,23 @@
 'use client'
 
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 import { BOHLinesOverlay } from './boh-lines-overlay'
+import { PointMarkersOverlay } from './point-markers-overlay'
 
 interface WebGLUnifiedCylinderProps {
   className?: string
   line1Angle?: number
   line2Angle?: number
+  trioManager?: any // From usePointTrios hook
 }
 
 export default function WebGLUnifiedCylinder({ 
   className = '', 
   line1Angle = 90,
-  line2Angle = 90
+  line2Angle = 90,
+  trioManager
 }: WebGLUnifiedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -285,15 +288,52 @@ export default function WebGLUnifiedCylinder({
 
   // BOH lines are now rendered via HTML overlay - no 3D geometry needed
 
+  // Handle clicks on cylinder to add points
+  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (!trioManager || !cameraRef.current || !containerRef.current) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    // Convert screen coordinates to normalized device coordinates (-1 to +1)
+    const ndcX = (x / rect.width) * 2 - 1
+    const ndcY = -(y / rect.height) * 2 + 1
+
+    // Create raycaster
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current)
+
+    // Check intersection with cylinder
+    if (!sceneRef.current) return
+    
+    const intersects = raycaster.intersectObjects(sceneRef.current.children, true)
+    
+    if (intersects.length > 0) {
+      const point = intersects[0].point
+      console.log(`Click at 3D point: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+      
+      // Add point to trio manager
+      trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
+      
+      // If trio is complete, auto-complete it
+      if (trioManager.isCurrentTrioComplete) {
+        trioManager.completeTrio()
+      }
+    }
+  }, [trioManager])
+
   return (
     <div 
       ref={containerRef} 
       className={`webgl-unified-cylinder ${className}`}
+      onClick={handleCanvasClick}
       style={{
         position: 'relative',
         width: '100%',
         height: '100%',
-        minHeight: '100vh'
+        minHeight: '100vh',
+        cursor: trioManager && trioManager.canAddMoreTrios ? 'crosshair' : 'default'
       }}
     >
       {/* Hidden video element (used as texture) */}
@@ -317,6 +357,22 @@ export default function WebGLUnifiedCylinder({
                 camera={cameraRef.current || undefined}
                 cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
                 radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
+              />
+            )}
+
+            {/* HTML Overlay for Point Trios */}
+            {containerSize.width > 0 && isReady && trioManager && (
+              <PointMarkersOverlay
+                trios={trioManager.trios}
+                currentTrio={trioManager.currentTrio}
+                selectedTrioId={trioManager.selectedTrioId}
+                containerWidth={containerSize.width}
+                containerHeight={containerSize.height}
+                camera={cameraRef.current || undefined}
+                onPointClick={(trioId, pointId) => {
+                  console.log(`Point clicked: trio=${trioId}, point=${pointId}`)
+                  trioManager.selectTrio(trioId)
+                }}
               />
             )}
     </div>
