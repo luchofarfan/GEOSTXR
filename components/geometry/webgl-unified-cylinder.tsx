@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { GEOSTXR_CONFIG } from '@/lib/config'
+import { BOHLinesOverlay } from './boh-lines-overlay'
 
 interface WebGLUnifiedCylinderProps {
   className?: string
@@ -21,9 +22,8 @@ export default function WebGLUnifiedCylinder({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
-  const bohLine1Ref = useRef<THREE.Line | null>(null)
-  const bohLine2Ref = useRef<THREE.Line | null>(null)
   const [isReady, setIsReady] = useState(false)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   // Camera stream setup
   useEffect(() => {
@@ -62,7 +62,10 @@ export default function WebGLUnifiedCylinder({
   // Initialize Three.js scene ONCE
   useEffect(() => {
     if (!containerRef.current || !videoRef.current) return
-    if (sceneRef.current) return // Already initialized
+    if (sceneRef.current) {
+      console.log('Scene already initialized, skipping')
+      return // Already initialized
+    }
 
     const container = containerRef.current
     const video = videoRef.current
@@ -71,23 +74,46 @@ export default function WebGLUnifiedCylinder({
     const height = container.clientHeight
 
     if (width === 0 || height === 0) return
+    
+    setContainerSize({ width, height })
 
-    console.log('=== WEBGL UNIFIED INITIALIZATION ===')
-    console.log(`Container: ${width}×${height}`)
+    // Wait for video to be ready
+    const initScene = () => {
+      if (video.readyState < video.HAVE_ENOUGH_DATA) {
+        console.log('Waiting for video...')
+        setTimeout(initScene, 100)
+        return
+      }
+      
+      // Double-check scene hasn't been created
+      if (sceneRef.current) {
+        console.log('Scene created by another instance, aborting')
+        return
+      }
+
+      console.log('=== WEBGL UNIFIED INITIALIZATION ===')
+      console.log(`Container: ${width}×${height}`)
+      console.log(`Video: ${video.videoWidth}×${video.videoHeight}`)
 
     // Scene
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x000000)
     sceneRef.current = scene
 
-    // Camera
+    // Camera - looking at cylinder from the side (along Y axis)
+    // Cylinder is vertical along Z axis (z=0 at bottom, z=30 at top)
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
     const aspectRatio = width / height
     let distance = (GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2) / Math.tan((75 * Math.PI / 180) / 2)
     distance *= aspectRatio > 1 ? 1.5 : 1.3
-    camera.position.set(0, distance, 0)
-    camera.lookAt(0, 0, 0)
+    const cylinderCenter = GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2 // z=15cm (center)
+    
+    // Position camera along +Y axis, looking at center of cylinder
+    camera.position.set(0, distance, cylinderCenter)
+    camera.lookAt(0, 0, cylinderCenter)
+    // Use default up vector (0,1,0)
     cameraRef.current = camera
+    console.log(`Camera at (0, ${distance.toFixed(1)}, ${cylinderCenter}), looking at (0, 0, ${cylinderCenter})`)
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -106,42 +132,95 @@ export default function WebGLUnifiedCylinder({
     const videoTexture = new THREE.VideoTexture(video)
     videoTexture.minFilter = THREE.LinearFilter
     videoTexture.magFilter = THREE.LinearFilter
+    videoTexture.flipY = false
     videoTextureRef.current = videoTexture
 
-    // Create background plane with video texture
-    const planeGeometry = new THREE.PlaneGeometry(100, 100)
-    const planeMaterial = new THREE.MeshBasicMaterial({ 
-      map: videoTexture,
-      side: THREE.DoubleSide
-    })
-    const videoPlane = new THREE.Mesh(planeGeometry, planeMaterial)
-    videoPlane.position.set(0, 0, -20) // Behind cylinder
-    scene.add(videoPlane)
-
-    // Create cylinder
     const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT
+    
+    // Video plane setup with correct aspect ratio and mask
+    const videoAspect = video.videoWidth / video.videoHeight
+    const planeHeight = cylinderHeight * 1.15
+    const planeWidth = planeHeight * videoAspect
+    
+    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
+    
+    // UV mapping
+    const uvs = planeGeometry.attributes.uv
+    const uvArray = uvs.array as Float32Array
+    for (let i = 0; i < uvArray.length; i += 2) {
+      uvArray[i] = uvArray[i]
+      uvArray[i + 1] = 1 - uvArray[i + 1]
+    }
+    uvs.needsUpdate = true
+    
+    // Shader with cylindrical mask
+    const planeMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        videoTexture: { value: videoTexture },
+        cylinderRadius: { value: radius }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vWorldPosition;
+        
+        void main() {
+          vUv = uv;
+          vec4 worldPos = modelMatrix * vec4(position, 1.0);
+          vWorldPosition = worldPos.xyz;
+          gl_Position = projectionMatrix * viewMatrix * worldPos;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D videoTexture;
+        uniform float cylinderRadius;
+        varying vec2 vUv;
+        varying vec3 vWorldPosition;
+        
+        void main() {
+          float dist = sqrt(vWorldPosition.x * vWorldPosition.x + vWorldPosition.y * vWorldPosition.y);
+          if (dist > cylinderRadius * 1.05) {
+            discard;
+          }
+          gl_FragColor = texture2D(videoTexture, vUv);
+        }
+      `,
+      transparent: true,
+      depthWrite: false
+    })
+    
+    const videoPlane = new THREE.Mesh(planeGeometry, planeMaterial)
+    videoPlane.position.set(0, -0.1, cylinderHeight / 2) // Center at z=15
+    videoPlane.rotateX(-Math.PI / 2)
+    videoPlane.renderOrder = 1
+    scene.add(videoPlane)
+    console.log(`Video plane positioned at (0, -0.1, ${cylinderHeight / 2})`)
 
+    // Create cylinder (radius and cylinderHeight already defined above)
+    // Cylinder from z=0 to z=30, centered at z=15
     const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 32)
-    cylinderGeometry.rotateX(Math.PI / 2) // Align with Z-axis
+    cylinderGeometry.rotateX(Math.PI / 2) // Align with Z-axis (vertical)
 
     const cylinderMaterial = new THREE.MeshBasicMaterial({
       color: 0x0066CC,
       transparent: true,
-      opacity: 0.7,
-      side: THREE.DoubleSide
+      opacity: 0.2, // More transparent to see video better
+      side: THREE.DoubleSide,
+      depthWrite: false
     })
 
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial)
+    cylinder.position.set(0, 0, cylinderHeight / 2) // Move to z=0 to z=30 range
     scene.add(cylinder)
 
-    // Borders
+    // Borders - Black lines at the edges of the cylinder
+    // From z=0 (bottom) to z=30 (top), at x=±radius
     const borderMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 })
     
     const frontBorder = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(radius, 0, cylinderHeight / 2),
-        new THREE.Vector3(radius, 0, -cylinderHeight / 2)
+        new THREE.Vector3(radius, 0, 0),      // Bottom at z=0
+        new THREE.Vector3(radius, 0, cylinderHeight)  // Top at z=30
       ]),
       borderMaterial
     )
@@ -149,43 +228,17 @@ export default function WebGLUnifiedCylinder({
     
     const backBorder = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-radius, 0, cylinderHeight / 2),
-        new THREE.Vector3(-radius, 0, -cylinderHeight / 2)
+        new THREE.Vector3(-radius, 0, 0),     // Bottom at z=0
+        new THREE.Vector3(-radius, 0, cylinderHeight) // Top at z=30
       ]),
       borderMaterial
     )
     scene.add(backBorder)
+    
+    console.log(`Cylinder positioned: z=0 to z=${cylinderHeight}cm, centered at z=${cylinderHeight/2}cm`)
+    console.log(`Borders at x=±${radius}cm, from z=0 to z=${cylinderHeight}cm`)
 
-    // BOH Lines
-    const bohMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000, linewidth: 3 })
-    
-    const angle1Rad = (line1Angle * Math.PI) / 180
-    const angle2Rad = (line2Angle * Math.PI) / 180
-    
-    const x1 = radius * Math.cos(angle1Rad)
-    const y1 = radius * Math.sin(angle1Rad)
-    const x2 = radius * Math.cos(angle2Rad)
-    const y2 = radius * Math.sin(angle2Rad)
-    
-    const bohLine1 = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x1, y1, -cylinderHeight / 2),
-        new THREE.Vector3(x1, y1, 0)
-      ]),
-      bohMaterial
-    )
-    bohLine1Ref.current = bohLine1
-    scene.add(bohLine1)
-    
-    const bohLine2 = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x2, y2, 0),
-        new THREE.Vector3(x2, y2, cylinderHeight / 2)
-      ]),
-      bohMaterial
-    )
-    bohLine2Ref.current = bohLine2
-    scene.add(bohLine2)
+    // BOH Lines now rendered via HTML overlay (no 3D geometry)
 
     console.log('WebGL unified scene initialized')
     
@@ -207,6 +260,7 @@ export default function WebGLUnifiedCylinder({
 
     // Cleanup
     return () => {
+      console.log('Cleaning up scene...')
       if (animationId) {
         cancelAnimationFrame(animationId)
       }
@@ -215,42 +269,21 @@ export default function WebGLUnifiedCylinder({
       }
       renderer.dispose()
       scene.clear()
+      sceneRef.current = null
+    }
+    } // End initScene
+    
+    // Start initialization
+    initScene()
+
+    // Cleanup for useEffect
+    return () => {
+      // Cleanup is handled in initScene's return function
+      console.log('useEffect cleanup called')
     }
   }, [])
 
-  // Update BOH lines when angles change
-  useEffect(() => {
-    if (!bohLine1Ref.current || !bohLine2Ref.current) return
-    
-    const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
-    const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT
-    
-    const angle1Rad = (line1Angle * Math.PI) / 180
-    const angle2Rad = (line2Angle * Math.PI) / 180
-    
-    const x1 = radius * Math.cos(angle1Rad)
-    const y1 = radius * Math.sin(angle1Rad)
-    const x2 = radius * Math.cos(angle2Rad)
-    const y2 = radius * Math.sin(angle2Rad)
-    
-    // Update BOH Line 1
-    const bohLine1Geometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(x1, y1, -cylinderHeight / 2),
-      new THREE.Vector3(x1, y1, 0)
-    ])
-    bohLine1Ref.current.geometry.dispose()
-    bohLine1Ref.current.geometry = bohLine1Geometry
-    
-    // Update BOH Line 2
-    const bohLine2Geometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(x2, y2, 0),
-      new THREE.Vector3(x2, y2, cylinderHeight / 2)
-    ])
-    bohLine2Ref.current.geometry.dispose()
-    bohLine2Ref.current.geometry = bohLine2Geometry
-    
-    console.log(`BOH angles updated: Line1=${line1Angle}°, Line2=${line2Angle}°`)
-  }, [line1Angle, line2Angle])
+  // BOH lines are now rendered via HTML overlay - no 3D geometry needed
 
   return (
     <div 
@@ -273,6 +306,19 @@ export default function WebGLUnifiedCylinder({
       />
       
       {/* Three.js will render here */}
+      
+            {/* HTML Overlay for BOH lines */}
+            {containerSize.width > 0 && isReady && (
+              <BOHLinesOverlay 
+                line1Angle={line1Angle}
+                line2Angle={line2Angle}
+                containerWidth={containerSize.width}
+                containerHeight={containerSize.height}
+                camera={cameraRef.current || undefined}
+                cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
+                radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
+              />
+            )}
     </div>
   )
 }
