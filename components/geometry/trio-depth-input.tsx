@@ -89,7 +89,8 @@ export function TrioDepthInput({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        gap: '8px',
+        marginBottom: '8px'
       }}>
         <div style={{
           width: '12px',
@@ -105,7 +106,33 @@ export function TrioDepthInput({
         }}>
           Trío 1 - Profundidad Manual
         </span>
+        {!trio.depth && (
+          <span style={{
+            fontSize: '11px',
+            fontWeight: 'bold',
+            color: '#EF4444',
+            backgroundColor: '#FEE2E2',
+            padding: '2px 8px',
+            borderRadius: '4px'
+          }}>
+            ⚠️ REQUERIDO
+          </span>
+        )}
       </div>
+      
+      {!trio.depth && (
+        <div style={{
+          fontSize: '12px',
+          color: '#DC2626',
+          backgroundColor: '#FEE2E2',
+          padding: '8px',
+          borderRadius: '6px',
+          marginBottom: '8px',
+          fontWeight: '500'
+        }}>
+          📍 Ingrese la profundidad para continuar
+        </div>
+      )}
 
       <div style={{
         display: 'flex',

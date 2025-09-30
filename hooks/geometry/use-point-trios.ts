@@ -56,22 +56,37 @@ export function usePointTrios() {
           color: getTrioColor(trioIndex),
           createdAt: new Date()
         }
+        console.log(`Point added (1/3): (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
         return newTrio
       }
 
       // If trio is complete, don't add
       if (prev.points.length >= POINTS_PER_TRIO) {
+        console.log('Trio already complete, ignoring click')
         return prev
       }
 
       // Add point to current trio
-      return {
+      const updatedTrio = {
         ...prev,
         points: [...prev.points, pointWithId]
       }
-    })
 
-    console.log(`Point added: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+      console.log(`Point added (${updatedTrio.points.length}/3): (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+
+      // Auto-complete if we now have 3 points
+      if (updatedTrio.points.length === POINTS_PER_TRIO) {
+        console.log(`Trio ${trios.length + 1} auto-completed with 3 points`)
+        
+        // Use setTimeout to ensure state update completes first
+        setTimeout(() => {
+          setTrios(prevTrios => [...prevTrios, updatedTrio])
+          setCurrentTrio(null)
+        }, 0)
+      }
+
+      return updatedTrio
+    })
   }, [trios.length, getTrioColor])
 
   // Complete current trio and start a new one

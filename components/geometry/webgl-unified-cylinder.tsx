@@ -292,6 +292,22 @@ export default function WebGLUnifiedCylinder({
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!trioManager || !cameraRef.current || !containerRef.current) return
 
+    // Block interaction if first trio exists but has no depth
+    if (trioManager.trios.length > 0 && !trioManager.trios[0].depth) {
+      console.log('⚠️ Please enter depth for first trio before continuing')
+      // Visual feedback
+      const panel = document.querySelector('.boh-controls')
+      if (panel) {
+        panel.scrollTop = panel.scrollHeight
+        // Flash effect
+        const depthInput = panel.querySelector('[style*="border: 2px solid #3B82F6"]')
+        if (depthInput) {
+          (depthInput as HTMLElement).style.animation = 'pulse 0.5s ease-in-out 2'
+        }
+      }
+      return
+    }
+
     const rect = containerRef.current.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
@@ -313,13 +329,8 @@ export default function WebGLUnifiedCylinder({
       const point = intersects[0].point
       console.log(`Click at 3D point: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
       
-      // Add point to trio manager
+      // Add point to trio manager (auto-completes internally at 3 points)
       trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
-      
-      // If trio is complete, auto-complete it
-      if (trioManager.isCurrentTrioComplete) {
-        trioManager.completeTrio()
-      }
     }
   }, [trioManager])
 
@@ -333,7 +344,7 @@ export default function WebGLUnifiedCylinder({
         width: '100%',
         height: '100%',
         minHeight: '100vh',
-        cursor: trioManager && trioManager.canAddMoreTrios ? 'crosshair' : 'default'
+        cursor: trioManager && trioManager.canAddMoreTrios && !(trioManager.trios.length > 0 && !trioManager.trios[0].depth) ? 'crosshair' : 'not-allowed'
       }}
     >
       {/* Hidden video element (used as texture) */}
