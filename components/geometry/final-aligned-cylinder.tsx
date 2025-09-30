@@ -197,49 +197,44 @@ export default function FinalAlignedCylinder({
     
     console.log(`BOH angles initialized: Line1=${line1Angle}°, Line2=${line2Angle}°`)
 
-    // Calculate mask position
-    const corners = [
-      new THREE.Vector3(-radius, 0, -cylinderHeight / 2),
-      new THREE.Vector3(radius, 0, -cylinderHeight / 2),
-      new THREE.Vector3(-radius, 0, cylinderHeight / 2),
-      new THREE.Vector3(radius, 0, cylinderHeight / 2)
+    // TEST: Project exact cylinder corners
+    console.log('=== PROJECTION TEST ===')
+    const testCorners = [
+      new THREE.Vector3(-radius, 0, -cylinderHeight / 2), // Bottom-left
+      new THREE.Vector3(radius, 0, -cylinderHeight / 2),  // Bottom-right
+      new THREE.Vector3(-radius, 0, cylinderHeight / 2),  // Top-left  
+      new THREE.Vector3(radius, 0, cylinderHeight / 2)    // Top-right
     ]
-
-    const screenCorners = corners.map(corner => {
+    testCorners.forEach((corner, i) => {
       const projected = corner.clone().project(camera)
-      return {
-        x: (projected.x + 1) * 50,
-        y: (-projected.y + 1) * 50
-      }
+      const screenX = (projected.x + 1) * 50
+      const screenY = (-projected.y + 1) * 50
+      console.log(`Corner ${i} [${corner.x.toFixed(2)}, ${corner.y.toFixed(2)}, ${corner.z.toFixed(2)}] → NDC[${projected.x.toFixed(4)}, ${projected.y.toFixed(4)}] → Screen[${screenX.toFixed(2)}%, ${screenY.toFixed(2)}%]`)
     })
+    console.log('=======================')
 
-    const minX = Math.min(...screenCorners.map(c => c.x))
-    const maxX = Math.max(...screenCorners.map(c => c.x))
-    const minY = Math.min(...screenCorners.map(c => c.y))
-    const maxY = Math.max(...screenCorners.map(c => c.y))
-
-    // Adjust mask to cover cylinder edges perfectly
-    // Add margin to account for rounding and border thickness
-    const marginY = 1.0 // 1% margin on top and bottom
-    const marginX = 0.3 // 0.3% margin on left and right
+    // Calculate mask to match cylinder proportions and position
+    const cylinderAspectRatio = radius * 2 / cylinderHeight // 0.2117
     
-    const adjustedMinY = Math.max(0, minY - marginY)
-    const adjustedMaxY = Math.min(100, maxY + marginY)
-    const adjustedMinX = Math.max(0, minX - marginX)
-    const adjustedMaxX = Math.min(100, maxX + marginX)
+    // Use empirical values that work visually
+    // Based on visual testing: horizontal position good, needs vertical extension
+    const fixedMask = {
+      top: 2,     // 2% from top
+      bottom: -5, // -5% from bottom (extend to cover full cylinder)
+      left: 40,   // 40% from left (good horizontal position)
+      right: 35   // 35% from right (maintains ~25% width)
+    }
+    
+    console.log('=== FIXED MASK VALUES ===')
+    console.log(`Container: ${width}×${height}, aspect: ${aspectRatio.toFixed(2)}`)
+    console.log(`Mask: top=${fixedMask.top}%, right=${fixedMask.right}%, bottom=${fixedMask.bottom}%, left=${fixedMask.left}%`)
+    console.log(`Visible area: width=${100 - fixedMask.left - fixedMask.right}%, height=${100 - fixedMask.top - fixedMask.bottom}%`)
+    console.log('=========================')
 
-    // Mask coordinates calculated and adjusted successfully
-    // console.log('Mask coords:', { 
-    //   left: adjustedMinX.toFixed(2), 
-    //   right: (100 - adjustedMaxX).toFixed(2), 
-    //   top: adjustedMinY.toFixed(2), 
-    //   bottom: (100 - adjustedMaxY).toFixed(2)
-    // })
-
-    // Apply mask to video
+    // Apply fixed mask to video
     setMaskStyle({
-      clipPath: `inset(${adjustedMinY}% ${100 - adjustedMaxX}% ${100 - adjustedMaxY}% ${adjustedMinX}%)`,
-      WebkitClipPath: `inset(${adjustedMinY}% ${100 - adjustedMaxX}% ${100 - adjustedMaxY}% ${adjustedMinX}%)`
+      clipPath: `inset(${fixedMask.top}% ${fixedMask.right}% ${fixedMask.bottom}% ${fixedMask.left}%)`,
+      WebkitClipPath: `inset(${fixedMask.top}% ${fixedMask.right}% ${fixedMask.bottom}% ${fixedMask.left}%)`
     })
 
     // Start animation loop
