@@ -29,11 +29,8 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
         {/* BOH Controls Panel */}
         <div className="w-80 bg-card border-l border-border p-4 overflow-y-auto">
           <BOHControls
-            line1Angle={state.line1Angle}
-            line2Angle={state.line2Angle}
-            onLine1AngleChange={actions.setLine1Angle}
-            onLine2AngleChange={actions.setLine2Angle}
-            onReset={actions.resetAngles}
+            state={state}
+            actions={actions}
           />
         </div>
       </div>

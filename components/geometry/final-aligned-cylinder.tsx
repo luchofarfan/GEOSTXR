@@ -20,6 +20,11 @@ export default function FinalAlignedCylinder({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [maskStyle, setMaskStyle] = useState<React.CSSProperties>({})
   const [isReady, setIsReady] = useState(false)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const bohLine1Ref = useRef<THREE.Line | null>(null)
+  const bohLine2Ref = useRef<THREE.Line | null>(null)
 
   useEffect(() => {
     // Get camera stream
