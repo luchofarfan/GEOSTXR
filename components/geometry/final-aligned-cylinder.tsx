@@ -6,9 +6,15 @@ import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface FinalAlignedCylinderProps {
   className?: string
+  line1Angle?: number
+  line2Angle?: number
 }
 
-export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCylinderProps) {
+export default function FinalAlignedCylinder({ 
+  className = '', 
+  line1Angle = 90,
+  line2Angle = 90
+}: FinalAlignedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -145,13 +151,23 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     )
     scene.add(backBorder)
 
-    // BOH Lines
+    // BOH Lines - using angles from props
     const bohMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000, linewidth: 3 })
+    
+    // Convert angles to radians
+    const angle1Rad = (line1Angle * Math.PI) / 180
+    const angle2Rad = (line2Angle * Math.PI) / 180
+    
+    // Calculate positions on cylinder surface
+    const x1 = radius * Math.cos(angle1Rad)
+    const y1 = radius * Math.sin(angle1Rad)
+    const x2 = radius * Math.cos(angle2Rad)
+    const y2 = radius * Math.sin(angle2Rad)
     
     const bohLine1 = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, radius, -cylinderHeight / 2),
-        new THREE.Vector3(0, radius, 0)
+        new THREE.Vector3(x1, y1, -cylinderHeight / 2), // Bottom
+        new THREE.Vector3(x1, y1, 0) // Center
       ]),
       bohMaterial
     )
@@ -159,12 +175,14 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     
     const bohLine2 = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, radius, 0),
-        new THREE.Vector3(0, radius, cylinderHeight / 2)
+        new THREE.Vector3(x2, y2, 0), // Center
+        new THREE.Vector3(x2, y2, cylinderHeight / 2) // Top
       ]),
       bohMaterial
     )
     scene.add(bohLine2)
+    
+    console.log(`BOH angles: Line1=${line1Angle}°, Line2=${line2Angle}°`)
 
     // Calculate mask position
     const corners = [
@@ -227,7 +245,7 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
       clearTimeout(timer)
       setIsReady(false)
     }
-  }, [])
+  }, [line1Angle, line2Angle]) // Re-render when angles change
 
   return (
     <div 
