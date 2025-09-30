@@ -34,20 +34,33 @@
 - [ ] Implement drag-to-move functionality for BOHs
 - [ ] Add real-time point tracking overlay
 
-### 4.1. Virtual Geometry System (2 hours)
+### 4.1. Virtual Geometry System (2 hours) ✅ COMPLETED
 
-- [ ] Implement virtual cylinder geometry (HQ=6.35cm, height=15cm)
-- [ ] Align cylinder axis with Z-coordinate axis
-- [ ] Create cylinder visualization overlay on camera feed
-- [ ] Implement cylinder positioning and scaling controls
-- [ ] Add cylinder transparency and wireframe options
+- [x] Implement virtual cylinder geometry (HQ=6.35cm, height=30cm)
+- [x] Align cylinder axis with Z-coordinate axis
+- [x] Create cylinder visualization overlay on camera feed
+- [x] Implement cylinder positioning and scaling controls
+- [x] Add cylinder transparency (70% opacity, blue color)
+- [x] Add border highlights at 0° and 180°
+- [x] Perfect alignment of camera feed mask with cylinder boundaries
 
-### 4.2. BOH Lines System (1 hour)
+### 4.2. BOH Lines System (1 hour) ✅ COMPLETED
 
-- [ ] Implement BOH Line 1 (z=0 → z=15, bottom to center)
-- [ ] Implement BOH Line 2 (z=15 → z=30, center to top)
-- [ ] Position BOH lines at 90° on cylinder surface (adjustable)
-- [ ] Create BOH lines visualization (red color, 0.1cm thickness)
+- [x] Implement BOH Line 1 (z=0 → z=15, bottom to center)
+- [x] Implement BOH Line 2 (z=15 → z=30, center to top)
+- [x] Position BOH lines at 90° on cylinder surface
+- [x] Create BOH lines visualization (red color, 3px width)
+- [x] Create BOH controls component structure
+
+### 4.3. BOH Interactive Controls (2 hours) 🔄 IN PROGRESS
+
+- [ ] Implement touch/drag interaction for BOH Line 1
+- [ ] Implement touch/drag interaction for BOH Line 2
+- [ ] Add smooth angular displacement (±20° range: 70° to 110°)
+- [ ] Display current angle for each BOH line
+- [ ] Add visual feedback during interaction (highlight, glow)
+- [ ] Implement angle snapping (optional: 5° increments)
+- [ ] Add reset button to return BOH lines to 90°
 - [ ] Add BOH lines interaction and positioning controls
 - [ ] Implement smooth manual displacement (±20° around Z-axis)
 - [ ] Add touch/drag interaction for BOH lines positioning
