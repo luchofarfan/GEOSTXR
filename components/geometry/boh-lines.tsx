@@ -16,7 +16,7 @@ export default function BOHLines({ className = '', onBOHChange }: BOHLinesProps)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const bohLine1Ref = useRef<THREE.Line | null>(null)
   const bohLine2Ref = useRef<THREE.Line | null>(null)
-  const [line1Angle, setLine1Angle] = useState(0) // Default 0°
+  const [line1Angle, setLine1Angle] = useState(90) // Default 90°
   const [line2Angle, setLine2Angle] = useState(90) // Default 90°
 
   useEffect(() => {
@@ -82,22 +82,22 @@ export default function BOHLines({ className = '', onBOHChange }: BOHLinesProps)
       linewidth: GEOSTXR_CONFIG.BOH.LINE1.WIDTH
     })
 
-    // BOH Line 1: z=0 to z=15 (bottom to center)
+    // BOH Line 1: z=0 to z=15 (bottom to center) at 90°
     const line1Geometry = new THREE.BufferGeometry()
     const line1Points = [
-      new THREE.Vector3(radius, 0, 0),   // Bottom at 0°
-      new THREE.Vector3(radius, 0, height / 2) // Center at 0°
+      new THREE.Vector3(0, radius, 0),   // Bottom at 90°
+      new THREE.Vector3(0, radius, height / 2) // Center at 90°
     ]
     line1Geometry.setFromPoints(line1Points)
     const bohLine1 = new THREE.Line(line1Geometry, bohMaterial)
     bohLine1Ref.current = bohLine1
     scene.add(bohLine1)
 
-    // BOH Line 2: z=15 to z=30 (center to top)
+    // BOH Line 2: z=15 to z=30 (center to top) at 90°
     const line2Geometry = new THREE.BufferGeometry()
     const line2Points = [
-      new THREE.Vector3(-radius, 0, height / 2), // Center at 180°
-      new THREE.Vector3(-radius, 0, height) // Top at 180°
+      new THREE.Vector3(0, radius, height / 2), // Center at 90°
+      new THREE.Vector3(0, radius, height) // Top at 90°
     ]
     line2Geometry.setFromPoints(line2Points)
     const bohLine2 = new THREE.Line(line2Geometry, bohMaterial)

@@ -62,8 +62,8 @@ export default function BOHControls({ state, actions, className = '' }: BOHContr
         </label>
         <input
           type="range"
-          min="-20"
-          max="20"
+          min="70"
+          max="110"
           step="0.1"
           value={line1Angle}
           onChange={(e) => setLine1Angle(parseFloat(e.target.value))}
@@ -71,9 +71,9 @@ export default function BOHControls({ state, actions, className = '' }: BOHContr
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
         />
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>-20°</span>
-          <span>0°</span>
-          <span>+20°</span>
+          <span>70°</span>
+          <span>90°</span>
+          <span>110°</span>
         </div>
       </div>
 
@@ -84,8 +84,8 @@ export default function BOHControls({ state, actions, className = '' }: BOHContr
         </label>
         <input
           type="range"
-          min="-20"
-          max="20"
+          min="70"
+          max="110"
           step="0.1"
           value={line2Angle}
           onChange={(e) => setLine2Angle(parseFloat(e.target.value))}
@@ -93,9 +93,9 @@ export default function BOHControls({ state, actions, className = '' }: BOHContr
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
         />
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>-20°</span>
-          <span>0°</span>
-          <span>+20°</span>
+          <span>70°</span>
+          <span>90°</span>
+          <span>110°</span>
         </div>
       </div>
 

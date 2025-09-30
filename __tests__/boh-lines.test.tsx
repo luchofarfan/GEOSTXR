@@ -8,8 +8,11 @@ import { GEOSTXR_CONFIG } from '@/lib/config'
 
 // Mock Three.js
 jest.mock('three', () => ({
-  Scene: jest.fn(),
-  PerspectiveCamera: jest.fn(),
+  Scene: jest.fn(() => ({ add: jest.fn() })),
+  PerspectiveCamera: jest.fn(() => ({ 
+    position: { set: jest.fn() },
+    lookAt: jest.fn()
+  })),
   WebGLRenderer: jest.fn(() => ({
     setSize: jest.fn(),
     setClearColor: jest.fn(),
@@ -17,10 +20,12 @@ jest.mock('three', () => ({
     domElement: document.createElement('canvas'),
     dispose: jest.fn()
   })),
-  BufferGeometry: jest.fn(),
+  BufferGeometry: jest.fn(() => ({
+    setFromPoints: jest.fn()
+  })),
   LineBasicMaterial: jest.fn(),
   Line: jest.fn(),
-  Vector3: jest.fn(),
+  Vector3: jest.fn((x, y, z) => ({ x, y, z })),
   AmbientLight: jest.fn(),
   DirectionalLight: jest.fn(),
   Math: {

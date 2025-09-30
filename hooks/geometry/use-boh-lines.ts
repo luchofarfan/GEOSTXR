@@ -19,26 +19,26 @@ export interface BOHLinesActions {
 
 export function useBOHLines() {
   const [state, setState] = useState<BOHLinesState>({
-    line1Angle: GEOSTXR_CONFIG.BOH.LINE1.OFFSET_ANGLE, // 0°
+    line1Angle: GEOSTXR_CONFIG.BOH.LINE1.OFFSET_ANGLE, // 90°
     line2Angle: GEOSTXR_CONFIG.BOH.LINE2.OFFSET_ANGLE, // 90°
     isVisible: true,
     isInteractive: true
   })
 
   const setLine1Angle = useCallback((angle: number) => {
-    // Clamp angle within displacement range
+    // Clamp angle within displacement range (90° ± 20°)
     const clampedAngle = Math.max(
-      -GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE,
-      Math.min(GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, angle)
+      90 - GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, // 70°
+      Math.min(90 + GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, angle) // 110°
     )
     setState(prev => ({ ...prev, line1Angle: clampedAngle }))
   }, [])
 
   const setLine2Angle = useCallback((angle: number) => {
-    // Clamp angle within displacement range
+    // Clamp angle within displacement range (90° ± 20°)
     const clampedAngle = Math.max(
-      -GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE,
-      Math.min(GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, angle)
+      90 - GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, // 70°
+      Math.min(90 + GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, angle) // 110°
     )
     setState(prev => ({ ...prev, line2Angle: clampedAngle }))
   }, [])
@@ -54,7 +54,7 @@ export function useBOHLines() {
   const resetAngles = useCallback(() => {
     setState(prev => ({
       ...prev,
-      line1Angle: GEOSTXR_CONFIG.BOH.LINE1.OFFSET_ANGLE, // 0°
+      line1Angle: GEOSTXR_CONFIG.BOH.LINE1.OFFSET_ANGLE, // 90°
       line2Angle: GEOSTXR_CONFIG.BOH.LINE2.OFFSET_ANGLE  // 90°
     }))
   }, [])
@@ -63,12 +63,12 @@ export function useBOHLines() {
     setState(prev => ({
       ...prev,
       line1Angle: Math.max(
-        -GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE,
-        Math.min(GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, line1Angle)
+        90 - GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, // 70°
+        Math.min(90 + GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, line1Angle) // 110°
       ),
       line2Angle: Math.max(
-        -GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE,
-        Math.min(GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, line2Angle)
+        90 - GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, // 70°
+        Math.min(90 + GEOSTXR_CONFIG.BOH.DISPLACEMENT_RANGE, line2Angle) // 110°
       )
     }))
   }, [])
