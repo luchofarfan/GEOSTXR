@@ -56,8 +56,10 @@ export default function FinalAlignedCylinder({
     }
   }, [])
 
+  // Initialize scene ONCE (no angle dependencies)
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return
+    if (sceneRef.current) return // Already initialized
 
     // Add a small delay to ensure container is fully rendered
     const timer = setTimeout(() => {
@@ -79,9 +81,12 @@ export default function FinalAlignedCylinder({
     canvas.width = width
     canvas.height = height
 
-    // Scene setup
+    // Scene setup - store in refs for persistence
     const scene = new THREE.Scene()
+    sceneRef.current = scene
+    
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    cameraRef.current = camera
     
     const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT
@@ -106,12 +111,13 @@ export default function FinalAlignedCylinder({
     camera.position.set(0, distance, 0)
     camera.lookAt(0, 0, 0)
 
-    // Renderer
+    // Renderer - store in ref for persistence
     const renderer = new THREE.WebGLRenderer({ 
       canvas,
       alpha: true, 
       antialias: true 
     })
+    rendererRef.current = renderer
     renderer.setSize(width, height)
     renderer.setClearColor(0x000000, 0)
 
@@ -176,6 +182,7 @@ export default function FinalAlignedCylinder({
       ]),
       bohMaterial
     )
+    bohLine1Ref.current = bohLine1
     scene.add(bohLine1)
     
     const bohLine2 = new THREE.Line(
@@ -185,9 +192,10 @@ export default function FinalAlignedCylinder({
       ]),
       bohMaterial
     )
+    bohLine2Ref.current = bohLine2
     scene.add(bohLine2)
     
-    console.log(`BOH angles: Line1=${line1Angle}°, Line2=${line2Angle}°`)
+    console.log(`BOH angles initialized: Line1=${line1Angle}°, Line2=${line2Angle}°`)
 
     // Calculate mask position
     const corners = [
@@ -234,23 +242,61 @@ export default function FinalAlignedCylinder({
       WebkitClipPath: `inset(${adjustedMinY}% ${100 - adjustedMaxX}% ${100 - adjustedMaxY}% ${adjustedMinX}%)`
     })
 
-    // Render
-    renderer.render(scene, camera)
+    // Start animation loop
+    let animationId: number
+    const animate = () => {
+      animationId = requestAnimationFrame(animate)
+      renderer.render(scene, camera)
+    }
+    animate()
 
     // Mark as ready
     setIsReady(true)
     console.log('Cylinder rendering complete and mask applied')
 
-    // Cleanup
-    renderer.dispose()
-    scene.clear()
     }, 200) // 200ms delay for more reliable rendering
 
     return () => {
       clearTimeout(timer)
-      setIsReady(false)
+      // Don't dispose scene/renderer on unmount - they're needed for updates
     }
-  }, [line1Angle, line2Angle]) // Re-render when angles change
+  }, []) // NO dependencies - initialize only once
+  
+  // Separate effect to update BOH lines when angles change
+  useEffect(() => {
+    if (!bohLine1Ref.current || !bohLine2Ref.current || !sceneRef.current || !rendererRef.current || !cameraRef.current) return
+    
+    const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
+    const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT
+    
+    // Convert angles to radians
+    const angle1Rad = (line1Angle * Math.PI) / 180
+    const angle2Rad = (line2Angle * Math.PI) / 180
+    
+    // Calculate positions
+    const x1 = radius * Math.cos(angle1Rad)
+    const y1 = radius * Math.sin(angle1Rad)
+    const x2 = radius * Math.cos(angle2Rad)
+    const y2 = radius * Math.sin(angle2Rad)
+    
+    // Update BOH Line 1 geometry
+    const bohLine1Geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x1, y1, -cylinderHeight / 2),
+      new THREE.Vector3(x1, y1, 0)
+    ])
+    bohLine1Ref.current.geometry.dispose()
+    bohLine1Ref.current.geometry = bohLine1Geometry
+    
+    // Update BOH Line 2 geometry
+    const bohLine2Geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x2, y2, 0),
+      new THREE.Vector3(x2, y2, cylinderHeight / 2)
+    ])
+    bohLine2Ref.current.geometry.dispose()
+    bohLine2Ref.current.geometry = bohLine2Geometry
+    
+    console.log(`BOH angles updated: Line1=${line1Angle}°, Line2=${line2Angle}°`)
+  }, [line1Angle, line2Angle]) // Update only when angles change
 
   return (
     <div 
