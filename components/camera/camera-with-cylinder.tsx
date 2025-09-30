@@ -5,6 +5,7 @@ import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
 import BOHControls from '@/components/geometry/boh-controls'
 import { useBOHLines } from '@/hooks/geometry/use-boh-lines'
 import { usePointTrios } from '@/hooks/geometry/use-point-trios'
+import { usePlanes } from '@/hooks/geometry/use-planes'
 
 interface CameraWithCylinderProps {
   className?: string
@@ -15,6 +16,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
 }) => {
   const { state, actions } = useBOHLines()
   const trioManager = usePointTrios()
+  const planeManager = usePlanes(trioManager.trios)
 
   return (
     <div className={`camera-with-cylinder ${className}`}>
@@ -26,6 +28,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
             line1Angle={state.line1Angle}
             line2Angle={state.line2Angle}
             trioManager={trioManager}
+            planeManager={planeManager}
           />
         </div>
         

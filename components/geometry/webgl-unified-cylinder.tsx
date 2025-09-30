@@ -11,13 +11,15 @@ interface WebGLUnifiedCylinderProps {
   line1Angle?: number
   line2Angle?: number
   trioManager?: any // From usePointTrios hook
+  planeManager?: any // From usePlanes hook
 }
 
 export default function WebGLUnifiedCylinder({ 
   className = '', 
   line1Angle = 90,
   line2Angle = 90,
-  trioManager
+  trioManager,
+  planeManager
 }: WebGLUnifiedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -25,6 +27,7 @@ export default function WebGLUnifiedCylinder({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
+  const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
   const [isReady, setIsReady] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -77,7 +80,7 @@ export default function WebGLUnifiedCylinder({
     const height = container.clientHeight
 
     if (width === 0 || height === 0) return
-    
+
     setContainerSize({ width, height })
 
     // Wait for video to be ready
@@ -237,7 +240,7 @@ export default function WebGLUnifiedCylinder({
       borderMaterial
     )
     scene.add(backBorder)
-    
+
     console.log(`Cylinder positioned: z=0 to z=${cylinderHeight}cm, centered at z=${cylinderHeight/2}cm`)
     console.log(`Borders at x=±${radius}cm, from z=0 to z=${cylinderHeight}cm`)
 
@@ -287,6 +290,84 @@ export default function WebGLUnifiedCylinder({
   }, [])
 
   // BOH lines are now rendered via HTML overlay - no 3D geometry needed
+
+  // Render planes in 3D
+  useEffect(() => {
+    if (!isReady || !sceneRef.current || !planeManager) return
+    
+    const scene = sceneRef.current
+    const currentPlanes = planesRef.current
+
+    // Remove planes that no longer exist
+    currentPlanes.forEach((mesh, planeId) => {
+      const planeExists = planeManager.planes.some((p: any) => p.id === planeId)
+      if (!planeExists) {
+        scene.remove(mesh)
+        mesh.geometry.dispose()
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach(m => m.dispose())
+        } else {
+          mesh.material.dispose()
+        }
+        currentPlanes.delete(planeId)
+        console.log(`Plane ${planeId} removed from scene`)
+      }
+    })
+
+    // Add or update planes
+    planeManager.planes.forEach((plane: any) => {
+      let mesh = currentPlanes.get(plane.id)
+
+      // Create new plane mesh if it doesn't exist
+      if (!mesh) {
+        // Create a large plane geometry (will be clipped by cylinder)
+        const planeSize = 50 // Large enough to cover cylinder
+        const geometry = new THREE.PlaneGeometry(planeSize, planeSize, 10, 10)
+        
+        // Create semi-transparent material with plane color
+        const material = new THREE.MeshBasicMaterial({
+          color: plane.color,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+        
+        mesh = new THREE.Mesh(geometry, material)
+        mesh.renderOrder = 2 // Render after cylinder but before overlays
+        
+        scene.add(mesh)
+        currentPlanes.set(plane.id, mesh)
+        console.log(`Plane ${plane.id} added to scene`)
+      }
+
+      // Position and orient the plane based on equation
+      // Plane equation: ax + by + cz + d = 0
+      // Normal vector: (a, b, c)
+      const { a, b, c, d } = plane.equation
+      
+      // Find a point on the plane (use z=15 as reference, cylinder center)
+      let x0 = 0, y0 = 0, z0 = 15
+      
+      if (c !== 0) {
+        z0 = -(a * x0 + b * y0 + d) / c
+      } else if (b !== 0) {
+        y0 = -(a * x0 + c * z0 + d) / b
+      } else if (a !== 0) {
+        x0 = -(b * y0 + c * z0 + d) / a
+      }
+      
+      // Position the plane at this point
+      mesh.position.set(x0, y0, z0)
+      
+      // Orient the plane using lookAt (normal direction)
+      const normalPoint = new THREE.Vector3(x0 + a, y0 + b, z0 + c)
+      mesh.lookAt(normalPoint)
+      
+      // Update visibility
+      mesh.visible = plane.visible
+    })
+  }, [isReady, planeManager?.planes])
 
   // Handle clicks on cylinder to add points
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
