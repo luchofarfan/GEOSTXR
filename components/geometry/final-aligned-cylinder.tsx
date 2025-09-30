@@ -13,6 +13,7 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [maskStyle, setMaskStyle] = useState<React.CSSProperties>({})
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
     // Get camera stream
@@ -47,18 +48,22 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return
 
-    const canvas = canvasRef.current
-    const container = containerRef.current
-    const width = container.clientWidth
-    const height = container.clientHeight
+    // Add a small delay to ensure container is fully rendered
+    const timer = setTimeout(() => {
+      const canvas = canvasRef.current
+      const container = containerRef.current
+      if (!canvas || !container) return
 
-    // Wait for container to have valid dimensions
-    if (width === 0 || height === 0) {
-      console.log('Container has no dimensions yet, waiting...')
-      return
-    }
+      const width = container.clientWidth
+      const height = container.clientHeight
 
-    // console.log('Container dimensions:', { width, height })
+      // Wait for container to have valid dimensions
+      if (width === 0 || height === 0) {
+        console.log('Container has no dimensions yet, waiting...')
+        return
+      }
+
+      console.log('Container dimensions:', { width, height })
 
     canvas.width = width
     canvas.height = height
@@ -209,10 +214,18 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     // Render
     renderer.render(scene, camera)
 
+    // Mark as ready
+    setIsReady(true)
+    console.log('Cylinder rendering complete and mask applied')
+
     // Cleanup
+    renderer.dispose()
+    scene.clear()
+    }, 200) // 200ms delay for more reliable rendering
+
     return () => {
-      renderer.dispose()
-      scene.clear()
+      clearTimeout(timer)
+      setIsReady(false)
     }
   }, [])
 
@@ -227,14 +240,18 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
         minHeight: '100vh'
       }}
     >
-      {/* Camera feed with mask */}
+      {/* Camera feed with mask - only show when ready */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
-        style={maskStyle}
+        style={{
+          ...maskStyle,
+          opacity: isReady ? 1 : 0,
+          transition: 'opacity 0.3s ease-in-out'
+        }}
       />
       
       {/* Cylinder overlay */}
