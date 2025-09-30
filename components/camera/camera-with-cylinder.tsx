@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import FinalAlignedCylinder from '@/components/geometry/final-aligned-cylinder'
+import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
 import BOHControls from '@/components/geometry/boh-controls'
 import { useBOHLines } from '@/hooks/geometry/use-boh-lines'
 
@@ -19,7 +19,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
       <div className="flex h-screen bg-background">
         {/* Camera Feed with Virtual Cylinder */}
         <div className="flex-1 relative">
-          <FinalAlignedCylinder 
+          <WebGLUnifiedCylinder 
             className="w-full h-full"
             line1Angle={state.line1Angle}
             line2Angle={state.line2Angle}
