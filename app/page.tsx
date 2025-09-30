@@ -131,10 +131,10 @@ export default function GeoStVRApp() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Target className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold text-balance">GeoStVR</h1>
+              <h1 className="text-xl font-bold text-balance">GEOSTXR</h1>
             </div>
             <Badge variant="secondary" className="text-xs">
-              v31
+              v1.0.0
             </Badge>
           </div>
 

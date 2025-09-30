@@ -19,14 +19,14 @@ export const GEOSTXR_CONFIG = {
       END_Z: 15,
       COLOR: 0xFF0000, // Red color
       WIDTH: 3,
-      OFFSET_ANGLE: 0, // Initial offset from 0 degrees
+      OFFSET_ANGLE: 90, // Initial offset at 90 degrees
     },
     LINE2: {
       START_Z: 15,
       END_Z: 30,
       COLOR: 0xFF0000, // Red color
       WIDTH: 3,
-      OFFSET_ANGLE: 90, // Initial offset from 0 degrees
+      OFFSET_ANGLE: 90, // Initial offset at 90 degrees
     },
     DISPLACEMENT_RANGE: 20, // +/- degrees around Z-axis
   },
