@@ -225,7 +225,11 @@ export function PhotoGalleryPanel({
                         justifyContent: 'space-between'
                       }}>
                         <span>
-                          {photo.planeNumber ? `Plano #${photo.planeNumber}` : 'Sin asociar'}
+                          {photo.metadata?.tags?.includes('scene-composite') 
+                            ? `🎬 Escena Completa (${photo.metadata.triosCount || 0} planos)` 
+                            : photo.planeNumber 
+                              ? `Plano #${photo.planeNumber}` 
+                              : 'Foto de Escena'}
                         </span>
                         <span style={{ fontSize: '10px', color: '#6B7280' }}>
                           {new Date(photo.timestamp).toLocaleTimeString()}

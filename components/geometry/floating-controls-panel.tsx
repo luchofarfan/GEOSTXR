@@ -12,6 +12,9 @@ interface FloatingControlsPanelProps {
   scenePhotoId?: string | null
   onOpenPhotoGallery?: () => void
   onResetScene?: () => void
+  onOpenCustomColumns?: () => void
+  onOpenDrillHoleInfo?: () => void
+  customColumns?: any
   initialPosition?: { x: number; y: number }
 }
 
@@ -23,6 +26,9 @@ export function FloatingControlsPanel({
   scenePhotoId,
   onOpenPhotoGallery,
   onResetScene,
+  onOpenCustomColumns,
+  onOpenDrillHoleInfo,
+  customColumns,
   initialPosition = { x: 20, y: 20 }
 }: FloatingControlsPanelProps) {
   const [position, setPosition] = useState(initialPosition)
@@ -171,12 +177,40 @@ export function FloatingControlsPanel({
             </div>
           )}
 
+          {/* Drill Hole Info Button */}
+          <div className="mb-4">
+            <button
+              onClick={onOpenDrillHoleInfo}
+              className="w-full py-2 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>🎯</span>
+              <span>Info del Sondaje</span>
+            </button>
+          </div>
+
+          {/* Custom Columns Button */}
+          <div className="mb-4">
+            <button
+              onClick={onOpenCustomColumns}
+              className="w-full py-2 px-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white rounded-lg font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>📋</span>
+              <span>Columnas Personalizadas</span>
+              {customColumns && customColumns.columns.length > 0 && (
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  {customColumns.columns.length}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* BOH Controls */}
           <BOHControls
             state={state}
             actions={actions}
             trioManager={trioManager}
             planeManager={planeManager}
+            customColumns={customColumns}
           />
         </div>
       )}

@@ -14,6 +14,7 @@ export interface PointTrio {
   id: string
   points: Point3D[]
   depth?: number // Manual depth for first trio, calculated for others
+  structureType?: string // Tipo de Estructura (manual input required)
   color: string
   createdAt: Date
   isValidation?: boolean // Flag to mark validation trios (excluded from reports)
@@ -57,7 +58,7 @@ export function usePointTrios() {
         const newTrio: PointTrio = {
           id: `trio-${Date.now()}`,
           points: [pointWithId],
-          color: getTrioColor(trioIndex),
+          color: '#888888', // Temporary gray color until structure type is assigned
           createdAt: new Date()
         }
         console.log(`Point added (1/3): (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
@@ -154,6 +155,49 @@ export function usePointTrios() {
     ))
     console.log(`Depth set for trio ${trioId}: ${depth}cm`)
   }, [])
+
+  // Set structure type for a specific trio (also updates color if provided)
+  const setStructureType = useCallback((trioId: string, structureType: string, color?: string) => {
+    setTrios(prev => {
+      // Create completely NEW array to trigger React updates
+      const updated = [...prev].map(trio => {
+        if (trio.id === trioId) {
+          // Create NEW object with updated properties
+          const newTrio = { 
+            ...trio,
+            id: trio.id,
+            points: trio.points.map(p => ({ ...p })), // New point objects
+            structureType: structureType.trim(),
+            color: color || '#888888', // MUST have a color
+            createdAt: new Date() // New timestamp
+          }
+          
+          console.log(`✅ Trio ${trioId} updated:`)
+          console.log(`   Type: "${newTrio.structureType}"`)
+          console.log(`   Color: ${newTrio.color}`)
+          console.log(`   Points: ${newTrio.points.length}`)
+          
+          return newTrio
+        }
+        // Return unchanged trios but as new objects to ensure array reference changes
+        return { ...trio }
+      })
+      
+      console.log(`📊 Trios array updated. Total: ${updated.length}`)
+      return updated
+    })
+  }, [])
+
+  // Update color for all trios of a specific structure type
+  const updateColorForStructureType = useCallback((structureType: string, newColor: string) => {
+    setTrios(prev => prev.map(trio => 
+      trio.structureType === structureType
+        ? { ...trio, color: newColor, createdAt: new Date() }
+        : trio
+    ))
+    const count = trios.filter(t => t.structureType === structureType).length
+    console.log(`🎨 Updated color to ${newColor} for ${count} trio(s) of type "${structureType}"`)
+  }, [trios])
 
   // Remove a specific trio
   const removeTrio = useCallback((trioId: string) => {
@@ -387,6 +431,8 @@ export function usePointTrios() {
     addPoint,
     completeTrio,
     setTrioDepth,
+    setStructureType,
+    updateColorForStructureType,
     removeTrio,
     clearAllTrios,
     clearValidationTrios,

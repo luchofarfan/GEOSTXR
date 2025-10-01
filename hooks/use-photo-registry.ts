@@ -20,6 +20,15 @@ export interface PhotoMetadata {
   }
   notes?: string
   tags?: string[]
+  metadata?: {
+    notes?: string
+    bohAngles?: {
+      line1: number
+      line2: number
+    }
+    tags?: string[]
+    triosCount?: number
+  }
 }
 
 export function usePhotoRegistry() {

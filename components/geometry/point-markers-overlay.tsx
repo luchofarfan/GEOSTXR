@@ -56,7 +56,7 @@ export function PointMarkersOverlay({
   ) => {
     const screenPos = project3DTo2D(point)
     const isDragging = draggingPoint?.trioId === trioId && draggingPoint?.pointId === point.id
-    const size = isDragging ? 20 : (isSelected ? 16 : isCurrent ? 14 : 12)
+    const size = isDragging ? 5 : (isSelected ? 4 : isCurrent ? 4 : 3)
 
     return (
       <div
@@ -79,14 +79,14 @@ export function PointMarkersOverlay({
           height: `${size}px`,
           backgroundColor: color,
           border: isDragging 
-            ? '4px solid yellow' 
-            : (isSelected ? '3px solid white' : isCurrent ? '2px solid white' : '2px solid rgba(0,0,0,0.3)'),
+            ? '1px solid yellow' 
+            : (isSelected ? '1px solid white' : isCurrent ? '1px solid white' : '1px solid rgba(0,0,0,0.3)'),
           borderRadius: '50%',
           transform: 'translate(-50%, -50%)',
           cursor: isDragging ? 'grabbing' : 'grab',
           boxShadow: isDragging 
-            ? `0 0 25px yellow, 0 0 40px ${color}` 
-            : `0 0 ${isSelected ? 15 : 10}px ${color}`,
+            ? `0 0 8px yellow, 0 0 12px ${color}` 
+            : `0 0 ${isSelected ? 6 : 4}px ${color}`,
           zIndex: isDragging ? 2003 : (isSelected ? 2002 : isCurrent ? 2001 : 2000),
           transition: isDragging ? 'none' : 'all 0.2s ease',
           pointerEvents: 'auto'

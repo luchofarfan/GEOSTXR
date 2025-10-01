@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 import { BOHLinesOverlay } from './boh-lines-overlay'
 import { PointMarkersOverlay } from './point-markers-overlay'
+import { RulerOverlay } from './ruler-overlay'
 
 interface WebGLUnifiedCylinderProps {
   className?: string
@@ -16,8 +17,11 @@ interface WebGLUnifiedCylinderProps {
   onLine2AngleChange?: (angle: number) => void
   isInteractive?: boolean
   enableSnapping?: boolean
+  cameraRef?: React.MutableRefObject<any>
   scenePhotoId?: string | null
-  onCaptureScenePhoto?: () => string | null
+  isFrozen?: boolean
+  frozenImageDataUrl?: string | null
+  onScenePhotoCaptured?: (imageDataUrl: string) => void
 }
 
 export default function WebGLUnifiedCylinder({ 
@@ -30,14 +34,17 @@ export default function WebGLUnifiedCylinder({
   onLine2AngleChange,
   isInteractive = true,
   enableSnapping = false,
+  cameraRef,
   scenePhotoId,
-  onCaptureScenePhoto
+  isFrozen = false,
+  frozenImageDataUrl = null,
+  onScenePhotoCaptured
 }: WebGLUnifiedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const localCameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
   const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
   const ellipsesRef = useRef<Map<string, THREE.Line>>(new Map()) // Map of planeId -> Three.js Line (ellipse)
@@ -132,13 +139,17 @@ export default function WebGLUnifiedCylinder({
     camera.position.set(0, distance, cylinderCenter)
     camera.lookAt(0, 0, cylinderCenter)
     // Use default up vector (0,1,0)
-    cameraRef.current = camera
+    localCameraRef.current = camera
+    // Pass camera reference to parent component for composite image generation
+    if (cameraRef) {
+      cameraRef.current = camera
+    }
     console.log(`Camera at (0, ${distance.toFixed(1)}, ${cylinderCenter}), looking at (0, 0, ${cylinderCenter})`)
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    // Renderer with preserveDrawingBuffer for screenshot capability
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
     renderer.setSize(width, height)
-    renderer.setClearColor(0x000000)
+    renderer.setClearColor(0x000000) // Black background
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
@@ -305,6 +316,10 @@ export default function WebGLUnifiedCylinder({
       renderer.render(scene, camera)
     }
     animate()
+    
+    // Store references for external control
+    ;(renderer as any)._sceneRef = scene
+    ;(renderer as any)._cameraRef = camera
 
     setIsReady(true)
 
@@ -357,6 +372,72 @@ export default function WebGLUnifiedCylinder({
     
     currentPlanes.clear()
   }, [isReady, planeManager?.planes])
+
+  // Log frozen state changes for debugging
+  useEffect(() => {
+    console.log('🔄 Frozen state changed:', { isFrozen })
+    if (isFrozen) {
+      console.log('🧊 Scene is now FROZEN - video paused, overlays active')
+    } else {
+      console.log('📹 Scene is now LIVE - video playing normally')
+    }
+  }, [isFrozen])
+
+  // Listen for capture scene photo event
+  useEffect(() => {
+    const handleCaptureEvent = () => {
+      if (!rendererRef.current || !videoRef.current || !sceneRef.current || !localCameraRef.current) {
+        console.error('Cannot capture: components not ready')
+        return
+      }
+
+      console.log('📸 Capturing scene from Three.js canvas with cylinder mask...')
+      
+      // Pause video first
+      const video = videoRef.current
+      video.pause()
+      
+      // Force renders to ensure the paused frame is captured with mask
+      setTimeout(() => {
+        if (!rendererRef.current || !sceneRef.current || !localCameraRef.current) return
+        
+        try {
+          // Force multiple renders to ensure video texture is updated with paused frame
+          for (let i = 0; i < 3; i++) {
+            if (videoTextureRef.current) {
+              videoTextureRef.current.needsUpdate = true
+            }
+            rendererRef.current.render(sceneRef.current, localCameraRef.current)
+          }
+          
+          // Now capture from the canvas - this includes the cylindrical mask (shader discard)
+          const canvas = rendererRef.current.domElement
+          
+          // The captured image will show:
+          // - Video inside cylinder (shader allows)
+          // - Black outside cylinder (shader discards → shows clearColor)
+          const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95)
+          
+          console.log('✅ Scene captured from renderer canvas')
+          console.log(`   Canvas size: ${canvas.width}x${canvas.height}`)
+          console.log(`   Mask applied: pixels outside ${GEOSTXR_CONFIG.CYLINDER.RADIUS}cm radius are discarded`)
+          
+          // Send captured image to parent
+          if (onScenePhotoCaptured) {
+            onScenePhotoCaptured(imageDataUrl)
+          }
+        } catch (error) {
+          console.error('Error capturing scene:', error)
+        }
+      }, 200) // Wait for video pause + multiple render cycles
+    }
+
+    window.addEventListener('captureScenePhoto', handleCaptureEvent)
+
+    return () => {
+      window.removeEventListener('captureScenePhoto', handleCaptureEvent)
+    }
+  }, [onScenePhotoCaptured])
 
   // Render ellipses (cylinder-plane intersections) in 3D
   useEffect(() => {
@@ -417,7 +498,7 @@ export default function WebGLUnifiedCylinder({
         currentEllipses.set(plane.id, ellipseLine)
         console.log(`Ellipse ${plane.id} added to scene with ${plane.ellipsePoints.length} points`)
       } else {
-        // UPDATE existing ellipse geometry with new points
+        // UPDATE existing ellipse geometry AND color
         const newGeometry = new THREE.BufferGeometry().setFromPoints(points)
         
         // Dispose old geometry
@@ -426,7 +507,18 @@ export default function WebGLUnifiedCylinder({
         // Assign new geometry
         ellipseLine.geometry = newGeometry
         
-        console.log(`Ellipse ${plane.id} UPDATED with ${plane.ellipsePoints.length} new points`)
+        // UPDATE color if it changed (when structure type is assigned/changed)
+        if (ellipseLine.material instanceof THREE.LineBasicMaterial) {
+          const currentColor = ellipseLine.material.color.getHexString()
+          const newColor = plane.color.replace('#', '')
+          
+          if (currentColor.toUpperCase() !== newColor.toUpperCase()) {
+            ellipseLine.material.color.set(plane.color)
+            console.log(`Ellipse ${plane.id} COLOR UPDATED: #${currentColor} → ${plane.color}`)
+          }
+        }
+        
+        console.log(`Ellipse ${plane.id} UPDATED with ${plane.ellipsePoints.length} points and color ${plane.color}`)
       }
 
       // Update visibility
@@ -436,7 +528,7 @@ export default function WebGLUnifiedCylinder({
 
   // Handle clicks/drags on cylinder to add or reposition points
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (!trioManager || !cameraRef.current || !containerRef.current || !rendererRef.current) return
+    if (!trioManager || !localCameraRef.current || !containerRef.current || !rendererRef.current) return
 
     // If dragging a point, update its position
     if (draggingPoint) {
@@ -449,7 +541,7 @@ export default function WebGLUnifiedCylinder({
       const ndcY = -(y / rect.height) * 2 + 1
 
       const raycaster = new THREE.Raycaster()
-      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current)
+      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), localCameraRef.current)
 
       if (!sceneRef.current) return
       
@@ -483,11 +575,11 @@ export default function WebGLUnifiedCylinder({
       return
     }
 
-    // CAPTURE SCENE PHOTO before first point of first trio
-    if (trioManager.normalTrios.length === 0 && !trioManager.currentTrio && !scenePhotoId && onCaptureScenePhoto) {
-      console.log('📸 Capturing scene photo before first trio...')
-      onCaptureScenePhoto()
-      // Continue with point addition after photo capture
+    // BLOCK point selection if no scene photo has been captured
+    if (!scenePhotoId) {
+      alert('⚠️ Primero debes capturar la foto de la escena.\n\nHaz clic en el botón 📸 "Capturar Escena" en la esquina superior derecha.')
+      console.warn('❌ Cannot add points: No scene photo captured yet')
+      return
     }
 
     // Get click position relative to the canvas element
@@ -502,7 +594,7 @@ export default function WebGLUnifiedCylinder({
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)}) → NDC: (${ndcX.toFixed(3)}, ${ndcY.toFixed(3)})`)
 
     const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current)
+    raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), localCameraRef.current)
 
     if (!sceneRef.current) return
     
@@ -520,7 +612,7 @@ export default function WebGLUnifiedCylinder({
     } else {
       console.log('✗ No intersection with cylinder')
     }
-  }, [trioManager, draggingPoint, scenePhotoId, onCaptureScenePhoto])
+  }, [trioManager, draggingPoint, scenePhotoId])
 
   return (
     <div 
@@ -548,8 +640,37 @@ export default function WebGLUnifiedCylinder({
         style={{ display: 'none' }}
       />
       
+      {/* Debug indicator when frozen */}
+      {isFrozen && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          background: 'rgba(0,255,0,0.8)',
+          color: 'white',
+          padding: '4px 8px',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          zIndex: 9999,
+          pointerEvents: 'none'
+        }}>
+          🧊 VIDEO PAUSADO
+        </div>
+      )}
+      
       {/* Three.js will render here */}
       
+            {/* HTML Overlay for Ruler */}
+            {containerSize.width > 0 && isReady && (
+              <RulerOverlay
+                containerWidth={containerSize.width}
+                containerHeight={containerSize.height}
+                camera={localCameraRef.current || undefined}
+                cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
+                radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
+              />
+            )}
+
             {/* HTML Overlay for BOH lines */}
             {containerSize.width > 0 && isReady && (
               <BOHLinesOverlay 
@@ -557,7 +678,7 @@ export default function WebGLUnifiedCylinder({
                 line2Angle={line2Angle}
                 containerWidth={containerSize.width}
                 containerHeight={containerSize.height}
-                camera={cameraRef.current || undefined}
+                camera={localCameraRef.current || undefined}
                 cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
                 radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
                 onLine1AngleChange={onLine1AngleChange}
@@ -575,7 +696,7 @@ export default function WebGLUnifiedCylinder({
                 selectedTrioId={trioManager.selectedTrioId}
                 containerWidth={containerSize.width}
                 containerHeight={containerSize.height}
-                camera={cameraRef.current || undefined}
+                camera={localCameraRef.current || undefined}
                 draggingPoint={draggingPoint}
                 onPointClick={(trioId, pointId) => {
                   console.log(`Point clicked: trio=${trioId}, point=${pointId}`)

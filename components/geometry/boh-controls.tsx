@@ -13,9 +13,10 @@ interface BOHControlsProps {
   className?: string
   trioManager?: any // Optional trio manager from usePointTrios hook
   planeManager?: any // Optional plane manager from usePlanes hook
+  customColumns?: any // Custom columns manager
 }
 
-export default function BOHControls({ state, actions, className = '', trioManager, planeManager }: BOHControlsProps) {
+export default function BOHControls({ state, actions, className = '', trioManager, planeManager, customColumns }: BOHControlsProps) {
   const {
     line1Angle,
     line2Angle,
@@ -249,6 +250,11 @@ export default function BOHControls({ state, actions, className = '', trioManage
                               </span>
                             )}
                           </div>
+                          {trio.structureType && (
+                            <span className="text-xs text-purple-600 font-medium">
+                              🏔️ {trio.structureType}
+                            </span>
+                          )}
                           {trio.depth && (
                             <span className="text-xs text-gray-600 font-medium">
                               {trio.isValidation ? '🧪' : (index === 0 ? '📝' : '✨')} {trio.depth.toFixed(2)} cm ({(trio.depth/100).toFixed(2)} m)
@@ -309,6 +315,28 @@ export default function BOHControls({ state, actions, className = '', trioManage
                       }
                       return null
                     })()}
+                    
+                    {/* Custom columns values */}
+                    {customColumns && customColumns.columns.length > 0 && trio.depth && (
+                      <div className="mt-2 space-y-1 pt-2 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
+                        <div className="text-xs font-bold text-gray-700 mb-1">📋 Datos Personalizados:</div>
+                        {customColumns.columns.map((col: any) => (
+                          <div key={col.id} className="flex items-center gap-2">
+                            <label className="text-xs text-gray-600 min-w-[100px]" style={{ fontSize: '10px' }}>
+                              {col.header}:
+                            </label>
+                            <input
+                              type="text"
+                              value={customColumns.getValue(trio.id, col.id)}
+                              onChange={(e) => customColumns.setValue(trio.id, col.id, e.target.value)}
+                              placeholder="..."
+                              className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                              style={{ fontSize: '10px' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

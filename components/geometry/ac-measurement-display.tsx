@@ -84,28 +84,7 @@ export function ACMeasurementDisplay({ acData, className = '' }: ACMeasurementDi
           </div>
         </div>
 
-        {/* Relative Position Summary */}
-        <div style={{
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          borderRadius: '8px',
-          padding: '10px',
-          marginBottom: '12px',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>
-            Posición Relativa
-          </div>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1F2937' }}>
-            {acData.relativePosition}
-          </div>
-          <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '4px' }}>
-            {acData.convergence > 0 ? '📐 Divergentes' : acData.convergence < 0 ? '📐 Convergentes' : '📐 Paralelas'}
-            {acData.convergence !== 0 && ` (${Math.abs(acData.convergence).toFixed(1)}°)`}
-          </div>
-        </div>
-
-        {/* BOH Positions - Detailed */}
+        {/* BOH Positions - Detailed - MOVED HERE (just below AC) */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -150,6 +129,27 @@ export function ACMeasurementDisplay({ acData, className = '' }: ACMeasurementDi
               <div><strong>Δ Centro:</strong> {acData.boh2.displacement > 0 ? '+' : ''}{acData.boh2.displacement.toFixed(1)}°</div>
               <div><strong>Superficie:</strong> ({acData.boh2.radialX.toFixed(2)}, {acData.boh2.radialY.toFixed(2)})cm</div>
             </div>
+          </div>
+        </div>
+
+        {/* Relative Position Summary */}
+        <div style={{
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '8px',
+          padding: '10px',
+          marginBottom: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>
+            Posición Relativa
+          </div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1F2937' }}>
+            {acData.relativePosition}
+          </div>
+          <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '4px' }}>
+            {acData.convergence > 0 ? '📐 Divergentes' : acData.convergence < 0 ? '📐 Convergentes' : '📐 Paralelas'}
+            {acData.convergence !== 0 && ` (${Math.abs(acData.convergence).toFixed(1)}°)`}
           </div>
         </div>
 
