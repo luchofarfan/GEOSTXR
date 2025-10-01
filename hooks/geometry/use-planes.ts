@@ -137,9 +137,14 @@ export function calculateAlphaAngle(equation: PlaneEquation): number {
 }
 
 /**
- * Calculate beta angle (β): angle between plane and BOH line
- * BOH lines are vertical (parallel to Z-axis) at specific angular positions
- * β depends on plane orientation and BOH position
+ * Calculate beta angle (β): angle of plane dip in the direction of BOH line
+ * β measures how the plane tilts relative to the radial direction at the BOH position
+ * 
+ * Interpretation:
+ * - 0° = plane is perpendicular to the BOH radial direction (plane faces the BOH)
+ * - 90° = plane is parallel to the BOH radial direction (plane runs along BOH)
+ * 
+ * This is dynamic: changes when BOH angle changes (70-110°)
  */
 export function calculateBetaAngle(
   equation: PlaneEquation,
@@ -148,36 +153,33 @@ export function calculateBetaAngle(
 ): number {
   const { normal } = equation
   
-  // BOH line direction: vertical line at angular position
+  // BOH radial direction at angular position (pointing outward from cylinder center)
   const bohAngleRad = (bohAngle * Math.PI) / 180
-  const bohX = cylinderRadius * Math.cos(bohAngleRad)
-  const bohY = cylinderRadius * Math.sin(bohAngleRad)
-  
-  // BOH line direction vector (vertical, parallel to Z-axis)
-  const bohDirection = { x: 0, y: 0, z: 1 }
-  
-  // However, we also need to consider the radial direction from cylinder center
   const radialDirection = {
     x: Math.cos(bohAngleRad),
     y: Math.sin(bohAngleRad),
     z: 0
   }
   
-  // Angle between plane normal and radial direction
-  const dotProduct = normal.x * radialDirection.x + normal.y * radialDirection.y
+  // Calculate dot product between plane normal and radial direction
+  const dotProduct = normal.x * radialDirection.x + normal.y * radialDirection.y + normal.z * radialDirection.z
   const normalMag = Math.sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
-  const radialMag = Math.sqrt(radialDirection.x ** 2 + radialDirection.y ** 2)
+  const radialMag = Math.sqrt(radialDirection.x ** 2 + radialDirection.y ** 2 + radialDirection.z ** 2)
   
   if (normalMag === 0 || radialMag === 0) return 0
   
+  // Angle between normal and radial direction
   const cosBeta = dotProduct / (normalMag * radialMag)
   const betaRad = Math.acos(Math.max(-1, Math.min(1, cosBeta)))
   const betaDeg = (betaRad * 180) / Math.PI
   
-  // Return angle (0-90°)
+  // β is the angle of the plane relative to the radial direction
+  // We want the angle of inclination, so:
+  // - If normal is perpendicular to radial → β = 0° (plane faces BOH)
+  // - If normal is parallel to radial → β = 90° (plane along BOH)
   const beta = Math.abs(90 - betaDeg)
   
-  console.log(`Beta angle (BOH at ${bohAngle}°): ${beta.toFixed(2)}°`)
+  console.log(`Beta (BOH at ${bohAngle}°, radial dir: [${radialDirection.x.toFixed(2)}, ${radialDirection.y.toFixed(2)}, ${radialDirection.z.toFixed(2)}]): ${beta.toFixed(2)}°`)
   
   return beta
 }
@@ -288,6 +290,9 @@ export function usePlanes(
       // BOH2 (line2): z=15 to z=30 (top half)
       const correspondingBOH = planeDepth !== null && planeDepth < 15 ? line1Angle : line2Angle
       const bohLabel = planeDepth !== null && planeDepth < 15 ? 'BOH1' : 'BOH2'
+      const bohAngleValue = planeDepth !== null && planeDepth < 15 ? line1Angle : line2Angle
+      
+      console.log(`Plane depth: ${planeDepth?.toFixed(2) || 'N/A'}cm → Corresponding BOH: ${bohLabel} at ${bohAngleValue}°`)
       
       // Calculate angles (α, β, azimuth)
       const alpha = calculateAlphaAngle(equation)
@@ -296,7 +301,7 @@ export function usePlanes(
       
       const angles: PlaneAngles = { alpha, beta, azimuth }
       
-      console.log(`Plane angles - α: ${alpha.toFixed(2)}°, β: ${beta.toFixed(2)}° (relative to ${bohLabel}), Azimuth: ${azimuth.toFixed(2)}°`)
+      console.log(`✓ Plane angles - α: ${alpha.toFixed(2)}° (dip), β: ${beta.toFixed(2)}° (vs ${bohLabel} at ${bohAngleValue}°), Azimuth: ${azimuth.toFixed(2)}°`)
       
       // Create new plane
       const newPlane: Plane = {

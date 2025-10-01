@@ -234,11 +234,25 @@ export default function BOHControls({ state, actions, className = '', trioManage
                     {planeManager && planeManager.planes && (() => {
                       const plane = planeManager.planes.find((p: any) => p.trioId === trio.id)
                       if (plane && plane.angles) {
+                        // Determine corresponding BOH based on depth
+                        const planeDepth = trio.depth || 0
+                        const bohNum = planeDepth < 15 ? 1 : 2
+                        const bohAngle = bohNum === 1 ? line1Angle : line2Angle
+                        
                         return (
-                          <div className="text-xs text-gray-600 mt-1 ml-5 space-y-1">
-                            <div>📐 <strong>α (Alpha):</strong> {plane.angles.alpha.toFixed(2)}°</div>
-                            <div>📐 <strong>β (Beta):</strong> {plane.angles.beta.toFixed(2)}°</div>
-                            <div>🧭 <strong>Azimuth:</strong> {plane.angles.azimuth.toFixed(2)}°</div>
+                          <div className="text-xs mt-2 ml-5 p-2 bg-gray-50 rounded border border-gray-200">
+                            <div className="font-semibold text-gray-700 mb-1">Ángulos del Plano:</div>
+                            <div className="space-y-1 text-gray-600">
+                              <div>📐 <strong>α (Buzamiento):</strong> {plane.angles.alpha.toFixed(2)}°</div>
+                              <div className="flex items-center gap-1">
+                                📐 <strong>β (vs BOH{bohNum}):</strong> {plane.angles.beta.toFixed(2)}°
+                                <span className="text-xs text-blue-600">(BOH{bohNum}@{bohAngle.toFixed(1)}°)</span>
+                              </div>
+                              <div>🧭 <strong>Azimuth:</strong> {plane.angles.azimuth.toFixed(2)}°</div>
+                            </div>
+                            <div className="text-xs text-blue-600 mt-1 italic">
+                              ↻ β se actualiza al mover BOH{bohNum}
+                            </div>
                           </div>
                         )
                       }
