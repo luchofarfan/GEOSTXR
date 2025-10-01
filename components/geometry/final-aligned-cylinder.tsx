@@ -6,14 +6,25 @@ import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface FinalAlignedCylinderProps {
   className?: string
+  line1Angle?: number
+  line2Angle?: number
 }
 
-export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCylinderProps) {
+export default function FinalAlignedCylinder({ 
+  className = '', 
+  line1Angle = 90,
+  line2Angle = 90
+}: FinalAlignedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [maskStyle, setMaskStyle] = useState<React.CSSProperties>({})
   const [isReady, setIsReady] = useState(false)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const bohLine1Ref = useRef<THREE.Line | null>(null)
+  const bohLine2Ref = useRef<THREE.Line | null>(null)
 
   useEffect(() => {
     // Get camera stream
@@ -45,8 +56,10 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     }
   }, [])
 
+  // Initialize scene ONCE (no angle dependencies)
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return
+    if (sceneRef.current) return // Already initialized
 
     // Add a small delay to ensure container is fully rendered
     const timer = setTimeout(() => {
@@ -68,9 +81,12 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     canvas.width = width
     canvas.height = height
 
-    // Scene setup
+    // Scene setup - store in refs for persistence
     const scene = new THREE.Scene()
+    sceneRef.current = scene
+    
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    cameraRef.current = camera
     
     const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT
@@ -95,12 +111,13 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     camera.position.set(0, distance, 0)
     camera.lookAt(0, 0, 0)
 
-    // Renderer
+    // Renderer - store in ref for persistence
     const renderer = new THREE.WebGLRenderer({ 
       canvas,
       alpha: true, 
       antialias: true 
     })
+    rendererRef.current = renderer
     renderer.setSize(width, height)
     renderer.setClearColor(0x000000, 0)
 
@@ -145,89 +162,136 @@ export default function FinalAlignedCylinder({ className = '' }: FinalAlignedCyl
     )
     scene.add(backBorder)
 
-    // BOH Lines
+    // BOH Lines - using angles from props
     const bohMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000, linewidth: 3 })
+    
+    // Convert angles to radians
+    const angle1Rad = (line1Angle * Math.PI) / 180
+    const angle2Rad = (line2Angle * Math.PI) / 180
+    
+    // Calculate positions on cylinder surface
+    const x1 = radius * Math.cos(angle1Rad)
+    const y1 = radius * Math.sin(angle1Rad)
+    const x2 = radius * Math.cos(angle2Rad)
+    const y2 = radius * Math.sin(angle2Rad)
     
     const bohLine1 = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, radius, -cylinderHeight / 2),
-        new THREE.Vector3(0, radius, 0)
+        new THREE.Vector3(x1, y1, -cylinderHeight / 2), // Bottom
+        new THREE.Vector3(x1, y1, 0) // Center
       ]),
       bohMaterial
     )
+    bohLine1Ref.current = bohLine1
     scene.add(bohLine1)
     
     const bohLine2 = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, radius, 0),
-        new THREE.Vector3(0, radius, cylinderHeight / 2)
+        new THREE.Vector3(x2, y2, 0), // Center
+        new THREE.Vector3(x2, y2, cylinderHeight / 2) // Top
       ]),
       bohMaterial
     )
+    bohLine2Ref.current = bohLine2
     scene.add(bohLine2)
-
-    // Calculate mask position
-    const corners = [
-      new THREE.Vector3(-radius, 0, -cylinderHeight / 2),
-      new THREE.Vector3(radius, 0, -cylinderHeight / 2),
-      new THREE.Vector3(-radius, 0, cylinderHeight / 2),
-      new THREE.Vector3(radius, 0, cylinderHeight / 2)
-    ]
-
-    const screenCorners = corners.map(corner => {
-      const projected = corner.clone().project(camera)
-      return {
-        x: (projected.x + 1) * 50,
-        y: (-projected.y + 1) * 50
-      }
-    })
-
-    const minX = Math.min(...screenCorners.map(c => c.x))
-    const maxX = Math.max(...screenCorners.map(c => c.x))
-    const minY = Math.min(...screenCorners.map(c => c.y))
-    const maxY = Math.max(...screenCorners.map(c => c.y))
-
-    // Adjust mask to cover cylinder edges perfectly
-    // Add margin to account for rounding and border thickness
-    const marginY = 1.0 // 1% margin on top and bottom
-    const marginX = 0.3 // 0.3% margin on left and right
     
-    const adjustedMinY = Math.max(0, minY - marginY)
-    const adjustedMaxY = Math.min(100, maxY + marginY)
-    const adjustedMinX = Math.max(0, minX - marginX)
-    const adjustedMaxX = Math.min(100, maxX + marginX)
+    console.log(`BOH angles initialized: Line1=${line1Angle}°, Line2=${line2Angle}°`)
 
-    // Mask coordinates calculated and adjusted successfully
-    // console.log('Mask coords:', { 
-    //   left: adjustedMinX.toFixed(2), 
-    //   right: (100 - adjustedMaxX).toFixed(2), 
-    //   top: adjustedMinY.toFixed(2), 
-    //   bottom: (100 - adjustedMaxY).toFixed(2)
-    // })
+    // TEST: Project exact cylinder corners
+    console.log('=== PROJECTION TEST ===')
+    const testCorners = [
+      new THREE.Vector3(-radius, 0, -cylinderHeight / 2), // Bottom-left
+      new THREE.Vector3(radius, 0, -cylinderHeight / 2),  // Bottom-right
+      new THREE.Vector3(-radius, 0, cylinderHeight / 2),  // Top-left  
+      new THREE.Vector3(radius, 0, cylinderHeight / 2)    // Top-right
+    ]
+    testCorners.forEach((corner, i) => {
+      const projected = corner.clone().project(camera)
+      const screenX = (projected.x + 1) * 50
+      const screenY = (-projected.y + 1) * 50
+      console.log(`Corner ${i} [${corner.x.toFixed(2)}, ${corner.y.toFixed(2)}, ${corner.z.toFixed(2)}] → NDC[${projected.x.toFixed(4)}, ${projected.y.toFixed(4)}] → Screen[${screenX.toFixed(2)}%, ${screenY.toFixed(2)}%]`)
+    })
+    console.log('=======================')
 
-    // Apply mask to video
+    // Calculate mask to match cylinder proportions and position
+    const cylinderAspectRatio = radius * 2 / cylinderHeight // 0.2117
+    
+    // Use empirical values that work visually
+    // Based on visual testing: horizontal position good, needs vertical extension
+    const fixedMask = {
+      top: 2,     // 2% from top
+      bottom: -5, // -5% from bottom (extend to cover full cylinder)
+      left: 40,   // 40% from left (good horizontal position)
+      right: 35   // 35% from right (maintains ~25% width)
+    }
+    
+    console.log('=== FIXED MASK VALUES ===')
+    console.log(`Container: ${width}×${height}, aspect: ${aspectRatio.toFixed(2)}`)
+    console.log(`Mask: top=${fixedMask.top}%, right=${fixedMask.right}%, bottom=${fixedMask.bottom}%, left=${fixedMask.left}%`)
+    console.log(`Visible area: width=${100 - fixedMask.left - fixedMask.right}%, height=${100 - fixedMask.top - fixedMask.bottom}%`)
+    console.log('=========================')
+
+    // Apply fixed mask to video
     setMaskStyle({
-      clipPath: `inset(${adjustedMinY}% ${100 - adjustedMaxX}% ${100 - adjustedMaxY}% ${adjustedMinX}%)`,
-      WebkitClipPath: `inset(${adjustedMinY}% ${100 - adjustedMaxX}% ${100 - adjustedMaxY}% ${adjustedMinX}%)`
+      clipPath: `inset(${fixedMask.top}% ${fixedMask.right}% ${fixedMask.bottom}% ${fixedMask.left}%)`,
+      WebkitClipPath: `inset(${fixedMask.top}% ${fixedMask.right}% ${fixedMask.bottom}% ${fixedMask.left}%)`
     })
 
-    // Render
-    renderer.render(scene, camera)
+    // Start animation loop
+    let animationId: number
+    const animate = () => {
+      animationId = requestAnimationFrame(animate)
+      renderer.render(scene, camera)
+    }
+    animate()
 
     // Mark as ready
     setIsReady(true)
     console.log('Cylinder rendering complete and mask applied')
 
-    // Cleanup
-    renderer.dispose()
-    scene.clear()
     }, 200) // 200ms delay for more reliable rendering
 
     return () => {
       clearTimeout(timer)
-      setIsReady(false)
+      // Don't dispose scene/renderer on unmount - they're needed for updates
     }
-  }, [])
+  }, []) // NO dependencies - initialize only once
+  
+  // Separate effect to update BOH lines when angles change
+  useEffect(() => {
+    if (!bohLine1Ref.current || !bohLine2Ref.current || !sceneRef.current || !rendererRef.current || !cameraRef.current) return
+    
+    const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
+    const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT
+    
+    // Convert angles to radians
+    const angle1Rad = (line1Angle * Math.PI) / 180
+    const angle2Rad = (line2Angle * Math.PI) / 180
+    
+    // Calculate positions
+    const x1 = radius * Math.cos(angle1Rad)
+    const y1 = radius * Math.sin(angle1Rad)
+    const x2 = radius * Math.cos(angle2Rad)
+    const y2 = radius * Math.sin(angle2Rad)
+    
+    // Update BOH Line 1 geometry
+    const bohLine1Geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x1, y1, -cylinderHeight / 2),
+      new THREE.Vector3(x1, y1, 0)
+    ])
+    bohLine1Ref.current.geometry.dispose()
+    bohLine1Ref.current.geometry = bohLine1Geometry
+    
+    // Update BOH Line 2 geometry
+    const bohLine2Geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x2, y2, 0),
+      new THREE.Vector3(x2, y2, cylinderHeight / 2)
+    ])
+    bohLine2Ref.current.geometry.dispose()
+    bohLine2Ref.current.geometry = bohLine2Geometry
+    
+    console.log(`BOH angles updated: Line1=${line1Angle}°, Line2=${line2Angle}°`)
+  }, [line1Angle, line2Angle]) // Update only when angles change
 
   return (
     <div 

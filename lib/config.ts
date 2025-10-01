@@ -44,8 +44,8 @@ export const GEOSTXR_CONFIG = {
   // Depth Calculation
   DEPTH: {
     MANUAL_RANGE: {
-      MIN: 0.1, // cm
-      MAX: 100, // cm
+      MIN: 0, // cm (0 meters)
+      MAX: 500000, // cm (5000 meters)
     },
     AUTO_CALCULATION: true,
     CYLINDER_REFERENCE: true,
