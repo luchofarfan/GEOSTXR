@@ -115,20 +115,27 @@ function getPlaneNormalInCylinder(
   const betaRad = toRadians(beta)
   const bohRad = toRadians(bohAngle)
   
-  // In cylinder frame:
+  // Standard geological convention for oriented core:
   // - Z axis = along drill hole
-  // - X axis = horizontal (East in cylinder view)
-  // - Y axis = horizontal (North in cylinder view)
-  // - BOH is at angle bohRad from X axis
+  // - Y axis = towards BOH reference line (front of core)
+  // - X axis = perpendicular (right-hand rule)
+  // - α (alpha) = angle between plane and drill axis (0° = perpendicular, 90° = parallel)
+  // - β (beta) = azimuth angle measured clockwise from BOH
   
-  // Plane normal components
-  // The plane has dip alpha from horizontal plane of cylinder
-  // The dip direction is beta degrees from BOH line
+  // For α=0°: plane perpendicular to axis → normal along Z
+  // For α=90°: plane parallel to axis → normal perpendicular to Z
   
-  const azimuthInCylinder = bohRad + betaRad
+  // BOH offset: convert BOH angle to offset from Y-axis
+  // If BOH is at 90°, it's along +Y axis (standard position)
+  const bohOffsetFromY = bohRad - Math.PI/2 // Offset from Y-axis
   
-  const nx = Math.sin(alphaRad) * Math.cos(azimuthInCylinder)
-  const ny = Math.sin(alphaRad) * Math.sin(azimuthInCylinder)
+  // Total azimuth in cylinder frame
+  const azimuthInCylinder = bohOffsetFromY + betaRad
+  
+  // Vector normal components
+  // Standard convention: β measured from BOH (Y-axis), clockwise looking down hole
+  const nx = Math.sin(alphaRad) * Math.sin(azimuthInCylinder)
+  const ny = Math.sin(alphaRad) * Math.cos(azimuthInCylinder)
   const nz = Math.cos(alphaRad)
   
   return [nx, ny, nz]
