@@ -11,7 +11,9 @@ interface PointMarkersOverlayProps {
   containerWidth: number
   containerHeight: number
   camera?: THREE.Camera
+  draggingPoint?: { trioId: string; pointId: string } | null
   onPointClick?: (trioId: string, pointId: string) => void
+  onPointDragStart?: (trioId: string, pointId: string) => void
 }
 
 export function PointMarkersOverlay({
@@ -21,7 +23,9 @@ export function PointMarkersOverlay({
   containerWidth,
   containerHeight,
   camera,
-  onPointClick
+  draggingPoint,
+  onPointClick,
+  onPointDragStart
 }: PointMarkersOverlayProps) {
   // Project 3D point to 2D screen coordinates
   const project3DTo2D = (point: Point3D) => {
@@ -51,12 +55,22 @@ export function PointMarkersOverlay({
     index: number
   ) => {
     const screenPos = project3DTo2D(point)
-    const size = isSelected ? 16 : isCurrent ? 14 : 12
+    const isDragging = draggingPoint?.trioId === trioId && draggingPoint?.pointId === point.id
+    const size = isDragging ? 20 : (isSelected ? 16 : isCurrent ? 14 : 12)
 
     return (
       <div
         key={point.id}
-        onClick={() => onPointClick?.(trioId, point.id)}
+        onMouseDown={(e) => {
+          e.stopPropagation()
+          onPointDragStart?.(trioId, point.id)
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          if (!isDragging) {
+            onPointClick?.(trioId, point.id)
+          }
+        }}
         style={{
           position: 'absolute',
           left: `${screenPos.x}px`,
@@ -64,72 +78,28 @@ export function PointMarkersOverlay({
           width: `${size}px`,
           height: `${size}px`,
           backgroundColor: color,
-          border: isSelected ? '3px solid white' : isCurrent ? '2px solid white' : '2px solid rgba(0,0,0,0.3)',
+          border: isDragging 
+            ? '4px solid yellow' 
+            : (isSelected ? '3px solid white' : isCurrent ? '2px solid white' : '2px solid rgba(0,0,0,0.3)'),
           borderRadius: '50%',
           transform: 'translate(-50%, -50%)',
-          cursor: 'pointer',
-          boxShadow: `0 0 ${isSelected ? 15 : 10}px ${color}`,
-          zIndex: isSelected ? 2002 : isCurrent ? 2001 : 2000,
-          transition: 'all 0.2s ease',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          boxShadow: isDragging 
+            ? `0 0 25px yellow, 0 0 40px ${color}` 
+            : `0 0 ${isSelected ? 15 : 10}px ${color}`,
+          zIndex: isDragging ? 2003 : (isSelected ? 2002 : isCurrent ? 2001 : 2000),
+          transition: isDragging ? 'none' : 'all 0.2s ease',
           pointerEvents: 'auto'
         }}
-        title={`Point ${index + 1}`}
-      >
-        {/* Point number label */}
-        <div style={{
-          position: 'absolute',
-          top: '-20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          color: 'white',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          padding: '2px 6px',
-          borderRadius: '10px',
-          whiteSpace: 'nowrap'
-        }}>
-          {index + 1}
-        </div>
-      </div>
+        title={`Point ${index + 1} - Click and drag to reposition`}
+      />
     )
   }
 
   // Render connecting lines between points in a trio
+  // DISABLED: Lines are hidden as per user request
   const renderTrioLines = (trio: PointTrio, isSelected: boolean, isCurrent: boolean) => {
-    if (trio.points.length < 2) return null
-
-    return trio.points.map((point, i) => {
-      if (i === 0) return null
-
-      const prevPoint = trio.points[i - 1]
-      const pos1 = project3DTo2D(prevPoint)
-      const pos2 = project3DTo2D(point)
-
-      const dx = pos2.x - pos1.x
-      const dy = pos2.y - pos1.y
-      const length = Math.sqrt(dx * dx + dy * dy)
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI
-
-      return (
-        <div
-          key={`line-${prevPoint.id}-${point.id}`}
-          style={{
-            position: 'absolute',
-            left: `${pos1.x}px`,
-            top: `${pos1.y}px`,
-            width: `${length}px`,
-            height: '2px',
-            backgroundColor: trio.color,
-            opacity: isSelected ? 0.8 : isCurrent ? 0.6 : 0.4,
-            transform: `rotate(${angle}deg)`,
-            transformOrigin: '0 0',
-            zIndex: 1999,
-            pointerEvents: 'none'
-          }}
-        />
-      )
-    })
+    return null // Lines disabled - only show ellipses on cylinder
   }
 
   return (
@@ -182,8 +152,31 @@ export function PointMarkersOverlay({
         </React.Fragment>
       )}
 
+      {/* Drag indicator */}
+      {draggingPoint && (
+        <div style={{
+          position: 'absolute',
+          top: '60px',
+          left: '10px',
+          backgroundColor: 'rgba(255, 200, 0, 0.95)',
+          color: '#000',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          fontSize: '13px',
+          fontWeight: 'bold',
+          pointerEvents: 'none',
+          border: '2px solid #FFD700',
+          boxShadow: '0 0 20px rgba(255, 215, 0, 0.6)'
+        }}>
+          <div>🖐️ Arrastrando punto...</div>
+          <div style={{ fontSize: '11px', marginTop: '4px', fontWeight: 'normal' }}>
+            Click en el cilindro para reposicionar
+          </div>
+        </div>
+      )}
+      
       {/* Trio count display */}
-      {(trios.length > 0 || currentTrio) && (
+      {(trios.length > 0 || currentTrio) && !draggingPoint && (
         <div style={{
           position: 'absolute',
           top: '60px',

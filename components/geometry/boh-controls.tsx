@@ -38,9 +38,6 @@ export default function BOHControls({ state, actions, className = '', trioManage
     <div className={`boh-controls ${className}`}>
       <h3 className="text-lg font-semibold mb-4 text-gray-800">Controles BOH</h3>
       
-      {/* AC Measurement Display */}
-      <ACMeasurementDisplay acData={acData} />
-      
       {/* Visibility Toggle */}
       <div className="mb-4">
         <label className="flex items-center space-x-2">
@@ -65,6 +62,23 @@ export default function BOHControls({ state, actions, className = '', trioManage
           />
           <span className="text-sm font-medium">Modo interactivo</span>
         </label>
+      </div>
+
+      {/* Snapping Toggle */}
+      <div className="mb-4">
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={state.enableSnapping || false}
+            onChange={(e) => actions.setSnapping && actions.setSnapping(e.target.checked)}
+            disabled={!isInteractive}
+            className="rounded"
+          />
+          <span className="text-sm font-medium">🧲 Snapping (1°)</span>
+        </label>
+        <p className="text-xs text-gray-500 mt-1 ml-6">
+          Los ángulos se ajustarán a valores enteros al arrastrar (sin decimales)
+        </p>
       </div>
 
       {/* Line 1 Angle Control */}
@@ -132,25 +146,40 @@ export default function BOHControls({ state, actions, className = '', trioManage
         </div>
       </div>
 
-      {/* Point Trios Section */}
+      {/* Planes Section */}
       {trioManager && (
         <div className="mt-6 pt-6 border-t border-gray-300">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">Tríos de Puntos</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Medición de Planos</h3>
           
           {/* Instructions */}
           {trioManager.triosCount === 0 && !trioManager.currentTrio && (
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
               <p className="text-sm text-blue-900">
                 💡 <strong>Instrucciones:</strong><br />
-                Haz click en el cilindro para seleccionar 3 puntos y crear un trío.
+                Haz click en el cilindro para seleccionar 3 puntos y crear un plano.
               </p>
             </div>
           )}
+          
+          {/* Validation Button */}
+          <div className="mb-4">
+            <button
+              onClick={() => {
+                // Trigger opening validation panel (will be handled by parent)
+                const event = new CustomEvent('openValidationPanel')
+                window.dispatchEvent(event)
+              }}
+              className="w-full py-2 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>🧪</span>
+              <span>Abrir Validación de Planos</span>
+            </button>
+          </div>
 
           {/* Current Trio Progress */}
           {trioManager.currentTrio && (
             <div className="mb-4 p-3 rounded-lg border-2 border-dashed" style={{ borderColor: trioManager.currentTrio.color }}>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <div style={{
                   width: '12px',
                   height: '12px',
@@ -161,42 +190,34 @@ export default function BOHControls({ state, actions, className = '', trioManage
                   Trío en progreso: {trioManager.currentTrioPointsCount} / 3 puntos
                 </span>
               </div>
-              <button
-                onClick={() => trioManager.cancelCurrentTrio()}
-                className="text-xs text-red-600 hover:text-red-800 font-medium"
-              >
-                ✕ Cancelar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => trioManager.removeLastPoint && trioManager.removeLastPoint()}
+                  disabled={trioManager.currentTrioPointsCount === 0}
+                  className="flex-1 px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded font-bold text-xs transition-colors"
+                >
+                  ↶ Deshacer Último
+                </button>
+                <button
+                  onClick={() => trioManager.cancelCurrentTrio()}
+                  className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold text-xs transition-colors"
+                >
+                  ✕ Cancelar Todo
+                </button>
+              </div>
+              {trioManager.currentTrioPointsCount > 0 && (
+                <div className="mt-2 text-xs text-gray-600 italic">
+                  💡 Tip: También puedes presionar Ctrl+Z para deshacer
+                </div>
+              )}
             </div>
           )}
 
-          {/* Depth Input for First Trio (Manual) */}
-          {trioManager.trios.length > 0 && (
-            <div className="mb-4">
-              <TrioDepthInput
-                trio={trioManager.trios[0]}
-                onDepthChange={trioManager.setTrioDepth}
-                minDepth={0}
-                maxDepth={500000}
-              />
-            </div>
-          )}
-          
-          {/* Info about automatic depth calculation */}
-          {trioManager.trios.length > 0 && trioManager.trios[0].depth && (
-            <div className="mb-4 bg-green-50 p-3 rounded-lg border border-green-200">
-              <p className="text-xs text-green-900">
-                ✨ <strong>Cálculo Automático:</strong><br />
-                Los siguientes tríos calcularán su profundidad automáticamente usando la intersección plano-eje Z.
-              </p>
-            </div>
-          )}
-
-          {/* Trios List */}
+          {/* Planes List */}
           {trioManager.triosCount > 0 && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-gray-700">
-                Tríos Completados ({trioManager.triosCount} / {trioManager.MAX_TRIOS})
+                Planos Completados ({trioManager.triosCount} / {trioManager.MAX_TRIOS})
               </h4>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {trioManager.trios.map((trio, index) => (
@@ -217,12 +238,23 @@ export default function BOHControls({ state, actions, className = '', trioManage
                           backgroundColor: trio.color,
                           borderRadius: '50%'
                         }} />
-                        <span className="text-sm font-medium text-gray-800">
-                          Trío {index + 1}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          ({trio.points.length} puntos)
-                        </span>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-bold text-gray-800">
+                              Plano {index + 1}
+                            </span>
+                            {trio.isValidation && (
+                              <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded font-bold">
+                                🧪 VAL
+                              </span>
+                            )}
+                          </div>
+                          {trio.depth && (
+                            <span className="text-xs text-gray-600 font-medium">
+                              {trio.isValidation ? '🧪' : (index === 0 ? '📝' : '✨')} {trio.depth.toFixed(2)} cm ({(trio.depth/100).toFixed(2)} m)
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <button
                         onClick={(e) => {
@@ -234,33 +266,43 @@ export default function BOHControls({ state, actions, className = '', trioManage
                         ✕
                       </button>
                     </div>
-                    {trio.depth && (
-                      <div className="text-xs text-gray-600 mt-1 ml-5">
-                        {index === 0 ? '📝' : '✨'} Profundidad: {trio.depth.toFixed(2)}cm ({(trio.depth/100).toFixed(2)}m)
-                        {index === 0 ? ' (manual)' : ' (auto)'}
+                    
+                    {/* Info about depth calculation */}
+                    {index === 0 && trio.depth && (
+                      <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-green-50 p-2 rounded border border-green-200">
+                          <p className="text-xs text-green-900">
+                            ✨ <strong>Cálculo automático activado:</strong> Los siguientes planos calcularán su profundidad automáticamente usando la intersección plano-eje Z.
+                          </p>
+                        </div>
                       </div>
                     )}
-                    {planeManager && planeManager.planes && (() => {
+                    
+                    {/* Auto depth info for subsequent planes */}
+                    {index > 0 && trio.depth && (
+                      <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-blue-50 p-2 rounded border border-blue-200">
+                          <p className="text-xs text-blue-900">
+                            <strong>Profundidad calculada automáticamente</strong> basada en la intersección del plano con el eje Z del cilindro.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Quick Info - Click to see details in floating panel */}
+                    {planeManager && planeManager.planes && trio.depth && (() => {
                       const plane = planeManager.planes.find((p: any) => p.trioId === trio.id)
                       if (plane && plane.angles) {
-                        // Determine corresponding BOH based on depth
-                        const planeDepth = trio.depth || 0
-                        const bohNum = planeDepth < 15 ? 1 : 2
-                        const bohAngle = bohNum === 1 ? line1Angle : line2Angle
-                        
                         return (
-                          <div className="text-xs mt-2 ml-5 p-2 bg-gray-50 rounded border border-gray-200">
-                            <div className="font-semibold text-gray-700 mb-1">Ángulos del Plano:</div>
-                            <div className="space-y-1 text-gray-600">
-                              <div>📐 <strong>α (Buzamiento):</strong> {plane.angles.alpha.toFixed(2)}°</div>
-                              <div className="flex items-center gap-1">
-                                📐 <strong>β (vs BOH{bohNum}):</strong> {plane.angles.beta.toFixed(2)}°
-                                <span className="text-xs text-blue-600">(BOH{bohNum}@{bohAngle.toFixed(1)}°)</span>
-                              </div>
-                              <div>🧭 <strong>Azimuth:</strong> {plane.angles.azimuth.toFixed(2)}°</div>
+                          <div className="text-xs mt-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-300">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-blue-900 font-bold">📊 Ángulos del Plano</span>
                             </div>
-                            <div className="text-xs text-blue-600 mt-1 italic">
-                              ↻ β se actualiza al mover BOH{bohNum}
+                            <div className="text-blue-700 text-xs space-y-1">
+                              <div><strong>α:</strong> {plane.angles.alpha.toFixed(2)}° | <strong>β:</strong> {plane.angles.beta.toFixed(2)}°</div>
+                            </div>
+                            <div className="text-blue-600 text-xs mt-2 italic flex items-center gap-1">
+                              💡 Click en el plano para ver detalles completos
                             </div>
                           </div>
                         )
@@ -277,13 +319,13 @@ export default function BOHControls({ state, actions, className = '', trioManage
           {trioManager.triosCount > 0 && (
             <button
               onClick={() => {
-                if (confirm('¿Eliminar todos los tríos?')) {
+                if (confirm('¿Eliminar todos los planos?')) {
                   trioManager.clearAllTrios()
                 }
               }}
               className="mt-4 w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors"
             >
-              🗑️ Eliminar Todos los Tríos
+              🗑️ Eliminar Todos los Planos
             </button>
           )}
 
@@ -291,12 +333,17 @@ export default function BOHControls({ state, actions, className = '', trioManage
           {!trioManager.canAddMoreTrios && (
             <div className="mt-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
               <p className="text-xs text-yellow-900">
-                ⚠️ Límite alcanzado: {trioManager.MAX_TRIOS} tríos máximo
+                ⚠️ Límite alcanzado: {trioManager.MAX_TRIOS} planos máximo
               </p>
             </div>
           )}
         </div>
       )}
+      
+      {/* AC Measurement Display - Moved to the end */}
+      <div className="mt-6 pt-6 border-t border-gray-300">
+        <ACMeasurementDisplay acData={acData} />
+      </div>
     </div>
   )
 }

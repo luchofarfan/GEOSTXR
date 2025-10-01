@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { PointTrio } from '@/hooks/geometry/use-point-trios'
+import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface TrioDepthInputProps {
   trio: PointTrio
@@ -13,8 +14,8 @@ interface TrioDepthInputProps {
 export function TrioDepthInput({
   trio,
   onDepthChange,
-  minDepth = 0,
-  maxDepth = 500000 // 5000 meters = 500000 cm
+  minDepth = GEOSTXR_CONFIG.DEPTH.MANUAL_RANGE.MIN,
+  maxDepth = GEOSTXR_CONFIG.DEPTH.MANUAL_RANGE.MAX // 10000 meters = 1000000 cm
 }: TrioDepthInputProps) {
   const [inputValue, setInputValue] = useState(trio.depth?.toString() || '')
   const [error, setError] = useState<string | null>(null)

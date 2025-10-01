@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 import { BOHLinesOverlay } from './boh-lines-overlay'
 import { PointMarkersOverlay } from './point-markers-overlay'
+import { RulerOverlay } from './ruler-overlay'
 
 interface WebGLUnifiedCylinderProps {
   className?: string
@@ -12,6 +13,10 @@ interface WebGLUnifiedCylinderProps {
   line2Angle?: number
   trioManager?: any // From usePointTrios hook
   planeManager?: any // From usePlanes hook
+  onLine1AngleChange?: (angle: number) => void
+  onLine2AngleChange?: (angle: number) => void
+  isInteractive?: boolean
+  enableSnapping?: boolean
 }
 
 export default function WebGLUnifiedCylinder({ 
@@ -19,7 +24,11 @@ export default function WebGLUnifiedCylinder({
   line1Angle = 90,
   line2Angle = 90,
   trioManager,
-  planeManager
+  planeManager,
+  onLine1AngleChange,
+  onLine2AngleChange,
+  isInteractive = true,
+  enableSnapping = false
 }: WebGLUnifiedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -31,6 +40,7 @@ export default function WebGLUnifiedCylinder({
   const ellipsesRef = useRef<Map<string, THREE.Line>>(new Map()) // Map of planeId -> Three.js Line (ellipse)
   const [isReady, setIsReady] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
 
   // Camera stream setup
   useEffect(() => {
@@ -242,8 +252,38 @@ export default function WebGLUnifiedCylinder({
     )
     scene.add(backBorder)
 
+    // Semicircles at top and bottom to mark cylinder extremes
+    // Connect the two vertical border lines with arcs
+    // Front borders are at (±radius, 0), so arc should go from right to left through front
+    const bottomArcPoints = []
+    const topArcPoints = []
+    const arcSegments = 48 // More segments for smoother arc
+    
+    // Arc from right border (0°) through front (90°) to left border (180°)
+    // This creates a semicircle on the visible front side
+    for (let i = 0; i <= arcSegments; i++) {
+      const angle = (Math.PI * i) / arcSegments // 0° to 180°
+      const x = radius * Math.cos(angle)      // Goes from +radius to -radius
+      const y = radius * Math.sin(angle)      // Goes from 0 through +radius back to 0
+      bottomArcPoints.push(new THREE.Vector3(x, y, 0)) // z=0 (bottom)
+      topArcPoints.push(new THREE.Vector3(x, y, cylinderHeight)) // z=30 (top)
+    }
+    
+    const bottomArc = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(bottomArcPoints),
+      borderMaterial
+    )
+    scene.add(bottomArc)
+    
+    const topArc = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(topArcPoints),
+      borderMaterial
+    )
+    scene.add(topArc)
+
     console.log(`Cylinder positioned: z=0 to z=${cylinderHeight}cm, centered at z=${cylinderHeight/2}cm`)
     console.log(`Borders at x=±${radius}cm, from z=0 to z=${cylinderHeight}cm`)
+    console.log(`Semicircles added at z=0 (bottom) and z=${cylinderHeight}cm (top)`)
 
     // BOH Lines now rendered via HTML overlay (no 3D geometry)
 
@@ -319,6 +359,8 @@ export default function WebGLUnifiedCylinder({
   useEffect(() => {
     if (!isReady || !sceneRef.current || !planeManager) return
 
+    console.log(`🎨 Ellipses useEffect triggered - Updating ${planeManager.planes.length} ellipse(s)`)
+
     const scene = sceneRef.current
     const currentEllipses = ellipsesRef.current
 
@@ -344,16 +386,16 @@ export default function WebGLUnifiedCylinder({
 
       let ellipseLine = currentEllipses.get(plane.id)
 
+      // Convert ellipse points to THREE.Vector3
+      const points = plane.ellipsePoints.map((p: any) => 
+        new THREE.Vector3(p.x, p.y, p.z)
+      )
+      
+      // Close the ellipse by adding first point at the end
+      points.push(points[0].clone())
+
       // Create new ellipse line if it doesn't exist
       if (!ellipseLine) {
-        // Convert ellipse points to THREE.Vector3
-        const points = plane.ellipsePoints.map((p: any) => 
-          new THREE.Vector3(p.x, p.y, p.z)
-        )
-        
-        // Close the ellipse by adding first point at the end
-        points.push(points[0].clone())
-        
         // Create line geometry
         const geometry = new THREE.BufferGeometry().setFromPoints(points)
         
@@ -371,6 +413,17 @@ export default function WebGLUnifiedCylinder({
         scene.add(ellipseLine)
         currentEllipses.set(plane.id, ellipseLine)
         console.log(`Ellipse ${plane.id} added to scene with ${plane.ellipsePoints.length} points`)
+      } else {
+        // UPDATE existing ellipse geometry with new points
+        const newGeometry = new THREE.BufferGeometry().setFromPoints(points)
+        
+        // Dispose old geometry
+        ellipseLine.geometry.dispose()
+        
+        // Assign new geometry
+        ellipseLine.geometry = newGeometry
+        
+        console.log(`Ellipse ${plane.id} UPDATED with ${plane.ellipsePoints.length} new points`)
       }
 
       // Update visibility
@@ -378,22 +431,51 @@ export default function WebGLUnifiedCylinder({
     })
   }, [isReady, planeManager?.planes])
 
-  // Handle clicks on cylinder to add points
+  // Handle clicks/drags on cylinder to add or reposition points
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!trioManager || !cameraRef.current || !containerRef.current || !rendererRef.current) return
 
+    // If dragging a point, update its position
+    if (draggingPoint) {
+      const canvas = rendererRef.current.domElement
+      const rect = canvas.getBoundingClientRect()
+      
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+      const ndcX = (x / rect.width) * 2 - 1
+      const ndcY = -(y / rect.height) * 2 + 1
+
+      const raycaster = new THREE.Raycaster()
+      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current)
+
+      if (!sceneRef.current) return
+      
+      const meshes = sceneRef.current.children.filter(obj => 
+        obj instanceof THREE.Mesh && obj.geometry instanceof THREE.CylinderGeometry
+      )
+      
+      const intersects = raycaster.intersectObjects(meshes, false)
+      
+      if (intersects.length > 0) {
+        const point = intersects[0].point
+        trioManager.updatePointPosition(draggingPoint.trioId, draggingPoint.pointId, { 
+          x: point.x, 
+          y: point.y, 
+          z: point.z 
+        })
+        console.log(`✓ Point repositioned to (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+      }
+      
+      setDraggingPoint(null)
+      return
+    }
+
     // Block interaction if first trio exists but has no depth
-    if (trioManager.trios.length > 0 && !trioManager.trios[0].depth) {
+    if (trioManager.normalTrios.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) {
       console.log('⚠️ Please enter depth for first trio before continuing')
-      // Visual feedback
       const panel = document.querySelector('.boh-controls')
       if (panel) {
         panel.scrollTop = panel.scrollHeight
-        // Flash effect
-        const depthInput = panel.querySelector('[style*="border: 2px solid #3B82F6"]')
-        if (depthInput) {
-          (depthInput as HTMLElement).style.animation = 'pulse 0.5s ease-in-out 2'
-        }
       }
       return
     }
@@ -402,29 +484,18 @@ export default function WebGLUnifiedCylinder({
     const canvas = rendererRef.current.domElement
     const rect = canvas.getBoundingClientRect()
     
-    // Use clientX/clientY relative to canvas position
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
-
-    // Get renderer size (actual canvas size)
-    const canvasWidth = canvas.width
-    const canvasHeight = canvas.height
-
-    // Convert to normalized device coordinates (-1 to +1)
-    // Use canvas dimensions for accurate mapping
     const ndcX = (x / rect.width) * 2 - 1
     const ndcY = -(y / rect.height) * 2 + 1
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)}) → NDC: (${ndcX.toFixed(3)}, ${ndcY.toFixed(3)})`)
 
-    // Create raycaster with precise camera
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current)
 
-    // Check intersection with cylinder and video plane only
     if (!sceneRef.current) return
     
-    // Filter to only intersect with cylinder mesh (not lines or other objects)
     const meshes = sceneRef.current.children.filter(obj => 
       obj instanceof THREE.Mesh && obj.geometry instanceof THREE.CylinderGeometry
     )
@@ -435,12 +506,11 @@ export default function WebGLUnifiedCylinder({
       const point = intersects[0].point
       console.log(`✓ Intersected at 3D: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
       
-      // Add point to trio manager (auto-completes internally at 3 points)
       trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
     } else {
       console.log('✗ No intersection with cylinder')
     }
-  }, [trioManager])
+  }, [trioManager, draggingPoint])
 
   return (
     <div 
@@ -452,7 +522,11 @@ export default function WebGLUnifiedCylinder({
         width: '100%',
         height: '100%',
         minHeight: '100vh',
-        cursor: trioManager && trioManager.canAddMoreTrios && !(trioManager.trios.length > 0 && !trioManager.trios[0].depth) ? 'crosshair' : 'not-allowed'
+        cursor: draggingPoint 
+          ? 'grabbing' 
+          : (trioManager && trioManager.canAddMoreTrios && !(trioManager.normalTrios.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) 
+            ? 'crosshair' 
+            : 'not-allowed')
       }}
     >
       {/* Hidden video element (used as texture) */}
@@ -466,6 +540,17 @@ export default function WebGLUnifiedCylinder({
       
       {/* Three.js will render here */}
       
+            {/* HTML Overlay for Ruler */}
+            {containerSize.width > 0 && isReady && (
+              <RulerOverlay
+                containerWidth={containerSize.width}
+                containerHeight={containerSize.height}
+                camera={cameraRef.current || undefined}
+                cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
+                radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
+              />
+            )}
+
             {/* HTML Overlay for BOH lines */}
             {containerSize.width > 0 && isReady && (
               <BOHLinesOverlay 
@@ -476,6 +561,10 @@ export default function WebGLUnifiedCylinder({
                 camera={cameraRef.current || undefined}
                 cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
                 radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
+                onLine1AngleChange={onLine1AngleChange}
+                onLine2AngleChange={onLine2AngleChange}
+                isInteractive={isInteractive}
+                enableSnapping={enableSnapping}
               />
             )}
 
@@ -488,9 +577,14 @@ export default function WebGLUnifiedCylinder({
                 containerWidth={containerSize.width}
                 containerHeight={containerSize.height}
                 camera={cameraRef.current || undefined}
+                draggingPoint={draggingPoint}
                 onPointClick={(trioId, pointId) => {
                   console.log(`Point clicked: trio=${trioId}, point=${pointId}`)
                   trioManager.selectTrio(trioId)
+                }}
+                onPointDragStart={(trioId, pointId) => {
+                  console.log(`Point drag started: trio=${trioId}, point=${pointId}`)
+                  setDraggingPoint({ trioId, pointId })
                 }}
               />
             )}

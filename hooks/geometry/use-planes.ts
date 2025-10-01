@@ -262,25 +262,21 @@ export function usePlanes(
   useEffect(() => {
     const newPlanes: Plane[] = []
     
+    console.log(`🔄 Recalculating ${trios.length} plane(s) and ellipse(s)...`)
+    
     trios.forEach(trio => {
       if (trio.points.length !== 3) return
       
-      // Check if plane already exists for this trio
-      const existingPlane = planes.find(p => p.trioId === trio.id)
-      if (existingPlane) {
-        newPlanes.push(existingPlane)
-        return
-      }
-      
-      // Calculate plane equation
+      // Always recalculate plane equation (dynamic, based on current point positions)
       const equation = calculatePlaneFromPoints(
         trio.points[0],
         trio.points[1],
         trio.points[2]
       )
       
-      // Calculate ellipse points (cylinder-plane intersection)
+      // Calculate ellipse points (cylinder-plane intersection) - DYNAMIC
       const ellipsePoints = calculateEllipsePoints(equation, cylinderRadius, 64)
+      console.log(`  ⭕ Ellipse recalculated for trio ${trio.id} with ${ellipsePoints.length} points`)
       
       // Calculate plane depth (Z-axis intersection)
       const planeDepth = calculatePlaneDepth(equation)
@@ -292,18 +288,16 @@ export function usePlanes(
       const bohLabel = planeDepth !== null && planeDepth < 15 ? 'BOH1' : 'BOH2'
       const bohAngleValue = planeDepth !== null && planeDepth < 15 ? line1Angle : line2Angle
       
-      console.log(`Plane depth: ${planeDepth?.toFixed(2) || 'N/A'}cm → Corresponding BOH: ${bohLabel} at ${bohAngleValue}°`)
-      
-      // Calculate angles (α, β, azimuth)
+      // Calculate angles - ALWAYS RECALCULATE for dynamic β update
       const alpha = calculateAlphaAngle(equation)
-      const beta = calculateBetaAngle(equation, correspondingBOH, cylinderRadius)
+      const beta = calculateBetaAngle(equation, correspondingBOH, cylinderRadius) // Dynamic based on BOH
       const azimuth = calculateAzimuthAngle(equation)
       
       const angles: PlaneAngles = { alpha, beta, azimuth }
       
-      console.log(`✓ Plane angles - α: ${alpha.toFixed(2)}° (dip), β: ${beta.toFixed(2)}° (vs ${bohLabel} at ${bohAngleValue}°), Azimuth: ${azimuth.toFixed(2)}°`)
+      console.log(`✓ Plane ${trio.id} - α: ${alpha.toFixed(2)}°, β: ${beta.toFixed(2)}° (vs ${bohLabel}@${bohAngleValue}°), Azimuth: ${azimuth.toFixed(2)}°`)
       
-      // Create new plane
+      // Create/update plane
       const newPlane: Plane = {
         id: `plane-${trio.id}`,
         trioId: trio.id,
@@ -312,11 +306,10 @@ export function usePlanes(
         visible: true,
         createdAt: new Date(),
         ellipsePoints,
-        angles
+        angles // Dynamic angles including β
       }
       
       newPlanes.push(newPlane)
-      console.log(`Plane and ellipse generated for trio ${trio.id}`)
     })
     
     setPlanes(newPlanes)

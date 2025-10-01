@@ -6,6 +6,7 @@ export interface BOHLinesState {
   line2Angle: number
   isVisible: boolean
   isInteractive: boolean
+  enableSnapping: boolean
 }
 
 export interface BOHLinesActions {
@@ -13,6 +14,7 @@ export interface BOHLinesActions {
   setLine2Angle: (angle: number) => void
   setVisibility: (visible: boolean) => void
   setInteractive: (interactive: boolean) => void
+  setSnapping: (enabled: boolean) => void
   resetAngles: () => void
   updateBOHLines: (line1Angle: number, line2Angle: number) => void
 }
@@ -22,7 +24,8 @@ export function useBOHLines() {
     line1Angle: GEOSTXR_CONFIG.BOH.LINE1.OFFSET_ANGLE, // 90°
     line2Angle: GEOSTXR_CONFIG.BOH.LINE2.OFFSET_ANGLE, // 90°
     isVisible: true,
-    isInteractive: true
+    isInteractive: true,
+    enableSnapping: false
   })
 
   const setLine1Angle = useCallback((angle: number) => {
@@ -49,6 +52,10 @@ export function useBOHLines() {
 
   const setInteractive = useCallback((interactive: boolean) => {
     setState(prev => ({ ...prev, isInteractive: interactive }))
+  }, [])
+
+  const setSnapping = useCallback((enabled: boolean) => {
+    setState(prev => ({ ...prev, enableSnapping: enabled }))
   }, [])
 
   const resetAngles = useCallback(() => {
@@ -78,6 +85,7 @@ export function useBOHLines() {
     setLine2Angle,
     setVisibility,
     setInteractive,
+    setSnapping,
     resetAngles,
     updateBOHLines
   }
