@@ -3,6 +3,9 @@
 import React from 'react'
 import { useBOHLines, BOHLinesState, BOHLinesActions } from '@/hooks/geometry/use-boh-lines'
 import { TrioDepthInput } from './trio-depth-input'
+import { ACMeasurementDisplay } from './ac-measurement-display'
+import { useACAngle } from '@/hooks/geometry/use-ac-angle'
+import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface BOHControlsProps {
   state: BOHLinesState
@@ -28,9 +31,15 @@ export default function BOHControls({ state, actions, className = '', trioManage
     resetAngles
   } = actions
 
+  // Calculate AC (Ángulo de Calce)
+  const acData = useACAngle(line1Angle, line2Angle, GEOSTXR_CONFIG.CYLINDER.RADIUS)
+
   return (
     <div className={`boh-controls ${className}`}>
       <h3 className="text-lg font-semibold mb-4 text-gray-800">Controles BOH</h3>
+      
+      {/* AC Measurement Display */}
+      <ACMeasurementDisplay acData={acData} />
       
       {/* Visibility Toggle */}
       <div className="mb-4">
