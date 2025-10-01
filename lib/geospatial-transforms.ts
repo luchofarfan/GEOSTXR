@@ -178,8 +178,12 @@ export function calculateRealOrientation(
   console.log(`   Normal (global): [${normalGlobal.map(v => v.toFixed(3)).join(', ')}]`)
   
   // 4. Calculate dip (angle from horizontal)
+  // NOTE: nz represents how vertical the NORMAL is
+  // If normal is vertical (nz=1) → plane is horizontal (dip=0°)
+  // If normal is horizontal (nz=0) → plane is vertical (dip=90°)
+  // Therefore: dip = 90° - angle_of_normal_from_horizontal
   const [nx, ny, nz] = normalGlobal
-  const dipRad = Math.asin(Math.abs(nz))
+  const dipRad = Math.acos(Math.abs(nz)) // acos gives angle from vertical
   const dip = toDegrees(dipRad)
   
   // 5. Calculate dip direction (azimuth of steepest descent)

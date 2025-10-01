@@ -72,7 +72,10 @@ function calculateRealOrientation(alpha, beta, bohAngle, drillAzimuth, drillDip)
   const normalGlobal = transformVector(normalLocal, rotMatrix)
   
   const [nx, ny, nz] = normalGlobal
-  const dipRad = Math.asin(Math.abs(nz))
+  // CORRECTED: dip = angle of plane from horizontal
+  // If normal is vertical (nz=1) → plane horizontal (dip=0°)
+  // If normal is horizontal (nz=0) → plane vertical (dip=90°)
+  const dipRad = Math.acos(Math.abs(nz))
   const dip = toDegrees(dipRad)
   
   let dipDirectionRad = Math.atan2(nx, ny)
