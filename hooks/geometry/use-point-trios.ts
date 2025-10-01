@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { calculatePlaneFromPoints, calculatePlaneDepth } from './use-planes'
 
 export interface Point3D {
   x: number
@@ -76,11 +77,38 @@ export function usePointTrios() {
 
       // Auto-complete if we now have 3 points
       if (updatedTrio.points.length === POINTS_PER_TRIO) {
-        console.log(`Trio ${trios.length + 1} auto-completed with 3 points`)
+        const trioIndex = trios.length
+        console.log(`Trio ${trioIndex + 1} auto-completed with 3 points`)
+        
+        // Calculate depth automatically for trios 2+ (first trio requires manual input)
+        let autoDepth: number | undefined
+        
+        if (trioIndex > 0) {
+          // Calculate plane equation from the 3 points
+          const planeEquation = calculatePlaneFromPoints(
+            updatedTrio.points[0],
+            updatedTrio.points[1],
+            updatedTrio.points[2]
+          )
+          
+          // Calculate depth as Z-axis intersection
+          const calculatedDepth = calculatePlaneDepth(planeEquation)
+          
+          if (calculatedDepth !== null) {
+            autoDepth = calculatedDepth
+            console.log(`Auto-calculated depth for trio ${trioIndex + 1}: ${calculatedDepth.toFixed(2)}cm`)
+          } else {
+            console.warn(`Could not auto-calculate depth for trio ${trioIndex + 1}`)
+          }
+        }
         
         // Use setTimeout to ensure state update completes first
         setTimeout(() => {
-          setTrios(prevTrios => [...prevTrios, updatedTrio])
+          const completedTrio = autoDepth !== undefined 
+            ? { ...updatedTrio, depth: autoDepth }
+            : updatedTrio
+            
+          setTrios(prevTrios => [...prevTrios, completedTrio])
           setCurrentTrio(null)
         }, 0)
       }

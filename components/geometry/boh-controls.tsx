@@ -160,7 +160,7 @@ export default function BOHControls({ state, actions, className = '', trioManage
             </div>
           )}
 
-          {/* Depth Input for First Trio */}
+          {/* Depth Input for First Trio (Manual) */}
           {trioManager.trios.length > 0 && (
             <div className="mb-4">
               <TrioDepthInput
@@ -169,6 +169,16 @@ export default function BOHControls({ state, actions, className = '', trioManage
                 minDepth={0}
                 maxDepth={500000}
               />
+            </div>
+          )}
+          
+          {/* Info about automatic depth calculation */}
+          {trioManager.trios.length > 0 && trioManager.trios[0].depth && (
+            <div className="mb-4 bg-green-50 p-3 rounded-lg border border-green-200">
+              <p className="text-xs text-green-900">
+                ✨ <strong>Cálculo Automático:</strong><br />
+                Los siguientes tríos calcularán su profundidad automáticamente usando la intersección plano-eje Z.
+              </p>
             </div>
           )}
 
@@ -216,7 +226,8 @@ export default function BOHControls({ state, actions, className = '', trioManage
                     </div>
                     {trio.depth && (
                       <div className="text-xs text-gray-600 mt-1 ml-5">
-                        📏 Profundidad: {trio.depth}cm ({(trio.depth/100).toFixed(2)}m)
+                        {index === 0 ? '📝' : '✨'} Profundidad: {trio.depth.toFixed(2)}cm ({(trio.depth/100).toFixed(2)}m)
+                        {index === 0 ? ' (manual)' : ' (auto)'}
                       </div>
                     )}
                   </div>
