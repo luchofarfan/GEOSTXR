@@ -28,6 +28,7 @@ export default function WebGLUnifiedCylinder({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
   const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
+  const ellipsesRef = useRef<Map<string, THREE.Line>>(new Map()) // Map of planeId -> Three.js Line (ellipse)
   const [isReady, setIsReady] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -371,6 +372,69 @@ export default function WebGLUnifiedCylinder({
       
       // Update visibility
       mesh.visible = plane.visible
+    })
+  }, [isReady, planeManager?.planes])
+
+  // Render ellipses (cylinder-plane intersections) in 3D
+  useEffect(() => {
+    if (!isReady || !sceneRef.current || !planeManager) return
+
+    const scene = sceneRef.current
+    const currentEllipses = ellipsesRef.current
+
+    // Remove ellipses that no longer exist
+    currentEllipses.forEach((line, planeId) => {
+      const planeExists = planeManager.planes.some((p: any) => p.id === planeId)
+      if (!planeExists) {
+        scene.remove(line)
+        line.geometry.dispose()
+        if (Array.isArray(line.material)) {
+          line.material.forEach(m => m.dispose())
+        } else {
+          line.material.dispose()
+        }
+        currentEllipses.delete(planeId)
+        console.log(`Ellipse ${planeId} removed from scene`)
+      }
+    })
+
+    // Add or update ellipses
+    planeManager.planes.forEach((plane: any) => {
+      if (!plane.ellipsePoints || plane.ellipsePoints.length === 0) return
+
+      let ellipseLine = currentEllipses.get(plane.id)
+
+      // Create new ellipse line if it doesn't exist
+      if (!ellipseLine) {
+        // Convert ellipse points to THREE.Vector3
+        const points = plane.ellipsePoints.map((p: any) => 
+          new THREE.Vector3(p.x, p.y, p.z)
+        )
+        
+        // Close the ellipse by adding first point at the end
+        points.push(points[0].clone())
+        
+        // Create line geometry
+        const geometry = new THREE.BufferGeometry().setFromPoints(points)
+        
+        // Create line material with plane color (brighter/more opaque)
+        const material = new THREE.LineBasicMaterial({
+          color: plane.color,
+          linewidth: 3, // Note: linewidth > 1 may not work on all platforms
+          transparent: true,
+          opacity: 0.9
+        })
+        
+        ellipseLine = new THREE.Line(geometry, material)
+        ellipseLine.renderOrder = 3 // Render on top of planes
+        
+        scene.add(ellipseLine)
+        currentEllipses.set(plane.id, ellipseLine)
+        console.log(`Ellipse ${plane.id} added to scene with ${plane.ellipsePoints.length} points`)
+      }
+
+      // Update visibility
+      ellipseLine.visible = plane.visible
     })
   }, [isReady, planeManager?.planes])
 

@@ -6,6 +6,7 @@ import BOHControls from '@/components/geometry/boh-controls'
 import { useBOHLines } from '@/hooks/geometry/use-boh-lines'
 import { usePointTrios } from '@/hooks/geometry/use-point-trios'
 import { usePlanes } from '@/hooks/geometry/use-planes'
+import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface CameraWithCylinderProps {
   className?: string
@@ -16,7 +17,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
 }) => {
   const { state, actions } = useBOHLines()
   const trioManager = usePointTrios()
-  const planeManager = usePlanes(trioManager.trios)
+  const planeManager = usePlanes(trioManager.trios, GEOSTXR_CONFIG.CYLINDER.RADIUS)
 
   return (
     <div className={`camera-with-cylinder ${className}`}>

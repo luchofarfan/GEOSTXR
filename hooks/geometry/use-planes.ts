@@ -11,6 +11,12 @@ export interface PlaneEquation {
   normal: { x: number; y: number; z: number } // Normal vector
 }
 
+export interface EllipsePoint {
+  x: number
+  y: number
+  z: number
+}
+
 export interface Plane {
   id: string
   trioId: string
@@ -18,6 +24,7 @@ export interface Plane {
   color: string
   visible: boolean
   createdAt: Date
+  ellipsePoints?: EllipsePoint[] // Points forming the ellipse
 }
 
 const MAX_PLANES = 100
@@ -95,7 +102,46 @@ export function calculatePlaneDepth(equation: PlaneEquation): number | null {
   return z
 }
 
-export function usePlanes(trios: PointTrio[]) {
+/**
+ * Calculate ellipse points from cylinder-plane intersection
+ * Cylinder: x² + y² = R², axis along Z
+ * Plane: ax + by + cz + d = 0
+ */
+export function calculateEllipsePoints(
+  equation: PlaneEquation,
+  cylinderRadius: number,
+  numPoints: number = 64
+): EllipsePoint[] {
+  const { a, b, c, d } = equation
+  const points: EllipsePoint[] = []
+  
+  // If plane is parallel to Z-axis (c = 0), the intersection is not an ellipse
+  if (Math.abs(c) < 0.0001) {
+    console.warn('Plane is nearly parallel to Z-axis, ellipse calculation may be inaccurate')
+    return points
+  }
+  
+  // Generate points around the cylinder
+  for (let i = 0; i < numPoints; i++) {
+    const theta = (i / numPoints) * 2 * Math.PI
+    
+    // Point on cylinder surface
+    const x = cylinderRadius * Math.cos(theta)
+    const y = cylinderRadius * Math.sin(theta)
+    
+    // Calculate z from plane equation: ax + by + cz + d = 0
+    // z = -(ax + by + d) / c
+    const z = -(a * x + b * y + d) / c
+    
+    points.push({ x, y, z })
+  }
+  
+  console.log(`Generated ${numPoints} ellipse points for cylinder-plane intersection`)
+  
+  return points
+}
+
+export function usePlanes(trios: PointTrio[], cylinderRadius: number = 3.175) {
   const [planes, setPlanes] = useState<Plane[]>([])
   
   // Automatically generate planes from complete trios
@@ -119,6 +165,9 @@ export function usePlanes(trios: PointTrio[]) {
         trio.points[2]
       )
       
+      // Calculate ellipse points (cylinder-plane intersection)
+      const ellipsePoints = calculateEllipsePoints(equation, cylinderRadius, 64)
+      
       // Create new plane
       const newPlane: Plane = {
         id: `plane-${trio.id}`,
@@ -126,15 +175,16 @@ export function usePlanes(trios: PointTrio[]) {
         equation,
         color: trio.color,
         visible: true,
-        createdAt: new Date()
+        createdAt: new Date(),
+        ellipsePoints
       }
       
       newPlanes.push(newPlane)
-      console.log(`Plane generated for trio ${trio.id}`)
+      console.log(`Plane and ellipse generated for trio ${trio.id}`)
     })
     
     setPlanes(newPlanes)
-  }, [trios])
+  }, [trios, cylinderRadius])
   
   // Toggle plane visibility
   const togglePlaneVisibility = useCallback((planeId: string) => {
