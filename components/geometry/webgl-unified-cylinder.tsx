@@ -380,7 +380,7 @@ export default function WebGLUnifiedCylinder({
 
   // Handle clicks on cylinder to add points
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (!trioManager || !cameraRef.current || !containerRef.current) return
+    if (!trioManager || !cameraRef.current || !containerRef.current || !rendererRef.current) return
 
     // Block interaction if first trio exists but has no depth
     if (trioManager.trios.length > 0 && !trioManager.trios[0].depth) {
@@ -398,29 +398,47 @@ export default function WebGLUnifiedCylinder({
       return
     }
 
-    const rect = containerRef.current.getBoundingClientRect()
+    // Get click position relative to the canvas element
+    const canvas = rendererRef.current.domElement
+    const rect = canvas.getBoundingClientRect()
+    
+    // Use clientX/clientY relative to canvas position
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
 
-    // Convert screen coordinates to normalized device coordinates (-1 to +1)
+    // Get renderer size (actual canvas size)
+    const canvasWidth = canvas.width
+    const canvasHeight = canvas.height
+
+    // Convert to normalized device coordinates (-1 to +1)
+    // Use canvas dimensions for accurate mapping
     const ndcX = (x / rect.width) * 2 - 1
     const ndcY = -(y / rect.height) * 2 + 1
 
-    // Create raycaster
+    console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)}) → NDC: (${ndcX.toFixed(3)}, ${ndcY.toFixed(3)})`)
+
+    // Create raycaster with precise camera
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current)
 
-    // Check intersection with cylinder
+    // Check intersection with cylinder and video plane only
     if (!sceneRef.current) return
     
-    const intersects = raycaster.intersectObjects(sceneRef.current.children, true)
+    // Filter to only intersect with cylinder mesh (not lines or other objects)
+    const meshes = sceneRef.current.children.filter(obj => 
+      obj instanceof THREE.Mesh && obj.geometry instanceof THREE.CylinderGeometry
+    )
+    
+    const intersects = raycaster.intersectObjects(meshes, false)
     
     if (intersects.length > 0) {
       const point = intersects[0].point
-      console.log(`Click at 3D point: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+      console.log(`✓ Intersected at 3D: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
       
       // Add point to trio manager (auto-completes internally at 3 points)
       trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
+    } else {
+      console.log('✗ No intersection with cylinder')
     }
   }, [trioManager])
 
