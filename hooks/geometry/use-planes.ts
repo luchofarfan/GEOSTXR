@@ -17,6 +17,12 @@ export interface EllipsePoint {
   z: number
 }
 
+export interface PlaneAngles {
+  alpha: number // Angle relative to Z-axis (degrees)
+  beta: number // Angle relative to BOH line (degrees)
+  azimuth: number // Azimuth/strike angle (degrees)
+}
+
 export interface Plane {
   id: string
   trioId: string
@@ -25,6 +31,7 @@ export interface Plane {
   visible: boolean
   createdAt: Date
   ellipsePoints?: EllipsePoint[] // Points forming the ellipse
+  angles?: PlaneAngles // Alpha, beta, and azimuth angles
 }
 
 const MAX_PLANES = 100
@@ -103,6 +110,106 @@ export function calculatePlaneDepth(equation: PlaneEquation): number | null {
 }
 
 /**
+ * Calculate alpha angle (α): angle between plane and Z-axis
+ * α = angle between plane normal and Z-axis
+ * Returns angle in degrees (0° = perpendicular to Z, 90° = parallel to Z)
+ */
+export function calculateAlphaAngle(equation: PlaneEquation): number {
+  const { normal } = equation
+  
+  // Angle between normal vector and Z-axis (0, 0, 1)
+  // cos(α) = |nz| / |n|
+  const normalMagnitude = Math.sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
+  
+  if (normalMagnitude === 0) return 0
+  
+  const cosAlpha = Math.abs(normal.z) / normalMagnitude
+  const alphaRad = Math.acos(Math.max(-1, Math.min(1, cosAlpha))) // Clamp to [-1, 1]
+  const alphaDeg = (alphaRad * 180) / Math.PI
+  
+  // Return complementary angle (90° - angle with Z) to get dip angle
+  // 0° = horizontal plane, 90° = vertical plane
+  const dipAngle = 90 - alphaDeg
+  
+  console.log(`Alpha angle: ${dipAngle.toFixed(2)}° (dip from horizontal)`)
+  
+  return dipAngle
+}
+
+/**
+ * Calculate beta angle (β): angle between plane and BOH line
+ * BOH lines are vertical (parallel to Z-axis) at specific angular positions
+ * β depends on plane orientation and BOH position
+ */
+export function calculateBetaAngle(
+  equation: PlaneEquation,
+  bohAngle: number, // BOH angle in degrees (70-110)
+  cylinderRadius: number = 3.175
+): number {
+  const { normal } = equation
+  
+  // BOH line direction: vertical line at angular position
+  const bohAngleRad = (bohAngle * Math.PI) / 180
+  const bohX = cylinderRadius * Math.cos(bohAngleRad)
+  const bohY = cylinderRadius * Math.sin(bohAngleRad)
+  
+  // BOH line direction vector (vertical, parallel to Z-axis)
+  const bohDirection = { x: 0, y: 0, z: 1 }
+  
+  // However, we also need to consider the radial direction from cylinder center
+  const radialDirection = {
+    x: Math.cos(bohAngleRad),
+    y: Math.sin(bohAngleRad),
+    z: 0
+  }
+  
+  // Angle between plane normal and radial direction
+  const dotProduct = normal.x * radialDirection.x + normal.y * radialDirection.y
+  const normalMag = Math.sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
+  const radialMag = Math.sqrt(radialDirection.x ** 2 + radialDirection.y ** 2)
+  
+  if (normalMag === 0 || radialMag === 0) return 0
+  
+  const cosBeta = dotProduct / (normalMag * radialMag)
+  const betaRad = Math.acos(Math.max(-1, Math.min(1, cosBeta)))
+  const betaDeg = (betaRad * 180) / Math.PI
+  
+  // Return angle (0-90°)
+  const beta = Math.abs(90 - betaDeg)
+  
+  console.log(`Beta angle (BOH at ${bohAngle}°): ${beta.toFixed(2)}°`)
+  
+  return beta
+}
+
+/**
+ * Calculate azimuth/strike angle: direction of the plane's horizontal line
+ * Measured clockwise from North (0° = North, 90° = East, 180° = South, 270° = West)
+ */
+export function calculateAzimuthAngle(equation: PlaneEquation): number {
+  const { normal } = equation
+  
+  // Project normal onto XY plane
+  const horizontalX = normal.x
+  const horizontalY = normal.y
+  
+  // Calculate azimuth (direction perpendicular to dip direction)
+  let azimuthRad = Math.atan2(horizontalX, horizontalY)
+  let azimuthDeg = (azimuthRad * 180) / Math.PI
+  
+  // Convert to 0-360° range
+  if (azimuthDeg < 0) azimuthDeg += 360
+  
+  // Add 90° to get strike (perpendicular to dip)
+  let strike = azimuthDeg + 90
+  if (strike >= 360) strike -= 360
+  
+  console.log(`Azimuth/Strike: ${strike.toFixed(2)}°`)
+  
+  return strike
+}
+
+/**
  * Calculate ellipse points from cylinder-plane intersection
  * Cylinder: x² + y² = R², axis along Z
  * Plane: ax + by + cz + d = 0
@@ -141,7 +248,12 @@ export function calculateEllipsePoints(
   return points
 }
 
-export function usePlanes(trios: PointTrio[], cylinderRadius: number = 3.175) {
+export function usePlanes(
+  trios: PointTrio[], 
+  cylinderRadius: number = 3.175,
+  line1Angle: number = 90,
+  line2Angle: number = 90
+) {
   const [planes, setPlanes] = useState<Plane[]>([])
   
   // Automatically generate planes from complete trios
@@ -168,6 +280,24 @@ export function usePlanes(trios: PointTrio[], cylinderRadius: number = 3.175) {
       // Calculate ellipse points (cylinder-plane intersection)
       const ellipsePoints = calculateEllipsePoints(equation, cylinderRadius, 64)
       
+      // Calculate plane depth (Z-axis intersection)
+      const planeDepth = calculatePlaneDepth(equation)
+      
+      // Determine which BOH line this plane corresponds to
+      // BOH1 (line1): z=0 to z=15 (bottom half)
+      // BOH2 (line2): z=15 to z=30 (top half)
+      const correspondingBOH = planeDepth !== null && planeDepth < 15 ? line1Angle : line2Angle
+      const bohLabel = planeDepth !== null && planeDepth < 15 ? 'BOH1' : 'BOH2'
+      
+      // Calculate angles (α, β, azimuth)
+      const alpha = calculateAlphaAngle(equation)
+      const beta = calculateBetaAngle(equation, correspondingBOH, cylinderRadius)
+      const azimuth = calculateAzimuthAngle(equation)
+      
+      const angles: PlaneAngles = { alpha, beta, azimuth }
+      
+      console.log(`Plane angles - α: ${alpha.toFixed(2)}°, β: ${beta.toFixed(2)}° (relative to ${bohLabel}), Azimuth: ${azimuth.toFixed(2)}°`)
+      
       // Create new plane
       const newPlane: Plane = {
         id: `plane-${trio.id}`,
@@ -176,7 +306,8 @@ export function usePlanes(trios: PointTrio[], cylinderRadius: number = 3.175) {
         color: trio.color,
         visible: true,
         createdAt: new Date(),
-        ellipsePoints
+        ellipsePoints,
+        angles
       }
       
       newPlanes.push(newPlane)
@@ -184,7 +315,7 @@ export function usePlanes(trios: PointTrio[], cylinderRadius: number = 3.175) {
     })
     
     setPlanes(newPlanes)
-  }, [trios, cylinderRadius])
+  }, [trios, cylinderRadius, line1Angle, line2Angle]) // Recalculate when BOH angles change
   
   // Toggle plane visibility
   const togglePlaneVisibility = useCallback((planeId: string) => {

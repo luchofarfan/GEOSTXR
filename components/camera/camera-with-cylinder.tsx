@@ -17,7 +17,12 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
 }) => {
   const { state, actions } = useBOHLines()
   const trioManager = usePointTrios()
-  const planeManager = usePlanes(trioManager.trios, GEOSTXR_CONFIG.CYLINDER.RADIUS)
+  const planeManager = usePlanes(
+    trioManager.trios, 
+    GEOSTXR_CONFIG.CYLINDER.RADIUS,
+    state.line1Angle,
+    state.line2Angle
+  )
 
   return (
     <div className={`camera-with-cylinder ${className}`}>
@@ -39,6 +44,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
             state={state}
             actions={actions}
             trioManager={trioManager}
+            planeManager={planeManager}
           />
         </div>
       </div>

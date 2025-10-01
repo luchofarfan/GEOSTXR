@@ -9,9 +9,10 @@ interface BOHControlsProps {
   actions: BOHLinesActions
   className?: string
   trioManager?: any // Optional trio manager from usePointTrios hook
+  planeManager?: any // Optional plane manager from usePlanes hook
 }
 
-export default function BOHControls({ state, actions, className = '', trioManager }: BOHControlsProps) {
+export default function BOHControls({ state, actions, className = '', trioManager, planeManager }: BOHControlsProps) {
   const {
     line1Angle,
     line2Angle,
@@ -230,6 +231,19 @@ export default function BOHControls({ state, actions, className = '', trioManage
                         {index === 0 ? ' (manual)' : ' (auto)'}
                       </div>
                     )}
+                    {planeManager && planeManager.planes && (() => {
+                      const plane = planeManager.planes.find((p: any) => p.trioId === trio.id)
+                      if (plane && plane.angles) {
+                        return (
+                          <div className="text-xs text-gray-600 mt-1 ml-5 space-y-1">
+                            <div>📐 <strong>α (Alpha):</strong> {plane.angles.alpha.toFixed(2)}°</div>
+                            <div>📐 <strong>β (Beta):</strong> {plane.angles.beta.toFixed(2)}°</div>
+                            <div>🧭 <strong>Azimuth:</strong> {plane.angles.azimuth.toFixed(2)}°</div>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
                   </div>
                 ))}
               </div>
