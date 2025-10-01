@@ -132,6 +132,33 @@ export default function RootLayout({
             .ease-in-out { transition-timing-function: ease-in-out; }
             .bg-black\\/50 { background-color: rgba(0, 0, 0, 0.5); }
             .touch-manipulation { touch-action: manipulation; }
+            
+            /* Estilos para paneles flotantes con fondo transparente */
+            .floating-panel-content {
+              color: white !important;
+            }
+            .floating-panel-content h3,
+            .floating-panel-content h4,
+            .floating-panel-content h5,
+            .floating-panel-content label,
+            .floating-panel-content span:not(.text-green-900):not(.text-yellow-900):not(.text-blue-900),
+            .floating-panel-content p,
+            .floating-panel-content div:not(.bg-green-50):not(.bg-yellow-50):not(.bg-blue-50):not(.bg-purple-50) {
+              color: white !important;
+              text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            }
+            .floating-panel-content input[type="range"] {
+              background: rgba(255, 255, 255, 0.2);
+            }
+            .floating-panel-content input[type="checkbox"] {
+              filter: brightness(1.2) contrast(1.3);
+            }
+            .floating-panel-content .text-gray-600,
+            .floating-panel-content .text-gray-700,
+            .floating-panel-content .text-gray-800,
+            .floating-panel-content .text-gray-900 {
+              color: rgba(255, 255, 255, 0.9) !important;
+            }
           `
         }} />
       </head>

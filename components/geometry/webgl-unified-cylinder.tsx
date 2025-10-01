@@ -5,7 +5,6 @@ import * as THREE from 'three'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 import { BOHLinesOverlay } from './boh-lines-overlay'
 import { PointMarkersOverlay } from './point-markers-overlay'
-import { RulerOverlay } from './ruler-overlay'
 
 interface WebGLUnifiedCylinderProps {
   className?: string
@@ -17,6 +16,8 @@ interface WebGLUnifiedCylinderProps {
   onLine2AngleChange?: (angle: number) => void
   isInteractive?: boolean
   enableSnapping?: boolean
+  scenePhotoId?: string | null
+  onCaptureScenePhoto?: () => string | null
 }
 
 export default function WebGLUnifiedCylinder({ 
@@ -28,7 +29,9 @@ export default function WebGLUnifiedCylinder({
   onLine1AngleChange,
   onLine2AngleChange,
   isInteractive = true,
-  enableSnapping = false
+  enableSnapping = false,
+  scenePhotoId,
+  onCaptureScenePhoto
 }: WebGLUnifiedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -480,6 +483,13 @@ export default function WebGLUnifiedCylinder({
       return
     }
 
+    // CAPTURE SCENE PHOTO before first point of first trio
+    if (trioManager.normalTrios.length === 0 && !trioManager.currentTrio && !scenePhotoId && onCaptureScenePhoto) {
+      console.log('📸 Capturing scene photo before first trio...')
+      onCaptureScenePhoto()
+      // Continue with point addition after photo capture
+    }
+
     // Get click position relative to the canvas element
     const canvas = rendererRef.current.domElement
     const rect = canvas.getBoundingClientRect()
@@ -510,7 +520,7 @@ export default function WebGLUnifiedCylinder({
     } else {
       console.log('✗ No intersection with cylinder')
     }
-  }, [trioManager, draggingPoint])
+  }, [trioManager, draggingPoint, scenePhotoId, onCaptureScenePhoto])
 
   return (
     <div 
@@ -540,17 +550,6 @@ export default function WebGLUnifiedCylinder({
       
       {/* Three.js will render here */}
       
-            {/* HTML Overlay for Ruler */}
-            {containerSize.width > 0 && isReady && (
-              <RulerOverlay
-                containerWidth={containerSize.width}
-                containerHeight={containerSize.height}
-                camera={cameraRef.current || undefined}
-                cylinderHeight={GEOSTXR_CONFIG.CYLINDER.HEIGHT}
-                radius={GEOSTXR_CONFIG.CYLINDER.RADIUS}
-              />
-            )}
-
             {/* HTML Overlay for BOH lines */}
             {containerSize.width > 0 && isReady && (
               <BOHLinesOverlay 

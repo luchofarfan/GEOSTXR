@@ -167,25 +167,27 @@ export function FloatingResultsPanel({
       {/* Content */}
       {!isMinimized && (
         <div style={{
-          background: 'linear-gradient(to bottom, #f0f9ff, #e0f2fe)',
+          background: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(20px)',
           padding: '12px',
-          fontSize: '12px'
+          fontSize: '12px',
+          color: 'white'
         }}>
           {/* Depth Information */}
           <div style={{
             marginBottom: '12px',
             paddingBottom: '12px',
-            borderBottom: '2px solid #bfdbfe'
+            borderBottom: '2px solid rgba(255,255,255,0.2)'
           }}>
-            <div style={{ color: '#1e40af', fontWeight: 'bold', marginBottom: '4px' }}>
+            <div style={{ color: '#93c5fd', fontWeight: 'bold', marginBottom: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
               {depthType === 'manual' ? '📝' : '✨'} Profundidad
             </div>
-            <div style={{ color: '#374151', fontSize: '13px' }}>
+            <div style={{ color: 'white', fontSize: '13px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
               <strong>{depth.toFixed(2)} cm</strong> ({(depth/100).toFixed(2)} m)
               <span style={{ 
                 marginLeft: '6px', 
                 fontSize: '10px', 
-                color: '#6b7280',
+                color: '#d1d5db',
                 fontStyle: 'italic'
               }}>
                 ({depthType === 'manual' ? 'manual' : 'automática'})
@@ -197,12 +199,12 @@ export function FloatingResultsPanel({
           <div style={{
             marginBottom: '12px',
             paddingBottom: '12px',
-            borderBottom: '2px solid #bfdbfe'
+            borderBottom: '2px solid rgba(255,255,255,0.2)'
           }}>
-            <div style={{ color: '#1e40af', fontWeight: 'bold', marginBottom: '6px' }}>
+            <div style={{ color: '#93c5fd', fontWeight: 'bold', marginBottom: '6px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
               📐 Ángulos
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: '#374151' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
               <div>
                 <strong>α (Buzamiento):</strong> {angles.alpha.toFixed(2)}°
               </div>
@@ -210,8 +212,8 @@ export function FloatingResultsPanel({
                 <strong>β (vs BOH{bohNumber}):</strong> {angles.beta.toFixed(2)}°
                 <span style={{ 
                   fontSize: '10px', 
-                  color: '#2563eb',
-                  background: '#dbeafe',
+                  color: 'white',
+                  background: 'rgba(59, 130, 246, 0.6)',
                   padding: '2px 6px',
                   borderRadius: '10px'
                 }}>
@@ -227,12 +229,13 @@ export function FloatingResultsPanel({
           {/* Dynamic Update Info */}
           <div style={{
             fontSize: '10px',
-            color: '#2563eb',
+            color: '#93c5fd',
             fontStyle: 'italic',
             textAlign: 'center',
             padding: '6px',
-            background: 'rgba(37, 99, 235, 0.1)',
-            borderRadius: '6px'
+            background: 'rgba(59, 130, 246, 0.3)',
+            borderRadius: '6px',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
           }}>
             ↻ β se actualiza al mover BOH{bohNumber}
           </div>

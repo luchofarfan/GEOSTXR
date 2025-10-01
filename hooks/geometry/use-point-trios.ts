@@ -17,6 +17,7 @@ export interface PointTrio {
   color: string
   createdAt: Date
   isValidation?: boolean // Flag to mark validation trios (excluded from reports)
+  photoId?: string // Associated photo for QA/QC
 }
 
 const TRIO_COLORS = [
@@ -104,15 +105,25 @@ export function usePointTrios() {
           }
         }
         
-        // Use setTimeout to ensure state update completes first
-        setTimeout(() => {
-          const completedTrio = autoDepth !== undefined 
-            ? { ...updatedTrio, depth: autoDepth }
-            : updatedTrio
-            
-          setTrios(prevTrios => [...prevTrios, completedTrio])
-          setCurrentTrio(null)
-        }, 0)
+        // Complete trio immediately - with duplicate protection
+        const completedTrio = autoDepth !== undefined 
+          ? { ...updatedTrio, depth: autoDepth }
+          : updatedTrio
+          
+        setTrios(prevTrios => {
+          // Check if trio already exists (prevent duplicates)
+          const exists = prevTrios.some(t => t.id === completedTrio.id)
+          if (exists) {
+            console.warn(`⚠️ Trio ${completedTrio.id} already exists, skipping duplicate`)
+            return prevTrios
+          }
+          console.log(`✅ Trio completed and added to list (total: ${prevTrios.length + 1})`)
+          return [...prevTrios, completedTrio]
+        })
+        setCurrentTrio(null)
+        
+        // Return null to clear currentTrio after completion
+        return null
       }
 
       return updatedTrio
@@ -349,6 +360,11 @@ export function usePointTrios() {
   const normalTrios = trios.filter(t => !t.isValidation)
   const validationTrios = trios.filter(t => t.isValidation)
   const visibleTrios = trios.filter(t => !t.isValidation || validationTriosVisible)
+  
+  // Debug: Log trio counts
+  if (normalTrios.length > 0) {
+    console.log(`📊 Trios breakdown: Total=${trios.length}, Normal=${normalTrios.length}, Validation=${validationTrios.length}, Visible=${visibleTrios.length}`)
+  }
 
   return {
     // State
