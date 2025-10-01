@@ -37,6 +37,19 @@ interface DrillHoleInfo {
   elevation: number // Cota (m.s.n.m.)
 }
 
+interface GeospatialPlaneData {
+  planeId: string
+  realOrientation: {
+    dip: number
+    dipDirection: number
+  } | null
+  spatialCoords: {
+    east: number
+    north: number
+    elevation: number
+  } | null
+}
+
 interface ReportMetadata {
   timestamp: string
   manualDepth: number // Profundidad manual del primer trío
@@ -49,6 +62,7 @@ interface ReportMetadata {
   customColumns?: Array<{ id: string; header: string }>
   customValues?: Record<string, Record<string, string>> // trioId -> columnId -> value
   drillHoleInfo?: DrillHoleInfo // Información del sondaje
+  geospatialData?: GeospatialPlaneData[] // Datos geoespaciales (dip real, coordenadas)
 }
 
 export function generateCSVReport(
@@ -85,10 +99,20 @@ export function generateCSVReport(
   lines.push(`# Total de Planos: ${metadata.totalPlanes}`)
   lines.push('')
   
-  // CSV Header with custom columns
-  const baseHeaders = 'Plano,Tipo_Estructura,Profundidad_cm,Profundidad_m,Tipo_Prof,Alpha_grados,Beta_grados,Azimuth_grados,BOH_Referencia,P1_X,P1_Y,P1_Z,P2_X,P2_Y,P2_Z,P3_X,P3_Y,P3_Z'
+  // CSV Header with geospatial and custom columns
+  const baseHeaders = 'Plano,Tipo_Estructura,Profundidad_cm,Profundidad_m,Tipo_Prof,Alpha_grados,Beta_grados,Azimuth_grados,BOH_Referencia'
+  
+  // Add geospatial headers if data is available
+  const hasGeospatial = metadata.geospatialData && metadata.geospatialData.length > 0
+  const geospatialHeaders = hasGeospatial 
+    ? ',Dip_Real_grados,Dip_Direction_grados,UTM_Este_m,UTM_Norte_m,Elevacion_m' 
+    : ''
+  
+  const pointHeaders = ',P1_X,P1_Y,P1_Z,P2_X,P2_Y,P2_Z,P3_X,P3_Y,P3_Z'
   const customHeaders = metadata.customColumns?.map(col => col.header.replace(/,/g, ';')).join(',') || ''
-  lines.push(customHeaders ? `${baseHeaders},${customHeaders}` : baseHeaders)
+  
+  const fullHeaders = `${baseHeaders}${geospatialHeaders}${pointHeaders}${customHeaders ? ',' + customHeaders : ''}`
+  lines.push(fullHeaders)
   
   // Data rows
   trios.forEach((trio, index) => {
@@ -110,6 +134,7 @@ export function generateCSVReport(
     const p2 = trio.points[1] || { x: 0, y: 0, z: 0 }
     const p3 = trio.points[2] || { x: 0, y: 0, z: 0 }
     
+    // Base row data
     const baseRow = [
       planeNumber,
       structureType,
@@ -119,7 +144,28 @@ export function generateCSVReport(
       alpha,
       beta,
       azimuth,
-      bohRef,
+      bohRef
+    ]
+    
+    // Add geospatial data if available
+    const geoData = metadata.geospatialData?.find(g => g.planeId === plane.id)
+    if (hasGeospatial && geoData) {
+      if (geoData.realOrientation && geoData.spatialCoords) {
+        baseRow.push(
+          geoData.realOrientation.dip.toFixed(2),
+          geoData.realOrientation.dipDirection.toFixed(2),
+          geoData.spatialCoords.east.toFixed(2),
+          geoData.spatialCoords.north.toFixed(2),
+          geoData.spatialCoords.elevation.toFixed(2)
+        )
+      } else {
+        // No geospatial data for this plane (e.g. missing drill hole info)
+        baseRow.push('N/A', 'N/A', 'N/A', 'N/A', 'N/A')
+      }
+    }
+    
+    // Add point coordinates
+    baseRow.push(
       p1.x.toFixed(4),
       p1.y.toFixed(4),
       p1.z.toFixed(4),
@@ -129,7 +175,7 @@ export function generateCSVReport(
       p3.x.toFixed(4),
       p3.y.toFixed(4),
       p3.z.toFixed(4)
-    ]
+    )
     
     // Add custom column values
     const customValues: string[] = []

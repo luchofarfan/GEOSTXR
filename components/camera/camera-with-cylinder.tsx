@@ -17,6 +17,7 @@ import { useBOHLines } from '@/hooks/geometry/use-boh-lines'
 import { usePointTrios } from '@/hooks/geometry/use-point-trios'
 import { usePlanes } from '@/hooks/geometry/use-planes'
 import { useACAngle } from '@/hooks/geometry/use-ac-angle'
+import { useGeospatialCalculations } from '@/hooks/geometry/use-geospatial-calculations'
 import { useCustomColumns } from '@/hooks/use-custom-columns'
 import { useStructureTypes } from '@/hooks/use-structure-types'
 import { useDrillHoleInfo } from '@/hooks/use-drill-hole-info'
@@ -46,6 +47,15 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
   const structureTypesManager = useStructureTypes()
   const drillHoleInfo = useDrillHoleInfo()
   const photoRegistry = usePhotoRegistry()
+  
+  // Calculate geospatial data (real dip/dip direction, UTM coordinates)
+  const geospatialData = useGeospatialCalculations(
+    trioManager.normalTrios,
+    planeManager.planes,
+    drillHoleInfo.info,
+    { line1: state.line1Angle, line2: state.line2Angle },
+    GEOSTXR_CONFIG.CYLINDER.RADIUS
+  )
   
   const cylinderContainerRef = useRef<HTMLDivElement>(null)
   const cameraRef = useRef<any>(null) // Reference to Three.js camera
@@ -259,7 +269,8 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
           totalPlanes: trioManager.normalTrios.length,
           customColumns: customColumnsData,
           customValues: customValuesData,
-          drillHoleInfo: drillHoleInfo.info // Información del sondaje
+          drillHoleInfo: drillHoleInfo.info, // Información del sondaje
+          geospatialData: geospatialData // Datos geoespaciales (dip real, coordenadas)
         }
       )
 
