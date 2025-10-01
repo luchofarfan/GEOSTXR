@@ -320,9 +320,14 @@ export default function WebGLUnifiedCylinder({
 
       // Create new plane mesh if it doesn't exist
       if (!mesh) {
-        // Create a large plane geometry (will be clipped by cylinder)
-        const planeSize = 50 // Large enough to cover cylinder
-        const geometry = new THREE.PlaneGeometry(planeSize, planeSize, 10, 10)
+        // Calculate plane size: cylinder diameter + 2cm (1cm extension on each side)
+        const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
+        const cylinderDiameter = cylinderRadius * 2 // 6.35 cm
+        const planeWidth = cylinderDiameter + 2 // 8.35 cm (1cm extension on each side)
+        const planeHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
+        
+        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 10, 10)
+        console.log(`Plane size: ${planeWidth}cm × ${planeHeight}cm (cylinder: ${cylinderDiameter}cm diameter)`)
         
         // Create semi-transparent material with plane color
         const material = new THREE.MeshBasicMaterial({
