@@ -13,6 +13,7 @@ import { DistanceIndicator } from '@/components/geometry/distance-indicator'
 import { FloatingCustomColumnsPanel } from '@/components/geometry/floating-custom-columns-panel'
 import { ManageStructureTypesPanel } from '@/components/geometry/manage-structure-types-panel'
 import { FloatingDrillHoleInfoPanel } from '@/components/geometry/floating-drillhole-info-panel'
+import { FloatingGeospatialPanel } from '@/components/geometry/floating-geospatial-panel'
 import { useBOHLines } from '@/hooks/geometry/use-boh-lines'
 import { usePointTrios } from '@/hooks/geometry/use-point-trios'
 import { usePlanes } from '@/hooks/geometry/use-planes'
@@ -89,6 +90,9 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
   
   // State for drill hole info panel
   const [showDrillHoleInfo, setShowDrillHoleInfo] = useState(false)
+  
+  // State for geospatial data panel
+  const [showGeospatialPanel, setShowGeospatialPanel] = useState(false)
   
   // Get selected trio and its plane data (from all trios including validation)
   const selectedTrio = trioManager.allTrios.find((t: any) => t.id === trioManager.selectedTrioId)
@@ -620,6 +624,15 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
             onClose={() => setShowDrillHoleInfo(false)}
           />
         )}
+        
+        {/* Geospatial Data Panel */}
+        {showGeospatialPanel && (
+          <FloatingGeospatialPanel
+            geospatialData={geospatialData}
+            selectedPlaneId={selectedPlane?.id || null}
+            onClose={() => setShowGeospatialPanel(false)}
+          />
+        )}
 
         {/* Floating Controls Panel */}
         <FloatingControlsPanel
@@ -632,6 +645,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
           onResetScene={resetScene}
           onOpenCustomColumns={() => setShowCustomColumnsPanel(true)}
           onOpenDrillHoleInfo={() => setShowDrillHoleInfo(true)}
+          onOpenGeospatialPanel={() => setShowGeospatialPanel(true)}
           customColumns={customColumns}
           />
       </div>

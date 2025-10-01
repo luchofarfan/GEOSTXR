@@ -14,6 +14,7 @@ interface FloatingControlsPanelProps {
   onResetScene?: () => void
   onOpenCustomColumns?: () => void
   onOpenDrillHoleInfo?: () => void
+  onOpenGeospatialPanel?: () => void
   customColumns?: any
   initialPosition?: { x: number; y: number }
 }
@@ -28,6 +29,7 @@ export function FloatingControlsPanel({
   onResetScene,
   onOpenCustomColumns,
   onOpenDrillHoleInfo,
+  onOpenGeospatialPanel,
   customColumns,
   initialPosition = { x: 20, y: 20 }
 }: FloatingControlsPanelProps) {
@@ -185,6 +187,17 @@ export function FloatingControlsPanel({
             >
               <span>🎯</span>
               <span>Info del Sondaje</span>
+            </button>
+          </div>
+
+          {/* Geospatial Data Button */}
+          <div className="mb-4">
+            <button
+              onClick={onOpenGeospatialPanel}
+              className="w-full py-2 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>🌍</span>
+              <span>Datos Geoespaciales</span>
             </button>
           </div>
 
