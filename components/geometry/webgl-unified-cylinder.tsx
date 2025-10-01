@@ -292,87 +292,27 @@ export default function WebGLUnifiedCylinder({
 
   // BOH lines are now rendered via HTML overlay - no 3D geometry needed
 
-  // Render planes in 3D
+  // Planes are calculated but NOT rendered (only ellipses are visible)
+  // This useEffect handles cleanup of any existing plane meshes
   useEffect(() => {
-    if (!isReady || !sceneRef.current || !planeManager) return
+    if (!sceneRef.current) return
     
     const scene = sceneRef.current
     const currentPlanes = planesRef.current
 
-    // Remove planes that no longer exist
+    // Remove all plane meshes from scene
     currentPlanes.forEach((mesh, planeId) => {
-      const planeExists = planeManager.planes.some((p: any) => p.id === planeId)
-      if (!planeExists) {
-        scene.remove(mesh)
-        mesh.geometry.dispose()
-        if (Array.isArray(mesh.material)) {
-          mesh.material.forEach(m => m.dispose())
-        } else {
-          mesh.material.dispose()
-        }
-        currentPlanes.delete(planeId)
-        console.log(`Plane ${planeId} removed from scene`)
+      scene.remove(mesh)
+      mesh.geometry.dispose()
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(m => m.dispose())
+      } else {
+        mesh.material.dispose()
       }
+      console.log(`Plane ${planeId} removed from scene`)
     })
-
-    // Add or update planes
-    planeManager.planes.forEach((plane: any) => {
-      let mesh = currentPlanes.get(plane.id)
-
-      // Create new plane mesh if it doesn't exist
-      if (!mesh) {
-        // Calculate plane size: cylinder diameter + 2cm (1cm extension on each side)
-        const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
-        const cylinderDiameter = cylinderRadius * 2 // 6.35 cm
-        const planeWidth = cylinderDiameter + 2 // 8.35 cm (1cm extension on each side)
-        const planeHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
-        
-        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 10, 10)
-        console.log(`Plane size: ${planeWidth}cm × ${planeHeight}cm (cylinder: ${cylinderDiameter}cm diameter)`)
-        
-        // Create semi-transparent material with plane color
-        const material = new THREE.MeshBasicMaterial({
-          color: plane.color,
-          transparent: true,
-          opacity: 0.3,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        })
-        
-        mesh = new THREE.Mesh(geometry, material)
-        mesh.renderOrder = 2 // Render after cylinder but before overlays
-        
-        scene.add(mesh)
-        currentPlanes.set(plane.id, mesh)
-        console.log(`Plane ${plane.id} added to scene`)
-      }
-
-      // Position and orient the plane based on equation
-      // Plane equation: ax + by + cz + d = 0
-      // Normal vector: (a, b, c)
-      const { a, b, c, d } = plane.equation
-      
-      // Find a point on the plane (use z=15 as reference, cylinder center)
-      let x0 = 0, y0 = 0, z0 = 15
-      
-      if (c !== 0) {
-        z0 = -(a * x0 + b * y0 + d) / c
-      } else if (b !== 0) {
-        y0 = -(a * x0 + c * z0 + d) / b
-      } else if (a !== 0) {
-        x0 = -(b * y0 + c * z0 + d) / a
-      }
-      
-      // Position the plane at this point
-      mesh.position.set(x0, y0, z0)
-      
-      // Orient the plane using lookAt (normal direction)
-      const normalPoint = new THREE.Vector3(x0 + a, y0 + b, z0 + c)
-      mesh.lookAt(normalPoint)
-      
-      // Update visibility
-      mesh.visible = plane.visible
-    })
+    
+    currentPlanes.clear()
   }, [isReady, planeManager?.planes])
 
   // Render ellipses (cylinder-plane intersections) in 3D
