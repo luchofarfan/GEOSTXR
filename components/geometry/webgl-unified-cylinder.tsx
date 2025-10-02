@@ -594,6 +594,71 @@ export default function WebGLUnifiedCylinder({
     }
   }, [controlsEnabled])
 
+  // Handle point dragging (mousemove and touchmove)
+  useEffect(() => {
+    if (!draggingPoint || !rendererRef.current || !localCameraRef.current || !sceneRef.current) return
+
+    console.log(`🖐️ Point dragging active: ${draggingPoint.trioId} / ${draggingPoint.pointId}`)
+
+    const handleMove = (clientX: number, clientY: number) => {
+      const canvas = rendererRef.current!.domElement
+      const rect = canvas.getBoundingClientRect()
+      
+      const x = clientX - rect.left
+      const y = clientY - rect.top
+      const ndcX = (x / rect.width) * 2 - 1
+      const ndcY = -(y / rect.height) * 2 + 1
+
+      const raycaster = new THREE.Raycaster()
+      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), localCameraRef.current!)
+
+      const meshes = sceneRef.current!.children.filter(obj => 
+        obj instanceof THREE.Mesh && obj.geometry instanceof THREE.CylinderGeometry
+      )
+      
+      const intersects = raycaster.intersectObjects(meshes, false)
+      
+      if (intersects.length > 0) {
+        const point = intersects[0].point
+        trioManager.updatePointPosition(draggingPoint.trioId, draggingPoint.pointId, { 
+          x: point.x, 
+          y: point.y, 
+          z: point.z 
+        })
+      }
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault()
+      handleMove(e.clientX, e.clientY)
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      if (e.touches.length > 0) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY)
+      }
+    }
+
+    const handleEnd = () => {
+      console.log('✅ Point drag ended')
+      setDraggingPoint(null)
+    }
+
+    // Add global listeners
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleEnd)
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleEnd)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleEnd)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleEnd)
+    }
+  }, [draggingPoint, trioManager])
+
   // Render ellipses (cylinder-plane intersections) in 3D
   useEffect(() => {
     if (!isReady || !sceneRef.current || !planeManager) return
@@ -685,38 +750,8 @@ export default function WebGLUnifiedCylinder({
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!trioManager || !localCameraRef.current || !containerRef.current || !rendererRef.current) return
 
-    // If dragging a point, update its position
+    // If currently dragging a point, ignore clicks (drag is handled by global listeners)
     if (draggingPoint) {
-      const canvas = rendererRef.current.domElement
-      const rect = canvas.getBoundingClientRect()
-      
-      const x = event.clientX - rect.left
-      const y = event.clientY - rect.top
-      const ndcX = (x / rect.width) * 2 - 1
-      const ndcY = -(y / rect.height) * 2 + 1
-
-      const raycaster = new THREE.Raycaster()
-      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), localCameraRef.current)
-
-      if (!sceneRef.current) return
-      
-      const meshes = sceneRef.current.children.filter(obj => 
-        obj instanceof THREE.Mesh && obj.geometry instanceof THREE.CylinderGeometry
-      )
-      
-      const intersects = raycaster.intersectObjects(meshes, false)
-      
-      if (intersects.length > 0) {
-        const point = intersects[0].point
-        trioManager.updatePointPosition(draggingPoint.trioId, draggingPoint.pointId, { 
-          x: point.x, 
-          y: point.y, 
-          z: point.z 
-        })
-        console.log(`✓ Point repositioned to (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
-      }
-      
-      setDraggingPoint(null)
       return
     }
 

@@ -65,6 +65,10 @@ export function PointMarkersOverlay({
           e.stopPropagation()
           onPointDragStart?.(trioId, point.id)
         }}
+        onTouchStart={(e) => {
+          e.stopPropagation()
+          onPointDragStart?.(trioId, point.id)
+        }}
         onClick={(e) => {
           e.stopPropagation()
           if (!isDragging) {
