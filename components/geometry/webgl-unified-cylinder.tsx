@@ -180,15 +180,37 @@ export default function WebGLUnifiedCylinder({
 
     // Camera - looking at cylinder from the side (along Y axis)
     // Cylinder is vertical along Z axis (z=0 at bottom, z=30 at top)
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
     const aspectRatio = width / height
-    let distance = (GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2) / Math.tan((75 * Math.PI / 180) / 2)
-    distance *= aspectRatio > 1 ? 1.5 : 1.3
+    
+    // Optimize FOV for mobile portrait (maximize cylinder size)
+    const isPortrait = aspectRatio < 1
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent)
+    const fov = (isPortrait && isMobile) ? 60 : 75 // Narrower FOV in portrait = larger cylinder
+    
+    const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 1000)
+    
+    // Calculate optimal distance based on aspect ratio and device
+    let distance = (GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2) / Math.tan((fov * Math.PI / 180) / 2)
+    
+    // Optimize distance for different screen orientations
+    if (isPortrait && isMobile) {
+      // Mobile portrait: Cylinder should fill height, get much closer
+      distance *= 0.85 // Reduce distance to 85% = cylinder appears 18% larger
+    } else if (isPortrait) {
+      // Desktop portrait: Moderate zoom
+      distance *= 1.1
+    } else {
+      // Landscape: Keep comfortable viewing distance
+      distance *= 1.5
+    }
+    
     const cylinderCenter = GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2 // z=15cm (center)
     
     // Position camera along +Y axis, looking at center of cylinder
     camera.position.set(0, distance, cylinderCenter)
     camera.lookAt(0, 0, cylinderCenter)
+    
+    console.log(`📱 Camera optimized: FOV=${fov}°, Distance=${distance.toFixed(1)}cm, Portrait=${isPortrait}, Mobile=${isMobile}`)
     // Use default up vector (0,1,0)
     localCameraRef.current = camera
     // Pass camera reference to parent component for composite image generation
