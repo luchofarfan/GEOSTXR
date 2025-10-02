@@ -1,6 +1,9 @@
 'use client'
 
 import type { Project, DrillHole } from '@/types/geostxr-data'
+import { StatisticsPanel } from '@/components/statistics-panel'
+import { StructureTable } from '@/components/structure-table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface DashboardProps {
   projects: Project[]
@@ -50,7 +53,7 @@ export function Dashboard({ projects, onSelectDrillHole, onImportClick }: Dashbo
         />
       </div>
 
-      {/* Projects List */}
+      {/* Projects List or Enhanced Views */}
       {projects.length === 0 ? (
         <div className="bg-white/5 backdrop-blur-lg rounded-xl p-12 border border-white/10 text-center">
           <div className="text-6xl mb-4">📂</div>
@@ -68,54 +71,70 @@ export function Dashboard({ projects, onSelectDrillHole, onImportClick }: Dashbo
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          {projects.map(project => (
-            <div
-              key={project.id}
-              className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
-            >
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <span>📁</span>
-                {project.name}
-                {project.client && (
-                  <span className="text-sm font-normal text-gray-400">
-                    - {project.client}
-                  </span>
-                )}
-              </h3>
-              
-              {/* Drill Holes List */}
-              <div className="space-y-2">
-                {project.drillHoles.map(dh => (
-                  <div
-                    key={dh.id}
-                    onClick={() => onSelectDrillHole(dh)}
-                    className="bg-white/5 hover:bg-white/10 rounded-lg p-4 cursor-pointer transition-all border border-white/10 hover:border-blue-400"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl">🔬</span>
-                        <div>
-                          <h4 className="font-semibold text-white">{dh.name}</h4>
-                          <p className="text-sm text-gray-400">
-                            {dh.totalDepth.toFixed(1)}m • {
-                              dh.scenes.reduce((sum, s) => sum + s.structures.length, 0)
-                            } estructuras
-                          </p>
+        <Tabs defaultValue="projects" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-white/10">
+            <TabsTrigger value="projects">Proyectos</TabsTrigger>
+            <TabsTrigger value="statistics">Estadísticas</TabsTrigger>
+            <TabsTrigger value="table">Tabla de Datos</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="projects" className="space-y-4 mt-6">
+            {projects.map(project => (
+              <div
+                key={project.id}
+                className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+              >
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <span>📁</span>
+                  {project.name}
+                  {project.client && (
+                    <span className="text-sm font-normal text-gray-400">
+                      - {project.client}
+                    </span>
+                  )}
+                </h3>
+                
+                {/* Drill Holes List */}
+                <div className="space-y-2">
+                  {project.drillHoles.map(dh => (
+                    <div
+                      key={dh.id}
+                      onClick={() => onSelectDrillHole(dh)}
+                      className="bg-white/5 hover:bg-white/10 rounded-lg p-4 cursor-pointer transition-all border border-white/10 hover:border-blue-400"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl">🔬</span>
+                          <div>
+                            <h4 className="font-semibold text-white">{dh.name}</h4>
+                            <p className="text-sm text-gray-400">
+                              {dh.totalDepth.toFixed(1)}m • {
+                                dh.scenes.reduce((sum, s) => sum + s.structures.length, 0)
+                              } estructuras
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right text-xs text-gray-400">
+                          <div>Az: {dh.info.azimuth.toFixed(0)}°</div>
+                          <div>Dip: {dh.info.dip.toFixed(0)}°</div>
                         </div>
                       </div>
-                      
-                      <div className="text-right text-xs text-gray-400">
-                        <div>Az: {dh.info.azimuth.toFixed(0)}°</div>
-                        <div>Dip: {dh.info.dip.toFixed(0)}°</div>
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </TabsContent>
+          
+          <TabsContent value="statistics" className="mt-6">
+            <StatisticsPanel projects={projects} />
+          </TabsContent>
+          
+          <TabsContent value="table" className="mt-6">
+            <StructureTable projects={projects} />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   )
