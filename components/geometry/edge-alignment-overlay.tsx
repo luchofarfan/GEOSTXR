@@ -69,29 +69,29 @@ export function EdgeAlignmentOverlay({
         transition: 'opacity 0.3s ease'
       }}
     >
-      {/* Detected Left Edge */}
+      {/* Detected Left Edge - Limited to visible cylinder area (middle 80% of screen) */}
       <div
         style={{
           position: 'absolute',
           left: `${(detectedLeftX / canvasWidth) * 100}%`,
-          top: 0,
+          top: '10%',
           width: '3px',
-          height: '100%',
-          background: `linear-gradient(to bottom, transparent 0%, ${color} 20%, ${color} 80%, transparent 100%)`,
+          height: '80%',
+          background: `linear-gradient(to bottom, transparent 0%, ${color} 15%, ${color} 85%, transparent 100%)`,
           boxShadow: `0 0 10px ${color}`,
           animation: 'pulse-edge 2s ease-in-out infinite'
         }}
       />
 
-      {/* Detected Right Edge */}
+      {/* Detected Right Edge - Limited to visible cylinder area (middle 80% of screen) */}
       <div
         style={{
           position: 'absolute',
           left: `${(detectedRightX / canvasWidth) * 100}%`,
-          top: 0,
+          top: '10%',
           width: '3px',
-          height: '100%',
-          background: `linear-gradient(to bottom, transparent 0%, ${color} 20%, ${color} 80%, transparent 100%)`,
+          height: '80%',
+          background: `linear-gradient(to bottom, transparent 0%, ${color} 15%, ${color} 85%, transparent 100%)`,
           boxShadow: `0 0 10px ${color}`,
           animation: 'pulse-edge 2s ease-in-out infinite'
         }}

@@ -63,7 +63,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
   // State for edge alignment overlay
   const [detectedEdges, setDetectedEdges] = useState({ leftX: 0, rightX: 0, quality: 0 })
   const [virtualBorders, setVirtualBorders] = useState({ leftX: 0, rightX: 0, canvasWidth: 0, canvasHeight: 0 })
-  const [showEdgeAlignment, setShowEdgeAlignment] = useState(false) // Disabled - lines appear outside cylinder mask
+  const [showEdgeAlignment, setShowEdgeAlignment] = useState(true) // Re-enabled with proper masking
 
   // State for depth input modal
   const [showDepthInput, setShowDepthInput] = useState(false)
