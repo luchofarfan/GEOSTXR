@@ -153,8 +153,9 @@ export function BOHLinesOverlay({
     const cylinderVisibleWidth = containerWidth * 0.6 // Map across 60% of screen width for smoother control
     const degreesPerPixel = 40 / cylinderVisibleWidth // ~0.067 degrees per pixel for very smooth control
     
-    // Calculate target angle based on pixel offset (INVERTED: negative to fix direction)
-    let targetAngle = 90 - (pixelOffset * degreesPerPixel) // Inverted: drag right = move right
+    // Calculate target angle based on pixel offset
+    // Positive pixelOffset (drag right) should INCREASE angle (move line right)
+    let targetAngle = 90 + (pixelOffset * degreesPerPixel) // Drag right = move right
     
     // Clamp to valid range [70, 110]
     targetAngle = Math.max(70, Math.min(110, targetAngle))
@@ -262,44 +263,82 @@ export function BOHLinesOverlay({
       zIndex: 1000
     }}>
       {/* BOH Line 1 - RED - From z=0 (bottom) to z=15 (center) */}
+      {/* Wider touch area for easier mobile interaction */}
       <div 
         style={{
           position: 'absolute',
           left: `${line1Left}px`,
           top: camera ? `${boh1TopY}px` : '50%',
           height: camera ? `${boh1Height}px` : '35%',
+          width: '40px', // Wide touch area (20px each side)
           transform: 'translateX(-50%)',
           zIndex: 1001,
           pointerEvents: isInteractive ? 'auto' : 'none',
           touchAction: 'none',
           userSelect: 'none',
-          ...getLineStyle('line1', '#FF0000', 'rgba(255,0,0,1)')
+          cursor: isInteractive ? (draggingLine === 'line1' ? 'grabbing' : 'grab') : 'default',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
         onMouseDown={handleMouseDown('line1')}
         onTouchStart={handleTouchStart('line1')}
         onMouseEnter={() => isInteractive && setHoveredLine('line1')}
         onMouseLeave={() => setHoveredLine(null)}
-      />
+      >
+        {/* Visual line (thin) */}
+        <div style={{
+          width: draggingLine === 'line1' ? '4px' : hoveredLine === 'line1' ? '3px' : '2px',
+          height: '100%',
+          backgroundColor: '#FF0000',
+          boxShadow: draggingLine === 'line1' 
+            ? '0 0 15px rgba(255,0,0,1), 0 0 30px rgba(255,0,0,1)' 
+            : hoveredLine === 'line1' 
+            ? '0 0 10px rgba(255,0,0,1)' 
+            : '0 0 8px rgba(255,0,0,1)',
+          opacity: draggingLine === 'line1' ? 0.9 : hoveredLine === 'line1' ? 0.95 : 0.85,
+          transition: draggingLine === 'line1' ? 'none' : 'all 0.2s ease'
+        }} />
+      </div>
       
       {/* BOH Line 2 - GREEN - From z=15 (center) to z=30 (top) */}
+      {/* Wider touch area for easier mobile interaction */}
       <div 
         style={{
           position: 'absolute',
           left: `${line2Left}px`,
           top: camera ? `${boh2TopY}px` : '15%',
           height: camera ? `${boh2Height}px` : '35%',
+          width: '40px', // Wide touch area (20px each side)
           transform: 'translateX(-50%)',
           zIndex: 1002,
           pointerEvents: isInteractive ? 'auto' : 'none',
           touchAction: 'none',
           userSelect: 'none',
-          ...getLineStyle('line2', '#00FF00', 'rgba(0,255,0,1)')
+          cursor: isInteractive ? (draggingLine === 'line2' ? 'grabbing' : 'grab') : 'default',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
         onMouseDown={handleMouseDown('line2')}
         onTouchStart={handleTouchStart('line2')}
         onMouseEnter={() => isInteractive && setHoveredLine('line2')}
         onMouseLeave={() => setHoveredLine(null)}
-      />
+      >
+        {/* Visual line (thin) */}
+        <div style={{
+          width: draggingLine === 'line2' ? '4px' : hoveredLine === 'line2' ? '3px' : '2px',
+          height: '100%',
+          backgroundColor: '#00FF00',
+          boxShadow: draggingLine === 'line2' 
+            ? '0 0 15px rgba(0,255,0,1), 0 0 30px rgba(0,255,0,1)' 
+            : hoveredLine === 'line2' 
+            ? '0 0 10px rgba(0,255,0,1)' 
+            : '0 0 8px rgba(0,255,0,1)',
+          opacity: draggingLine === 'line2' ? 0.9 : hoveredLine === 'line2' ? 0.95 : 0.85,
+          transition: draggingLine === 'line2' ? 'none' : 'all 0.2s ease'
+        }} />
+      </div>
       
       {/* Debug info */}
       <div style={{
