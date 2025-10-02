@@ -190,10 +190,11 @@ export default function WebGLUnifiedCylinder({
     const cylRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3cm
     const cylinderCenter = cylHeight / 2 // z=15cm (center)
     
-    // FOV optimized for mobile portrait: needs wider FOV to show full 30cm cylinder
-    // Portrait mobile: 75° to fit full cylinder height (30cm) at 26cm distance with margins
+    // FOV optimized for mobile portrait: needs VERY wide FOV to show full 30cm cylinder
+    // Portrait mobile: 85° to ensure full cylinder height (30cm) visible at 26cm distance
+    // This gives enough vertical field of view to see from z=0 to z=30 with margins
     // Landscape/desktop: 50° works fine
-    const fov = (isPortrait && isMobile) ? 75 : 50
+    const fov = (isPortrait && isMobile) ? 85 : 50
     
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 1000)
     
