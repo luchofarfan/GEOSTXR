@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 import { BOHLinesOverlay } from './boh-lines-overlay'
 import { PointMarkersOverlay } from './point-markers-overlay'
@@ -45,12 +46,14 @@ export default function WebGLUnifiedCylinder({
   const sceneRef = useRef<THREE.Scene | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const localCameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const orbitControlsRef = useRef<OrbitControls | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
   const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
   const ellipsesRef = useRef<Map<string, THREE.Line>>(new Map()) // Map of planeId -> Three.js Line (ellipse)
   const [isReady, setIsReady] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
+  const [controlsEnabled, setControlsEnabled] = useState(false)
 
   // Camera stream setup
   useEffect(() => {
@@ -200,6 +203,20 @@ export default function WebGLUnifiedCylinder({
     renderer.setClearColor(0x000000) // Black background
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
+    
+    // OrbitControls for rotation and zoom
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true // Smooth movement
+    controls.dampingFactor = 0.05
+    controls.target.set(0, 0, cylinderCenter) // Rotate around cylinder center
+    controls.enablePan = false // Disable panning (only rotate and zoom)
+    controls.minDistance = distance * 0.5 // Min zoom (50% closer)
+    controls.maxDistance = distance * 2.0 // Max zoom (2x farther)
+    controls.minPolarAngle = Math.PI / 4 // Limit rotation (45°)
+    controls.maxPolarAngle = (3 * Math.PI) / 4 // Limit rotation (135°)
+    controls.enabled = false // Disabled by default, enable with UI toggle
+    orbitControlsRef.current = controls
+    console.log('✅ OrbitControls created (disabled by default)')
 
     // Lighting
     scene.add(new THREE.AmbientLight(0x404040, 0.8))
@@ -385,6 +402,11 @@ export default function WebGLUnifiedCylinder({
     const animate = () => {
       animationId = requestAnimationFrame(animate)
       
+      // Update OrbitControls (if enabled)
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.update()
+      }
+      
       // Update video texture
       if (videoTextureRef.current) {
         videoTextureRef.current.needsUpdate = true
@@ -515,6 +537,14 @@ export default function WebGLUnifiedCylinder({
       window.removeEventListener('captureScenePhoto', handleCaptureEvent)
     }
   }, [onScenePhotoCaptured])
+
+  // Sync controls enabled state
+  useEffect(() => {
+    if (orbitControlsRef.current) {
+      orbitControlsRef.current.enabled = controlsEnabled
+      console.log(`🎮 OrbitControls ${controlsEnabled ? 'ENABLED' : 'DISABLED'}`)
+    }
+  }, [controlsEnabled])
 
   // Render ellipses (cylinder-plane intersections) in 3D
   useEffect(() => {
@@ -734,6 +764,42 @@ export default function WebGLUnifiedCylinder({
           🧊 VIDEO PAUSADO
         </div>
       )}
+      
+      {/* Controls Toggle Button */}
+      <button
+        onClick={() => setControlsEnabled(!controlsEnabled)}
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 2010,
+          padding: '12px 20px',
+          background: controlsEnabled 
+            ? 'linear-gradient(135deg, #10b981, #059669)' 
+            : 'linear-gradient(135deg, #6b7280, #4b5563)',
+          border: controlsEnabled ? '2px solid #34d399' : '2px solid #9ca3af',
+          borderRadius: '12px',
+          color: 'white',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.3s ease'
+        }}
+      >
+        <span style={{ fontSize: '18px' }}>{controlsEnabled ? '🎮' : '🔒'}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2' }}>
+          <span style={{ fontSize: '12px' }}>
+            {controlsEnabled ? 'Controles Activos' : 'Controles Bloqueados'}
+          </span>
+          <span style={{ fontSize: '10px', opacity: 0.8 }}>
+            {controlsEnabled ? 'Arrastra para rotar, scroll para zoom' : 'Click para habilitar rotación/zoom'}
+          </span>
+        </div>
+      </button>
       
       {/* Three.js will render here */}
       
