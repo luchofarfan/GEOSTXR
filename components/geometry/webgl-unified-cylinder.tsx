@@ -321,10 +321,8 @@ export default function WebGLUnifiedCylinder({
         varying vec3 vWorldPosition;
         
         void main() {
-          float dist = sqrt(vWorldPosition.x * vWorldPosition.x + vWorldPosition.y * vWorldPosition.y);
-          if (dist > cylinderRadius * 1.05) {
-            discard;
-          }
+          // Show full video feed in live view (no masking)
+          // Mask will be applied only when capturing the photo
           gl_FragColor = texture2D(videoTexture, vUv);
         }
       `,
@@ -558,17 +556,43 @@ export default function WebGLUnifiedCylinder({
             rendererRef.current.render(sceneRef.current, localCameraRef.current)
           }
           
-          // Now capture from the canvas - this includes the cylindrical mask (shader discard)
+          // Capture from canvas and apply cylindrical mask manually
           const canvas = rendererRef.current.domElement
           
-          // The captured image will show:
-          // - Video inside cylinder (shader allows)
-          // - Black outside cylinder (shader discards → shows clearColor)
-          const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95)
+          // Create temporary canvas for masking
+          const tempCanvas = document.createElement('canvas')
+          tempCanvas.width = canvas.width
+          tempCanvas.height = canvas.height
+          const tempCtx = tempCanvas.getContext('2d')
           
-          console.log('✅ Scene captured from renderer canvas')
+          if (tempCtx) {
+            // Draw the full video frame
+            tempCtx.drawImage(canvas, 0, 0)
+            
+            // Apply cylindrical mask
+            // Calculate cylinder screen bounds (approximate - based on visible area)
+            const centerX = tempCanvas.width / 2
+            const centerY = tempCanvas.height / 2
+            const cylinderWidth = tempCanvas.width * 0.3 // Cylinder ~30% of screen width
+            const cylinderHeight = tempCanvas.height * 0.85 // Cylinder ~85% of screen height
+            
+            // Create mask: keep only cylinder area
+            tempCtx.globalCompositeOperation = 'destination-in'
+            
+            // Draw elliptical mask (cylinder viewed from front)
+            tempCtx.beginPath()
+            const radiusX = cylinderWidth / 2
+            const radiusY = cylinderHeight / 2
+            tempCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2)
+            tempCtx.fillStyle = 'white'
+            tempCtx.fill()
+          }
+          
+          const imageDataUrl = tempCanvas.toDataURL('image/jpeg', 0.95)
+          
+          console.log('✅ Scene captured with cylindrical mask applied')
           console.log(`   Canvas size: ${canvas.width}x${canvas.height}`)
-          console.log(`   Mask applied: pixels outside ${GEOSTXR_CONFIG.CYLINDER.RADIUS}cm radius are discarded`)
+          console.log(`   Mask: Elliptical area centered, keeping only cylinder region`)
           
           // Send captured image to parent
           if (onScenePhotoCaptured) {
