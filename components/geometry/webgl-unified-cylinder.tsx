@@ -208,15 +208,41 @@ export default function WebGLUnifiedCylinder({
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true // Smooth movement
     controls.dampingFactor = 0.05
-    controls.target.set(0, 0, cylinderCenter) // Rotate around cylinder center
-    controls.enablePan = false // Disable panning (only rotate and zoom)
-    controls.minDistance = distance * 0.5 // Min zoom (50% closer)
-    controls.maxDistance = distance * 2.0 // Max zoom (2x farther)
-    controls.minPolarAngle = Math.PI / 4 // Limit rotation (45°)
-    controls.maxPolarAngle = (3 * Math.PI) / 4 // Limit rotation (135°)
+    controls.target.set(0, 0, cylinderCenter) // Initial target at cylinder center
+    
+    // Enable panning with generous limits
+    controls.enablePan = true
+    controls.screenSpacePanning = true // Pan in screen space (more intuitive)
+    controls.panSpeed = 1.0 // Fast panning for easy repositioning
+    
+    // Zoom limits
+    controls.minDistance = distance * 0.3 // Min zoom (70% closer for detailed inspection)
+    controls.maxDistance = distance * 3.0 // Max zoom (3x farther for overview)
+    
+    // Rotation limits (prevent flipping upside down)
+    controls.minPolarAngle = Math.PI / 6 // 30° (can see from above)
+    controls.maxPolarAngle = (5 * Math.PI) / 6 // 150° (can see from below)
+    
+    // Allow full 360° horizontal rotation
+    controls.minAzimuthAngle = -Infinity
+    controls.maxAzimuthAngle = Infinity
+    
+    // Touch controls optimized for mobile
+    controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,    // 1 finger = rotate
+      TWO: THREE.TOUCH.DOLLY_PAN  // 2 fingers = zoom + pan simultaneously
+    }
+    
+    // Mouse controls for desktop
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,   // Left click + drag = rotate
+      MIDDLE: THREE.MOUSE.DOLLY,  // Middle mouse = zoom
+      RIGHT: THREE.MOUSE.PAN      // Right click + drag = pan
+    }
+    
     controls.enabled = false // Disabled by default, enable with UI toggle
     orbitControlsRef.current = controls
-    console.log('✅ OrbitControls created (disabled by default)')
+    console.log('✅ OrbitControls created (full 3D navigation: rotate + zoom + pan in all directions)')
 
     // Lighting
     scene.add(new THREE.AmbientLight(0x404040, 0.8))
@@ -796,7 +822,7 @@ export default function WebGLUnifiedCylinder({
             {controlsEnabled ? 'Controles Activos' : 'Controles Bloqueados'}
           </span>
           <span style={{ fontSize: '10px', opacity: 0.8 }}>
-            {controlsEnabled ? 'Arrastra para rotar, scroll para zoom' : 'Click para habilitar rotación/zoom'}
+            {controlsEnabled ? '1 dedo: rotar | 2 dedos: panear | pinch: zoom' : 'Click para habilitar rotación/zoom/pan'}
           </span>
         </div>
       </button>
