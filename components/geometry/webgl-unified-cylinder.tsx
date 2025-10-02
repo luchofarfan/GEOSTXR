@@ -272,25 +272,54 @@ export default function WebGLUnifiedCylinder({
     videoPlane.position.set(0, -0.1, cylinderHeight / 2) // Center at z=15
     videoPlane.rotateX(-Math.PI / 2)
     videoPlane.renderOrder = 1
+    videoPlane.visible = false // Hide background plane since video is now on cylinder
     scene.add(videoPlane)
-    console.log(`Video plane positioned at (0, -0.1, ${cylinderHeight / 2})`)
+    console.log(`Video plane created (hidden - video is mapped on cylinder)`)
 
     // Create cylinder (radius and cylinderHeight already defined above)
     // Cylinder from z=0 to z=30, centered at z=15
-    const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 32)
+    const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 64, 1, true) // 64 segments, open-ended
     cylinderGeometry.rotateX(Math.PI / 2) // Align with Z-axis (vertical)
+    
+    // Custom UV mapping for proper video projection onto cylinder
+    // Standard CylinderGeometry UV wraps around, but we need to adjust for front-facing view
+    const cylinderUVs = cylinderGeometry.attributes.uv
+    const positions = cylinderGeometry.attributes.position
+    
+    for (let i = 0; i < positions.count; i++) {
+      const x = positions.getX(i)
+      const y = positions.getY(i)
+      const z = positions.getZ(i)
+      
+      // Calculate angle around cylinder (0° = right, 90° = front, 180° = left)
+      const angle = Math.atan2(y, x)
+      
+      // Map only the front 180° (visible portion) to full texture width
+      // This prevents distortion on the back
+      let u = (angle + Math.PI / 2) / Math.PI // 0 to 1 for front 180°
+      u = Math.max(0, Math.min(1, u)) // Clamp to 0-1
+      
+      // V maps along cylinder height (Z-axis)
+      const v = z / cylinderHeight // 0 at bottom, 1 at top
+      
+      cylinderUVs.setXY(i, u, v)
+    }
+    
+    cylinderUVs.needsUpdate = true
 
+    // Apply video texture to cylinder surface with corrected UV mapping
     const cylinderMaterial = new THREE.MeshBasicMaterial({
-      color: 0x0066CC,
-      transparent: true,
-      opacity: 0.2, // More transparent to see video better
-      side: THREE.DoubleSide,
-      depthWrite: false
+      map: videoTexture, // Map video onto cylinder
+      side: THREE.FrontSide, // Only render outside (visible surface)
+      depthWrite: true,
+      transparent: false
     })
 
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial)
     cylinder.position.set(0, 0, cylinderHeight / 2) // Move to z=0 to z=30 range
     scene.add(cylinder)
+    
+    console.log('✅ Cylinder created with custom UV-mapped video texture')
 
     // Borders - Black lines at the edges of the cylinder
     // From z=0 (bottom) to z=30 (top), at x=±radius
