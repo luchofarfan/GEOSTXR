@@ -14,6 +14,7 @@ interface EdgeAlignmentOverlayProps {
   canvasWidth: number
   canvasHeight: number
   enabled: boolean
+  onWellAligned?: () => void // Callback when edges are well aligned
 }
 
 export function EdgeAlignmentOverlay({

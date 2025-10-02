@@ -292,8 +292,8 @@ export default function WebGLUnifiedCylinder({
     const uvs = planeGeometry.attributes.uv
     const uvArray = uvs.array as Float32Array
     for (let i = 0; i < uvArray.length; i += 2) {
-      uvArray[i] = uvArray[i]
-      uvArray[i + 1] = uvArray[i + 1] // Remove vertical flip - keep original orientation
+      uvArray[i] = 1 - uvArray[i] // Flip horizontally (mirror correction)
+      uvArray[i + 1] = uvArray[i + 1] // Keep vertical orientation
     }
     uvs.needsUpdate = true
     
