@@ -331,9 +331,9 @@ export default function WebGLUnifiedCylinder({
     videoPlane.position.set(0, -0.1, cylinderHeight / 2) // Center at z=15
     videoPlane.rotateX(-Math.PI / 2)
     videoPlane.renderOrder = 1
-    videoPlane.visible = false // Hide background plane since video is now on cylinder
+    videoPlane.visible = true // Show background video - displays real camera feed
     scene.add(videoPlane)
-    console.log(`Video plane created (hidden - video is mapped on cylinder)`)
+    console.log(`Video plane visible - shows real camera feed as background`)
 
     // Create cylinder (radius and cylinderHeight already defined above)
     // Cylinder from z=0 to z=30, centered at z=15
@@ -366,12 +366,14 @@ export default function WebGLUnifiedCylinder({
     
     cylinderUVs.needsUpdate = true
 
-    // Apply video texture to cylinder surface with corrected UV mapping
+    // Cylinder material: Transparent, only for raycasting (point selection)
+    // Video is shown as flat background, not mapped on cylinder
     const cylinderMaterial = new THREE.MeshBasicMaterial({
-      map: videoTexture, // Map video onto cylinder
-      side: THREE.FrontSide, // Only render outside (visible surface)
-      depthWrite: true,
-      transparent: false
+      color: 0x0066CC,
+      transparent: true,
+      opacity: 0.15, // Very transparent - just for reference
+      side: THREE.DoubleSide,
+      depthWrite: false
     })
 
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial)
