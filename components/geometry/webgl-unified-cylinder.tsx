@@ -50,12 +50,14 @@ export default function WebGLUnifiedCylinder({
   const localCameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<OrbitControls | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
+  const videoPlaneRef = useRef<THREE.Mesh | null>(null) // Reference to video plane for zoom
   const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
   const ellipsesRef = useRef<Map<string, THREE.Line>>(new Map()) // Map of planeId -> Three.js Line (ellipse)
   const [isReady, setIsReady] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
   const [controlsEnabled, setControlsEnabled] = useState(false)
+  const [videoZoom, setVideoZoom] = useState(1.0) // Video zoom level (1.0 = 100%)
 
   // Camera stream setup
   useEffect(() => {
@@ -336,6 +338,7 @@ export default function WebGLUnifiedCylinder({
     videoPlane.renderOrder = 1
     videoPlane.visible = true // Show background video - displays real camera feed
     scene.add(videoPlane)
+    videoPlaneRef.current = videoPlane // Store reference for zoom control
     console.log(`Video plane visible - shows real camera feed as background`)
 
     // Create cylinder (radius and cylinderHeight already defined above)
@@ -618,6 +621,14 @@ export default function WebGLUnifiedCylinder({
       console.log(`🎮 OrbitControls ${controlsEnabled ? 'ENABLED' : 'DISABLED'}`)
     }
   }, [controlsEnabled])
+
+  // Update video plane zoom
+  useEffect(() => {
+    if (videoPlaneRef.current) {
+      videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
+      console.log(`🔍 Video zoom: ${(videoZoom * 100).toFixed(0)}%`)
+    }
+  }, [videoZoom])
 
   // Handle point dragging (mousemove and touchmove)
   useEffect(() => {
@@ -906,6 +917,85 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
+      {/* Video Zoom Controls */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: '20px',
+          zIndex: 2010,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}
+      >
+        <button
+          onClick={() => setVideoZoom(prev => Math.min(prev + 0.1, 3.0))}
+          style={{
+            padding: '10px 16px',
+            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            border: '2px solid #60a5fa',
+            borderRadius: '10px',
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          🔍+
+        </button>
+        <div
+          style={{
+            padding: '6px 12px',
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '11px',
+            textAlign: 'center',
+            fontWeight: '600'
+          }}
+        >
+          {(videoZoom * 100).toFixed(0)}%
+        </div>
+        <button
+          onClick={() => setVideoZoom(prev => Math.max(prev - 0.1, 0.5))}
+          style={{
+            padding: '10px 16px',
+            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            border: '2px solid #60a5fa',
+            borderRadius: '10px',
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          🔍−
+        </button>
+        <button
+          onClick={() => setVideoZoom(1.0)}
+          style={{
+            padding: '8px 12px',
+            background: 'linear-gradient(135deg, #6b7280, #4b5563)',
+            border: '1px solid #9ca3af',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          100%
+        </button>
+      </div>
+
       {/* Controls Toggle Button */}
       <button
         onClick={() => setControlsEnabled(!controlsEnabled)}
