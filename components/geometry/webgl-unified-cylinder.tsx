@@ -7,6 +7,7 @@ import { GEOSTXR_CONFIG } from '@/lib/config'
 import { BOHLinesOverlay } from './boh-lines-overlay'
 import { PointMarkersOverlay } from './point-markers-overlay'
 import { RulerOverlay } from './ruler-overlay'
+import { useVideoGestures } from '@/hooks/use-video-gestures'
 
 interface WebGLUnifiedCylinderProps {
   className?: string
@@ -57,8 +58,11 @@ export default function WebGLUnifiedCylinder({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
   const [controlsEnabled, setControlsEnabled] = useState(false)
-  const [videoZoom, setVideoZoom] = useState(1.0) // Video zoom level (1.0 = 100%)
-  const [videoRotation, setVideoRotation] = useState(0) // Video rotation in degrees
+  
+  // Video gestures (pinch zoom and rotation)
+  const videoGestures = useVideoGestures(containerRef)
+  const videoZoom = videoGestures.zoom
+  const videoRotation = videoGestures.rotation
 
   // Camera stream setup
   useEffect(() => {
@@ -919,166 +923,53 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
-      {/* Video Adjustment Controls */}
+      {/* Video Adjustment Indicator */}
       <div
         style={{
           position: 'absolute',
           bottom: '20px',
           left: '20px',
           zIndex: 2010,
+          background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(15px)',
+          padding: '12px 16px',
+          borderRadius: '12px',
+          color: 'white',
+          fontSize: '12px',
+          border: '2px solid rgba(59, 130, 246, 0.5)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
           display: 'flex',
-          gap: '12px'
+          flexDirection: 'column',
+          gap: '6px',
+          maxWidth: '200px'
         }}
       >
-        {/* Zoom Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ 
-            fontSize: '11px', 
-            fontWeight: 'bold', 
-            color: 'white', 
-            textAlign: 'center',
-            background: 'rgba(59, 130, 246, 0.3)',
-            padding: '4px',
-            borderRadius: '6px'
-          }}>
-            ZOOM
-          </div>
-          <button
-            onClick={() => setVideoZoom(prev => Math.min(prev + 0.1, 3.0))}
-            style={{
-              padding: '10px 16px',
-              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-              border: '2px solid #60a5fa',
-              borderRadius: '10px',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            +
-          </button>
-          <div
-            style={{
-              padding: '6px 12px',
-              background: 'rgba(0,0,0,0.7)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '11px',
-              textAlign: 'center',
-              fontWeight: '600'
-            }}
-          >
-            {(videoZoom * 100).toFixed(0)}%
-          </div>
-          <button
-            onClick={() => setVideoZoom(prev => Math.max(prev - 0.1, 0.5))}
-            style={{
-              padding: '10px 16px',
-              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-              border: '2px solid #60a5fa',
-              borderRadius: '10px',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            −
-          </button>
+        <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' }}>
+          🎯 Ajustar Feed
         </div>
-
-        {/* Rotation Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ 
-            fontSize: '11px', 
-            fontWeight: 'bold', 
-            color: 'white', 
-            textAlign: 'center',
-            background: 'rgba(168, 85, 247, 0.3)',
-            padding: '4px',
-            borderRadius: '6px'
-          }}>
-            ROTAR
-          </div>
-          <button
-            onClick={() => setVideoRotation(prev => (prev + 5) % 360)}
-            style={{
-              padding: '10px 16px',
-              background: 'linear-gradient(135deg, #a855f7, #9333ea)',
-              border: '2px solid #c084fc',
-              borderRadius: '10px',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            ↻
-          </button>
-          <div
-            style={{
-              padding: '6px 12px',
-              background: 'rgba(0,0,0,0.7)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '11px',
-              textAlign: 'center',
-              fontWeight: '600'
-            }}
-          >
-            {videoRotation.toFixed(0)}°
-          </div>
-          <button
-            onClick={() => setVideoRotation(prev => (prev - 5 + 360) % 360)}
-            style={{
-              padding: '10px 16px',
-              background: 'linear-gradient(135deg, #a855f7, #9333ea)',
-              border: '2px solid #c084fc',
-              borderRadius: '10px',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            ↺
-          </button>
+        <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#d1d5db' }}>
+          <div>🤏 <strong>Pinch:</strong> Zoom ({(videoZoom * 100).toFixed(0)}%)</div>
+          <div>🔄 <strong>2 dedos rotar:</strong> {videoRotation.toFixed(0)}°</div>
         </div>
-
-        {/* Reset All */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        {(videoZoom !== 1.0 || videoRotation !== 0) && (
           <button
-            onClick={() => {
-              setVideoZoom(1.0)
-              setVideoRotation(0)
-            }}
+            onClick={() => videoGestures.reset()}
             style={{
-              padding: '12px 14px',
+              marginTop: '6px',
+              padding: '8px',
               background: 'linear-gradient(135deg, #6b7280, #4b5563)',
               border: '1px solid #9ca3af',
-              borderRadius: '10px',
+              borderRadius: '8px',
               color: 'white',
-              fontSize: '14px',
+              fontSize: '11px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-              transition: 'all 0.2s ease'
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
             }}
           >
-            🔄
+            🔄 Reset
           </button>
-        </div>
+        )}
       </div>
 
       {/* Controls Toggle Button */}
