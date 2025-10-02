@@ -505,6 +505,10 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
             canvasWidth={virtualBorders.canvasWidth}
             canvasHeight={virtualBorders.canvasHeight}
             enabled={isDetecting}
+            onWellAligned={() => {
+              console.log('📸 Bordes perfectamente alineados - capturando automáticamente...')
+              captureScenePhoto()
+            }}
           />
         )}
 

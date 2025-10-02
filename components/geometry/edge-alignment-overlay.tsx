@@ -25,9 +25,12 @@ export function EdgeAlignmentOverlay({
   alignmentQuality,
   canvasWidth,
   canvasHeight,
-  enabled
+  enabled,
+  onWellAligned
 }: EdgeAlignmentOverlayProps) {
   const [showHelp, setShowHelp] = useState(true)
+  const [alignmentTimer, setAlignmentTimer] = useState<NodeJS.Timeout | null>(null)
+  const [hasTriggeredCapture, setHasTriggeredCapture] = useState(false)
 
   useEffect(() => {
     // Auto-hide help after 5 seconds
@@ -45,6 +48,39 @@ export function EdgeAlignmentOverlay({
   const avgDiff = (leftDiff + rightDiff) / 2
   const maxAllowedDiff = canvasWidth * 0.05 // 5% of canvas width
   const isWellAligned = avgDiff < maxAllowedDiff
+
+  // Trigger auto-capture when well aligned for 2 seconds
+  useEffect(() => {
+    if (!enabled || hasTriggeredCapture) return
+
+    if (isWellAligned && alignmentQuality > 0.75) {
+      // Start countdown if not already started
+      if (!alignmentTimer) {
+        console.log('🎯 Bordes alineados - iniciando countdown para captura automática...')
+        const timer = setTimeout(() => {
+          console.log('✅ Captura automática activada - bordes perfectamente alineados')
+          setHasTriggeredCapture(true)
+          if (onWellAligned) {
+            onWellAligned()
+          }
+        }, 2000) // Wait 2 seconds of stable alignment
+        setAlignmentTimer(timer)
+      }
+    } else {
+      // Cancel countdown if alignment lost
+      if (alignmentTimer) {
+        console.log('⚠️ Alineamiento perdido - cancelando captura automática')
+        clearTimeout(alignmentTimer)
+        setAlignmentTimer(null)
+      }
+    }
+
+    return () => {
+      if (alignmentTimer) {
+        clearTimeout(alignmentTimer)
+      }
+    }
+  }, [isWellAligned, alignmentQuality, enabled, alignmentTimer, hasTriggeredCapture, onWellAligned])
 
   // Determine color based on alignment quality
   const getAlignmentColor = () => {
@@ -125,10 +161,11 @@ export function EdgeAlignmentOverlay({
             height: '10px',
             borderRadius: '50%',
             background: color,
-            boxShadow: `0 0 8px ${color}`
+            boxShadow: `0 0 8px ${color}`,
+            animation: alignmentTimer ? 'pulse 0.5s ease-in-out infinite' : 'none'
           }}
         />
-        {isWellAligned ? '✅ Bordes Alineados' : '⚠️ Ajustar Alineamiento'}
+        {alignmentTimer ? '⏱️ Capturando en 2s...' : (isWellAligned ? '✅ Bordes Alineados' : '⚠️ Ajustar Alineamiento')}
       </div>
 
       {/* Alignment Metrics (Debug Info) */}
@@ -177,7 +214,7 @@ export function EdgeAlignmentOverlay({
         </div>
       )}
 
-      {/* CSS Animation */}
+      {/* CSS Animations */}
       <style jsx>{`
         @keyframes pulse-edge {
           0%, 100% {
@@ -185,6 +222,16 @@ export function EdgeAlignmentOverlay({
           }
           50% {
             opacity: 1;
+          }
+        }
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.3);
+            opacity: 0.7;
           }
         }
       `}</style>
