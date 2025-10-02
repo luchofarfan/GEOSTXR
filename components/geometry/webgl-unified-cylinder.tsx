@@ -23,6 +23,7 @@ interface WebGLUnifiedCylinderProps {
   isFrozen?: boolean
   frozenImageDataUrl?: string | null
   onScenePhotoCaptured?: (imageDataUrl: string) => void
+  onVirtualBorderPositionsUpdate?: (leftX: number, rightX: number, canvasWidth: number, canvasHeight: number) => void
 }
 
 export default function WebGLUnifiedCylinder({ 
@@ -39,7 +40,8 @@ export default function WebGLUnifiedCylinder({
   scenePhotoId,
   isFrozen = false,
   frozenImageDataUrl = null,
-  onScenePhotoCaptured
+  onScenePhotoCaptured,
+  onVirtualBorderPositionsUpdate
 }: WebGLUnifiedCylinderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -741,6 +743,39 @@ export default function WebGLUnifiedCylinder({
       ellipseLine.visible = plane.visible
     })
   }, [isReady, planeManager?.planes])
+
+  // Calculate and emit virtual cylinder border positions (for edge alignment overlay)
+  useEffect(() => {
+    if (!isReady || !localCameraRef.current || !containerSize.width || !onVirtualBorderPositionsUpdate) {
+      return
+    }
+
+    const project3DTo2D = (x: number, y: number, z: number) => {
+      const vector = new THREE.Vector3(x, y, z)
+      vector.project(localCameraRef.current!)
+      
+      return {
+        x: (vector.x * 0.5 + 0.5) * containerSize.width,
+        y: (-vector.y * 0.5 + 0.5) * containerSize.height
+      }
+    }
+
+    // Virtual cylinder borders are at x = ±radius, y = 0, z = middle height
+    const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
+    const midHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2
+
+    // Project left border (x = -radius) and right border (x = +radius)
+    const leftBorderPos = project3DTo2D(-radius, 0, midHeight)
+    const rightBorderPos = project3DTo2D(radius, 0, midHeight)
+
+    // Emit positions to parent component
+    onVirtualBorderPositionsUpdate(
+      leftBorderPos.x,
+      rightBorderPos.x,
+      containerSize.width,
+      containerSize.height
+    )
+  }, [isReady, containerSize, onVirtualBorderPositionsUpdate])
 
   // Handle clicks/drags on cylinder to add or reposition points
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {

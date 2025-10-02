@@ -11,6 +11,9 @@ interface DetectionResult {
   centeredness: number
   estimatedDistance: number // Estimated distance in cm
   apparentWidth: number // Width in pixels
+  leftEdgeX: number // Left edge X position in pixels
+  rightEdgeX: number // Right edge X position in pixels
+  edgeAlignmentQuality: number // 0-1, how well aligned with virtual cylinder
 }
 
 export class CylinderDetector {
@@ -19,6 +22,7 @@ export class CylinderDetector {
   private detectionInterval: number | null = null
   private onReadyCallback: (() => void) | null = null
   private onDistanceUpdateCallback: ((distance: number) => void) | null = null
+  private onEdgeDetectionCallback: ((leftX: number, rightX: number, quality: number) => void) | null = null
   private hasAutoCaptured = false
   
   // Known cylinder dimensions
@@ -39,10 +43,12 @@ export class CylinderDetector {
   startDetection(
     video: HTMLVideoElement, 
     onReady: () => void,
-    onDistanceUpdate?: (distance: number) => void
+    onDistanceUpdate?: (distance: number) => void,
+    onEdgeDetection?: (leftX: number, rightX: number, quality: number) => void
   ) {
     this.onReadyCallback = onReady
     this.onDistanceUpdateCallback = onDistanceUpdate || null
+    this.onEdgeDetectionCallback = onEdgeDetection || null
     this.hasAutoCaptured = false
     
     // Set canvas size to match video
@@ -60,6 +66,11 @@ export class CylinderDetector {
       // Update distance to parent component
       if (this.onDistanceUpdateCallback) {
         this.onDistanceUpdateCallback(result.estimatedDistance)
+      }
+      
+      // Update edge detection to parent component
+      if (this.onEdgeDetectionCallback) {
+        this.onEdgeDetectionCallback(result.leftEdgeX, result.rightEdgeX, result.edgeAlignmentQuality)
       }
       
       // Check if distance is within target range (26cm ± 3cm)
@@ -103,7 +114,7 @@ export class CylinderDetector {
       const hasVerticalEdges = this.detectVerticalEdges(edgeMap)
       const hasCurvedEdges = this.detectCurvedEdges(edgeMap)
       const centeredness = this.calculateCenteredness(edgeMap)
-      const apparentWidth = this.measureApparentWidth(edgeMap)
+      const widthData = this.measureApparentWidth(edgeMap)
       
       // Estimate distance based on apparent size
       // Using pinhole camera model: distance = (real_size × focal_length) / apparent_size
@@ -112,8 +123,12 @@ export class CylinderDetector {
       const frameWidth = this.canvas.width
       const referenceWidth = frameWidth * 0.4 // Expected width at 26cm
       const estimatedDistance = referenceWidth > 0 
-        ? (this.TARGET_DISTANCE * referenceWidth) / Math.max(apparentWidth, 1)
+        ? (this.TARGET_DISTANCE * referenceWidth) / Math.max(widthData.width, 1)
         : 999
+      
+      // Calculate edge alignment quality (will be compared with virtual cylinder borders)
+      // For now, use centeredness as a proxy
+      const edgeAlignmentQuality = centeredness
       
       // Calculate confidence
       let confidence = 0
@@ -121,7 +136,7 @@ export class CylinderDetector {
       if (hasCurvedEdges) confidence += 0.3
       confidence += centeredness * 0.3
       
-      const isReady = confidence > 0.6 && apparentWidth > frameWidth * 0.2
+      const isReady = confidence > 0.6 && widthData.width > frameWidth * 0.2
       
       return {
         isReady,
@@ -130,7 +145,10 @@ export class CylinderDetector {
         hasCurvedEdges,
         centeredness,
         estimatedDistance,
-        apparentWidth
+        apparentWidth: widthData.width,
+        leftEdgeX: widthData.leftX,
+        rightEdgeX: widthData.rightX,
+        edgeAlignmentQuality
       }
     } catch (error) {
       console.error('Error analyzing frame:', error)
@@ -141,15 +159,18 @@ export class CylinderDetector {
         hasCurvedEdges: false,
         centeredness: 0,
         estimatedDistance: 999,
-        apparentWidth: 0
+        apparentWidth: 0,
+        leftEdgeX: 0,
+        rightEdgeX: 0,
+        edgeAlignmentQuality: 0
       }
     }
   }
 
   /**
-   * Measure apparent width of cylinder in pixels
+   * Measure apparent width of cylinder in pixels and return edge positions
    */
-  private measureApparentWidth(edgeMap: boolean[][]): number {
+  private measureApparentWidth(edgeMap: boolean[][]): { width: number; leftX: number; rightX: number } {
     const height = edgeMap.length
     const width = edgeMap[0]?.length || 0
     
@@ -173,7 +194,11 @@ export class CylinderDetector {
     }
     
     const apparentWidth = rightEdge - leftEdge
-    return apparentWidth > 0 ? apparentWidth : 0
+    return { 
+      width: apparentWidth > 0 ? apparentWidth : 0,
+      leftX: leftEdge < width ? leftEdge : 0,
+      rightX: rightEdge > 0 ? rightEdge : 0
+    }
   }
 
   /**

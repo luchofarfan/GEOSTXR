@@ -10,6 +10,7 @@ import { FloatingValidationPanel } from '@/components/geometry/floating-validati
 import { PhotoGalleryPanel } from '@/components/geometry/photo-gallery-panel'
 import { SceneCaptureButtons } from '@/components/geometry/scene-capture-buttons'
 import { DistanceIndicator } from '@/components/geometry/distance-indicator'
+import { EdgeAlignmentOverlay } from '@/components/geometry/edge-alignment-overlay'
 import { FloatingCustomColumnsPanel } from '@/components/geometry/floating-custom-columns-panel'
 import { ManageStructureTypesPanel } from '@/components/geometry/manage-structure-types-panel'
 import { FloatingDrillHoleInfoPanel } from '@/components/geometry/floating-drillhole-info-panel'
@@ -58,6 +59,11 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
   const [isFrozen, setIsFrozen] = useState(false) // Freeze video during point selection
   const [estimatedDistance, setEstimatedDistance] = useState<number>(999)
   const [isDetecting, setIsDetecting] = useState(false)
+  
+  // State for edge alignment overlay
+  const [detectedEdges, setDetectedEdges] = useState({ leftX: 0, rightX: 0, quality: 0 })
+  const [virtualBorders, setVirtualBorders] = useState({ leftX: 0, rightX: 0, canvasWidth: 0, canvasHeight: 0 })
+  const [showEdgeAlignment, setShowEdgeAlignment] = useState(true) // Show alignment feedback
 
   // State for depth input modal
   const [showDepthInput, setShowDepthInput] = useState(false)
@@ -368,6 +374,10 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
         (distance) => {
           // Update estimated distance in real-time
           setEstimatedDistance(distance)
+        },
+        (leftX, rightX, quality) => {
+          // Update detected edge positions and alignment quality
+          setDetectedEdges({ leftX, rightX, quality })
         }
       )
       
@@ -471,6 +481,9 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
             setIsFrozen(true)
             console.log('📸 Scene photo received and frozen')
           }}
+          onVirtualBorderPositionsUpdate={(leftX, rightX, canvasWidth, canvasHeight) => {
+            setVirtualBorders({ leftX, rightX, canvasWidth, canvasHeight })
+          }}
         />
         
         {/* Distance Indicator (top-center) */}
@@ -480,6 +493,20 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
           tolerance={3}
           isDetecting={isDetecting && !scenePhotoId}
         />
+
+        {/* Edge Alignment Overlay */}
+        {showEdgeAlignment && !scenePhotoId && virtualBorders.canvasWidth > 0 && (
+          <EdgeAlignmentOverlay
+            detectedLeftX={detectedEdges.leftX}
+            detectedRightX={detectedEdges.rightX}
+            virtualLeftX={virtualBorders.leftX}
+            virtualRightX={virtualBorders.rightX}
+            alignmentQuality={detectedEdges.quality}
+            canvasWidth={virtualBorders.canvasWidth}
+            canvasHeight={virtualBorders.canvasHeight}
+            enabled={isDetecting}
+          />
+        )}
 
         {/* Scene Capture Buttons (top-right) */}
         <SceneCaptureButtons
