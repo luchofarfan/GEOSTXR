@@ -56,23 +56,58 @@ export default function WebGLUnifiedCylinder({
   useEffect(() => {
     const getCameraStream = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            facingMode: 'environment'
-          }
-        })
+        console.log('📱 Requesting camera access...')
         
-        if (videoRef.current) {
+        // Try with environment camera first (rear camera)
+        let stream: MediaStream | null = null
+        
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              facingMode: 'environment'
+            }
+          })
+          console.log('✅ Environment camera (rear) accessed successfully')
+        } catch (envErr) {
+          console.warn('⚠️ Environment camera failed, trying any camera...', envErr)
+          
+          // Fallback: Try without facingMode constraint
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+              }
+            })
+            console.log('✅ Any camera accessed successfully')
+          } catch (anyErr) {
+            console.error('❌ No camera available:', anyErr)
+            alert('❌ Error de Cámara\n\nNo se pudo acceder a la cámara.\n\nVerifica:\n1. Permisos de Chrome para cámara\n2. Que no esté siendo usada por otra app\n3. Configuración del dispositivo')
+            return
+          }
+        }
+        
+        if (stream && videoRef.current) {
+          console.log('📹 Setting video stream...')
           videoRef.current.srcObject = stream
+          
           // Wait for video to be ready
           videoRef.current.onloadedmetadata = () => {
+            console.log('✅ Video metadata loaded')
             videoRef.current?.play()
+              .then(() => console.log('✅ Video playing'))
+              .catch(err => console.error('❌ Video play error:', err))
+          }
+          
+          videoRef.current.onerror = (e) => {
+            console.error('❌ Video element error:', e)
           }
         }
       } catch (err) {
-        console.error('Error accessing camera:', err)
+        console.error('❌ Critical camera error:', err)
+        alert(`❌ Error Crítico de Cámara\n\n${err}\n\nIntenta recargar la página o usar Chrome.`)
       }
     }
 
@@ -88,11 +123,24 @@ export default function WebGLUnifiedCylinder({
 
   // Initialize Three.js scene ONCE
   useEffect(() => {
-    if (!containerRef.current || !videoRef.current) return
+    if (!containerRef.current || !videoRef.current) {
+      console.log('⚠️ Container or video ref not ready yet')
+      return
+    }
     if (sceneRef.current) {
       console.log('Scene already initialized, skipping')
       return // Already initialized
     }
+
+    // Check WebGL support
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    if (!gl) {
+      console.error('❌ WebGL not supported on this device')
+      alert('❌ WebGL No Soportado\n\nTu dispositivo no soporta WebGL.\n\nPrueba con:\n1. Actualizar Chrome\n2. Activar aceleración de hardware\n3. Usar un dispositivo más reciente')
+      return
+    }
+    console.log('✅ WebGL is supported')
 
     const container = containerRef.current
     const video = videoRef.current
