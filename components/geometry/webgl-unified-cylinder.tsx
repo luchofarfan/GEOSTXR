@@ -191,9 +191,9 @@ export default function WebGLUnifiedCylinder({
     const cylinderCenter = cylHeight / 2 // z=15cm (center)
     
     // FOV optimized for mobile portrait: needs wider FOV to show full 30cm cylinder
-    // Portrait mobile: 65° to fit full cylinder height (30cm) at 26cm distance
+    // Portrait mobile: 75° to fit full cylinder height (30cm) at 26cm distance with margins
     // Landscape/desktop: 50° works fine
-    const fov = (isPortrait && isMobile) ? 65 : 50
+    const fov = (isPortrait && isMobile) ? 75 : 50
     
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 1000)
     
@@ -291,7 +291,7 @@ export default function WebGLUnifiedCylinder({
     const uvArray = uvs.array as Float32Array
     for (let i = 0; i < uvArray.length; i += 2) {
       uvArray[i] = uvArray[i]
-      uvArray[i + 1] = 1 - uvArray[i + 1]
+      uvArray[i + 1] = uvArray[i + 1] // Remove vertical flip - keep original orientation
     }
     uvs.needsUpdate = true
     
