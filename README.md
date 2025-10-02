@@ -1,230 +1,133 @@
-# GeoStVR - Structural Logging AR Application
+# 🌐 GeoStXR Hub
 
-A Next.js Progressive Web Application (PWA) for structural logging and measurement using Augmented Reality technology. GeoStVR enables precise structural analysis through camera-based point tracking, angle measurements, and depth calculations.
+**Hub Web centralizado para análisis y visualización de datos estructurales capturados con GeoStXR PWA**
 
-## 🎯 Overview
+## ✨ Funcionalidades (POC)
 
-GeoStVR is a professional-grade AR application designed for structural engineers, surveyors, and construction professionals. The application provides real-time measurement capabilities through camera integration, allowing users to capture structural data, calculate angles between reference points (BOHs), and generate comprehensive measurement reports.
+### ✅ Implementado:
+- 📤 **Importación de CSV** desde GEOSTXR
+- 📊 **Dashboard** con estadísticas globales
+- 🔬 **Gestión de sondajes** y proyectos
+- 🎮 **Visualización 3D** de sondajes individuales
+- 🪨 **Estructuras como discos** intersectando el sondaje
+- 🎨 **Colores por tipo** de estructura
 
-## 🚀 Key Features
+### 🚧 Próximamente:
+- 📈 Gráficos estadísticos (histogramas, rosetas)
+- 🗺️ Vista multi-sondaje con coordenadas UTM
+- 📑 Exportación de reportes (PDF, CSV consolidado)
+- 🔐 Autenticación y multi-usuario
+- ☁️ Sincronización automática desde PWA
 
-### Core Functionality
-
-- **Camera Integration**: Real-time camera feed with AR overlay capabilities
-- **Point Tracking**: Precise tracking of measurement points with trio-based organization
-- **BOHs Management**: Reference point system for structural measurements
-- **Angle Calculations**: Automatic calculation of angles between reference points
-- **Depth Measurements**: Manual and automatic depth measurement capabilities
-- **Data Export**: Comprehensive reporting and data export functionality
-- **Offline Support**: Full PWA capabilities for field work without internet connection
-
-### User Interface
-
-- **Central Visualizer**: Blue measurement band with point visualization
-- **Control Panel**: Camera controls, point management, and data operations
-- **Measurement Report**: Real-time display of calculated angles and depths
-- **Export System**: Multiple export formats for professional reporting
-
-## 🛠 Technical Stack
-
-### Frontend Framework
-
-- **Next.js 14**: React framework with App Router for optimal performance
-- **TypeScript**: Type-safe development with enhanced developer experience
-- **Tailwind CSS**: Utility-first CSS framework for responsive design
-- **Framer Motion**: Smooth animations and transitions
-
-### AR & Camera Integration
-
-- **MediaDevices API**: Native camera access and control
-- **WebRTC**: Real-time camera streaming capabilities
-- **Canvas API**: Custom AR overlay rendering
-- **WebGL**: Advanced graphics rendering for measurement visualization
-
-### State Management & Data
-
-- **Zustand**: Lightweight state management for app state
-- **React Query**: Server state management and caching
-- **IndexedDB**: Local data storage for offline functionality
-- **File System Access API**: Native file operations
-
-### PWA & Offline Support
-
-- **Workbox**: Service worker management and caching strategies
-- **Web App Manifest**: PWA configuration and installation
-- **Cache API**: Offline data storage and retrieval
-- **Background Sync**: Data synchronization when connection is restored
-
-### Development & Build Tools
-
-- **ESLint**: Code linting and quality assurance
-- **Prettier**: Code formatting and consistency
-- **Husky**: Git hooks for pre-commit validation
-- **Vercel**: Deployment and hosting platform
-
-## 📱 PWA Capabilities
-
-### Offline Functionality
-
-- Complete app functionality without internet connection
-- Local data storage and retrieval
-- Background data synchronization
-- Offline measurement and calculation capabilities
-
-### Installation & Performance
-
-- Native app-like installation experience
-- Fast loading and responsive interface
-- Optimized bundle size and caching strategies
-- Cross-platform compatibility (iOS, Android, Desktop)
-
-## 🏗 Architecture
-
-### Component Structure
-
-```
-src/
-├── app/                    # Next.js App Router
-├── components/             # Reusable UI components
-│   ├── camera/            # Camera and AR components
-│   ├── measurement/       # Measurement visualization
-│   ├── controls/          # Control panel components
-│   └── reports/           # Report and export components
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utility functions and configurations
-├── stores/                # Zustand state stores
-├── types/                 # TypeScript type definitions
-└── utils/                 # Helper functions
-```
-
-### Data Flow
-
-1. **Camera Input**: Real-time camera feed processing
-2. **Point Detection**: AR point tracking and validation
-3. **Measurement Calculation**: Real-time angle and depth calculations
-4. **Data Storage**: Local storage with IndexedDB
-5. **Report Generation**: Comprehensive measurement reports
-6. **Export System**: Multiple format support (PDF, CSV, JSON)
-
-## 🎨 Design System
-
-### Visual Elements
-
-- **Color Scheme**: Professional blue and grey palette
-- **Typography**: Clean, readable fonts optimized for field use
-- **Icons**: Consistent iconography for intuitive navigation
-- **Responsive Design**: Optimized for mobile and tablet devices
-
-### User Experience
-
-- **Intuitive Controls**: Simple, gesture-based interactions
-- **Real-time Feedback**: Immediate visual confirmation of actions
-- **Professional Interface**: Clean, uncluttered design for field work
-- **Accessibility**: WCAG compliant design for inclusive usage
-
-## 🔧 Development Setup
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn package manager
-- Modern web browser with camera support
-- HTTPS environment for camera access (required for production)
-
-### Installation
+## 🚀 Inicio Rápido
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd geostvr
-
-# Install dependencies
+# Instalar dependencias
 npm install
 
-# Start development server
+# Iniciar servidor de desarrollo
 npm run dev
 
-# Build for production
-npm run build
-
-# Start production server
-npm start
+# Abrir en navegador
+http://localhost:3000
 ```
 
-### Environment Configuration
+## 📂 Estructura del Proyecto
 
-```bash
-# .env.local
-NEXT_PUBLIC_APP_NAME=GeoStVR
-NEXT_PUBLIC_APP_VERSION=v31
-NEXT_PUBLIC_CAMERA_RESOLUTION=1920x1080
+```
+geostxr-hub/
+├── app/
+│   ├── page.tsx           # Dashboard principal
+│   └── layout.tsx         # Layout global
+├── components/
+│   ├── csv-uploader.tsx   # Upload e importación de CSV
+│   ├── dashboard.tsx      # Estadísticas y lista de proyectos
+│   └── drill-hole-viewer-3d.tsx  # Visualización 3D
+├── lib/
+│   └── csv-parser.ts      # Parser de CSV de GEOSTXR
+├── types/
+│   └── geostxr-data.ts    # Definiciones de tipos
+└── docs/
+    └── HUB_WEB_DESIGN.md  # Diseño completo del sistema
 ```
 
-## 📊 Performance Optimization
+## 📊 Formato de Datos
 
-### Bundle Optimization
+El hub importa archivos CSV exportados desde GEOSTXR con el siguiente formato:
 
-- Code splitting and lazy loading
-- Image optimization with Next.js Image component
-- Tree shaking for minimal bundle size
-- Service worker caching strategies
+```csv
+# Sondaje: DDH-001
+# Azimut Sondaje: 45.0°
+# Profundidad Manual: 15 cm
+# ...
 
-### Runtime Performance
+Plano,Tipo_Estructura,Profundidad_cm,Alpha_grados,Beta_grados,...
+1,Veta,15.5,45.2,12.3,...
+2,Falla,18.7,60.1,8.5,...
+```
 
-- Efficient state management with Zustand
-- Optimized re-rendering with React.memo
-- Debounced calculations for smooth performance
-- Memory management for long-running sessions
+## 🎮 Uso
 
-## 🔒 Security & Privacy
+1. **Importar Datos:**
+   - Click en "📤 Importar"
+   - Arrastra archivo CSV o selecciona
+   - Preview automático
+   - Datos agregados al proyecto
 
-### Data Protection
+2. **Ver Dashboard:**
+   - Estadísticas globales
+   - Lista de sondajes
+   - Click en sondaje para ver detalles
 
-- Local-first data storage
-- No external data transmission without consent
-- Secure camera access permissions
-- Privacy-compliant data handling
+3. **Visualización 3D:**
+   - Vista interactiva del sondaje completo
+   - Estructuras coloreadas por tipo
+   - Rotación, zoom, pan con mouse
 
-### Security Measures
+## 🛠️ Stack Tecnológico
 
-- HTTPS enforcement for production
-- Content Security Policy implementation
-- Secure camera API usage
-- Input validation and sanitization
+- **Framework:** Next.js 14 + TypeScript
+- **Estilos:** TailwindCSS
+- **3D:** Three.js
+- **Gráficos:** Recharts (próximamente)
+- **CSV:** PapaParse
+- **Hosting:** Vercel
 
-## 🚀 Deployment
+## 📝 Roadmap
 
-### Production Build
+### Fase 1: POC ✅
+- [x] Setup del proyecto
+- [x] Importación de CSV
+- [x] Dashboard básico
+- [x] Visualización 3D simple
 
-- Optimized Next.js build with static generation
-- PWA manifest and service worker configuration
-- CDN-ready static assets
-- Environment-specific configurations
+### Fase 2: Analytics (Próximo)
+- [ ] Gráficos estadísticos
+- [ ] Stereonets (rosetas)
+- [ ] Filtros avanzados
+- [ ] Análisis de dominios
 
-### Hosting Options
+### Fase 3: Multi-Proyecto
+- [ ] Base de datos (Supabase)
+- [ ] Autenticación
+- [ ] Gestión de múltiples proyectos
+- [ ] Upload de fotos
 
-- **Vercel**: Recommended for seamless Next.js deployment
-- **Netlify**: Alternative with excellent PWA support
-- **Self-hosted**: Docker containerization support
+### Fase 4: Avanzado
+- [ ] Exportación a formatos geológicos
+- [ ] Reportes PDF automatizados
+- [ ] API para sincronización con PWA
+- [ ] Dashboard en tiempo real
 
-## 📈 Future Enhancements
+## 📖 Documentación
 
-### Planned Features
+Ver `docs/HUB_WEB_DESIGN.md` para diseño completo y arquitectura.
 
-- Advanced AR visualization with WebXR
-- Cloud synchronization capabilities
-- Multi-user collaboration features
-- Advanced measurement algorithms
-- Integration with CAD software
-- Machine learning-based point detection
+## 🔗 Proyectos Relacionados
 
-### Scalability Considerations
-
-- Modular architecture for easy feature addition
-- Plugin system for custom measurement tools
-- API integration for external data sources
-- Multi-language support for international usage
+- **GeoStXR PWA:** Aplicación móvil para captura de datos en campo
+- **Repository:** https://github.com/luchofarfan/GEOSTXR
 
 ---
 
-**GeoStVR v31** - Professional Structural Logging with Augmented Reality
+**Desarrollado como parte del ecosistema GeoStXR** 🪨✨
