@@ -63,6 +63,10 @@ export function BOHLinesOverlay({
   const x2 = radius * Math.cos(angle2Rad)
   const y2 = radius * Math.sin(angle2Rad) + bohOffset // Slightly closer to camera
   
+  console.log(`BOH 3D positions:`)
+  console.log(`  BOH1 (${line1Angle.toFixed(1)}°): x=${x1.toFixed(2)}, y=${y1.toFixed(2)}, z=0 to ${cylinderHeight/2}`)
+  console.log(`  BOH2 (${line2Angle.toFixed(1)}°): x=${x2.toFixed(2)}, y=${y2.toFixed(2)}, z=${cylinderHeight/2} to ${cylinderHeight}`)
+  
   // Project 3D points to 2D screen using camera (if available)
   let line1Left = containerWidth / 2
   let line2Left = containerWidth / 2
@@ -118,12 +122,14 @@ export function BOHLinesOverlay({
     const cylinderScreenBottom = boh2_top.y
     const cylinderScreenHeight = Math.abs(cylinderScreenBottom - cylinderScreenTop)
     
+    console.log(`BOH 2D Projections:`)
+    console.log(`  BOH1 bottom (z=0): screen (${boh1_bottom.x.toFixed(0)}, ${boh1_bottom.y.toFixed(0)}), screenZ=${boh1_bottom.screenZ.toFixed(3)}`)
+    console.log(`  BOH1 top (z=15): screen (${boh1_top.x.toFixed(0)}, ${boh1_top.y.toFixed(0)}), screenZ=${boh1_top.screenZ.toFixed(3)}`)
+    console.log(`  BOH2 bottom (z=15): screen (${boh2_bottom.x.toFixed(0)}, ${boh2_bottom.y.toFixed(0)}), screenZ=${boh2_bottom.screenZ.toFixed(3)}`)
+    console.log(`  BOH2 top (z=30): screen (${boh2_top.x.toFixed(0)}, ${boh2_top.y.toFixed(0)}), screenZ=${boh2_top.screenZ.toFixed(3)}`)
     console.log(`BOH Heights: BOH1=${boh1Height.toFixed(0)}px + BOH2=${boh2Height.toFixed(0)}px = ${totalBOHHeight.toFixed(0)}px`)
     console.log(`Cylinder screen height: ${cylinderScreenHeight.toFixed(0)}px (should match total BOH)`)
     console.log(`Height match: ${Math.abs(totalBOHHeight - cylinderScreenHeight) < 1 ? '✓ OK' : '✗ MISMATCH'}`)
-    
-    console.log(`BOH1 (${line1Angle}°): 3D(${x1.toFixed(2)}, ${y1.toFixed(2)}) → Screen X=${line1Left.toFixed(0)}px, Y=${boh1TopY.toFixed(0)}-${boh1BottomY.toFixed(0)}px`)
-    console.log(`BOH2 (${line2Angle}°): 3D(${x2.toFixed(2)}, ${y2.toFixed(2)}) → Screen X=${line2Left.toFixed(0)}px, Y=${boh2TopY.toFixed(0)}-${(boh2TopY + boh2Height).toFixed(0)}px`)
   } else {
     // Fallback to approximate positioning
     const centerX = containerWidth / 2
