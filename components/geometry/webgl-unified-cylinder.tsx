@@ -178,39 +178,33 @@ export default function WebGLUnifiedCylinder({
     scene.background = new THREE.Color(0x000000)
     sceneRef.current = scene
 
-    // Camera - looking at cylinder from the side (along Y axis)
-    // Cylinder is vertical along Z axis (z=0 at bottom, z=30 at top)
+    // Camera - PerspectiveCamera to MATCH real camera perspective/distortion
+    // This ensures cylinder 3D and mapped video have SAME perspective (coherent view)
     const aspectRatio = width / height
-    
-    // Optimize FOV for mobile portrait (maximize cylinder size)
     const isPortrait = aspectRatio < 1
     const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent)
-    const fov = (isPortrait && isMobile) ? 60 : 75 // Narrower FOV in portrait = larger cylinder
+    
+    const cylHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30cm
+    const cylRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3cm
+    const cylinderCenter = cylHeight / 2 // z=15cm (center)
+    
+    // FOV optimized: smaller = less distortion, larger = more visible
+    // 50° gives good balance: minimal distortion + good view
+    const fov = (isPortrait && isMobile) ? 45 : 50
     
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 1000)
     
-    // Calculate optimal distance based on aspect ratio and device
-    let distance = (GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2) / Math.tan((fov * Math.PI / 180) / 2)
-    
-    // Optimize distance for different screen orientations
-    if (isPortrait && isMobile) {
-      // Mobile portrait: Cylinder should fill height, get much closer
-      distance *= 0.85 // Reduce distance to 85% = cylinder appears 18% larger
-    } else if (isPortrait) {
-      // Desktop portrait: Moderate zoom
-      distance *= 1.1
-    } else {
-      // Landscape: Keep comfortable viewing distance
-      distance *= 1.5
-    }
-    
-    const cylinderCenter = GEOSTXR_CONFIG.CYLINDER.HEIGHT / 2 // z=15cm (center)
+    // Distance: far enough to minimize perspective distortion
+    // Real camera is ~26cm from object, we match this
+    const distance = 26
     
     // Position camera along +Y axis, looking at center of cylinder
     camera.position.set(0, distance, cylinderCenter)
     camera.lookAt(0, 0, cylinderCenter)
+    camera.up.set(0, 0, 1) // Z-axis points up (cylinder is vertical)
     
-    console.log(`📱 Camera optimized: FOV=${fov}°, Distance=${distance.toFixed(1)}cm, Portrait=${isPortrait}, Mobile=${isMobile}`)
+    console.log(`📐 Perspective camera: FOV=${fov}°, Distance=${distance}cm, AspectRatio=${aspectRatio.toFixed(2)}, Portrait=${isPortrait}, Mobile=${isMobile}`)
+    console.log(`   → Matches real camera perspective for coherent video mapping`)
     // Use default up vector (0,1,0)
     localCameraRef.current = camera
     // Pass camera reference to parent component for composite image generation
