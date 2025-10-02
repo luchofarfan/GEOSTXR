@@ -6,3 +6,8 @@ node_modules
 /ios
 /capacitor.config.json
 /capacitor.config.ts
+.vercel
+
+# Tunneling tools
+ngrok.exe
+ngrok

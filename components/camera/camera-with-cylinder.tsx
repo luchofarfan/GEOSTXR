@@ -24,6 +24,7 @@ import { usePhotoRegistry } from '@/hooks/use-photo-registry'
 import { generateCompositeImage } from '@/lib/generate-composite-image'
 import { generateCSVReport, downloadCSV, downloadImage } from '@/lib/generate-csv-report'
 import { CylinderDetector } from '@/lib/cylinder-detection'
+import { isMobileDevice } from '@/lib/device-detection'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface CameraWithCylinderProps {
@@ -79,6 +80,15 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
   
   // State for drill hole info panel
   const [showDrillHoleInfo, setShowDrillHoleInfo] = useState(false)
+  
+  // State for hiding all panels (useful in mobile)
+  const [allPanelsHidden, setAllPanelsHidden] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Detect mobile on mount
+  useEffect(() => {
+    setIsMobile(isMobileDevice())
+  }, [])
   
   // Get selected trio and its plane data (from all trios including validation)
   const selectedTrio = trioManager.allTrios.find((t: any) => t.id === trioManager.selectedTrioId)
@@ -481,7 +491,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
         />
           
           {/* Floating Validation Panel */}
-          {showValidationPanel && (
+          {!allPanelsHidden && showValidationPanel && (
             <FloatingValidationPanel
               onCreateTrio={(alpha, beta, depth, bohAngle) => {
                 trioManager.createValidationTrio(alpha, beta, depth, bohAngle)
@@ -502,7 +512,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
           )}
           
           {/* Manage Structure Types Panel */}
-          {showManageStructureTypes && (
+          {!allPanelsHidden && showManageStructureTypes && (
             <ManageStructureTypesPanel
               structureTypes={structureTypesManager.structureTypes}
               onAddType={structureTypesManager.addStructureType}
@@ -610,19 +620,51 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
           />
         )}
 
+        {/* Toggle Panels Button (Mobile) */}
+        <button
+          onClick={() => setAllPanelsHidden(!allPanelsHidden)}
+          style={{
+            position: 'fixed',
+            top: '10px',
+            left: '10px',
+            zIndex: 5000,
+            padding: isMobile ? '10px 16px' : '8px 14px',
+            background: allPanelsHidden 
+              ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+              : 'linear-gradient(135deg, #10b981, #059669)',
+            border: 'none',
+            borderRadius: '10px',
+            color: 'white',
+            fontSize: isMobile ? '14px' : '12px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <span style={{ fontSize: isMobile ? '18px' : '16px' }}>
+            {allPanelsHidden ? '👁️' : '🙈'}
+          </span>
+          <span>{allPanelsHidden ? 'Mostrar Paneles' : 'Ocultar Paneles'}</span>
+        </button>
+
         {/* Floating Controls Panel */}
-        <FloatingControlsPanel
+        {!allPanelsHidden && (
+          <FloatingControlsPanel
             state={state}
             actions={actions}
             trioManager={trioManager}
             planeManager={planeManager}
-          scenePhotoId={scenePhotoId}
-          onOpenPhotoGallery={() => setShowPhotoGallery(true)}
-          onResetScene={resetScene}
-          onOpenCustomColumns={() => setShowCustomColumnsPanel(true)}
-          onOpenDrillHoleInfo={() => setShowDrillHoleInfo(true)}
-          customColumns={customColumns}
+            scenePhotoId={scenePhotoId}
+            onOpenPhotoGallery={() => setShowPhotoGallery(true)}
+            onResetScene={resetScene}
+            onOpenCustomColumns={() => setShowCustomColumnsPanel(true)}
+            onOpenDrillHoleInfo={() => setShowDrillHoleInfo(true)}
+            customColumns={customColumns}
           />
+        )}
       </div>
     </div>
   )
