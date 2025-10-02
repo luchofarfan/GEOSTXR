@@ -19,6 +19,8 @@ import {
 } from 'recharts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
+import { Stereonet } from '@/components/stereonet'
+import { useMemo } from 'react'
 
 interface StatisticsPanelProps {
   projects: Project[]
@@ -35,6 +37,19 @@ const STRUCTURE_COLORS: Record<string, string> = {
 
 export function StatisticsPanel({ projects }: StatisticsPanelProps) {
   const stats = useStatistics(projects)
+  
+  // Recopilar todas las estructuras para stereonet
+  const allStructures = useMemo(() => {
+    const structures: any[] = []
+    projects.forEach(project => {
+      project.drillHoles.forEach(dh => {
+        dh.scenes.forEach(scene => {
+          structures.push(...scene.structures)
+        })
+      })
+    })
+    return structures
+  }, [projects])
   
   if (stats.totalStructures === 0) {
     return (
@@ -82,9 +97,10 @@ export function StatisticsPanel({ projects }: StatisticsPanelProps) {
       
       {/* Tabs con diferentes análisis */}
       <Tabs defaultValue="types" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-white/10">
+        <TabsList className="grid w-full grid-cols-5 bg-white/10">
           <TabsTrigger value="types">Por Tipo</TabsTrigger>
           <TabsTrigger value="orientations">Orientaciones</TabsTrigger>
+          <TabsTrigger value="stereonet">Stereonet</TabsTrigger>
           <TabsTrigger value="depth">Profundidad</TabsTrigger>
           <TabsTrigger value="drillholes">Sondajes</TabsTrigger>
         </TabsList>
@@ -298,6 +314,11 @@ export function StatisticsPanel({ projects }: StatisticsPanelProps) {
               </div>
             </Card>
           </div>
+        </TabsContent>
+        
+        {/* Tab: Red Estereográfica */}
+        <TabsContent value="stereonet">
+          <Stereonet structures={allStructures} width={600} height={600} />
         </TabsContent>
         
         {/* Tab: Distribución por Profundidad */}
