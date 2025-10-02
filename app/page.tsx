@@ -16,20 +16,29 @@ export default function HubPage() {
     
     // For now, add to a default project
     setProjects(prev => {
-      const defaultProject = prev.find(p => p.name === 'Default Project') || {
-        id: 'default',
-        name: 'Default Project',
-        drillHoles: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
+      const existingProject = prev.find(p => p.name === 'Default Project')
+      
+      if (existingProject) {
+        // Update existing project immutably
+        return prev.map(p => 
+          p.id === 'default' 
+            ? {
+                ...p,
+                drillHoles: [...p.drillHoles, drillHole],
+                updatedAt: new Date()
+              }
+            : p
+        )
+      } else {
+        // Create new project
+        return [{
+          id: 'default',
+          name: 'Default Project',
+          drillHoles: [drillHole],
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }]
       }
-      
-      defaultProject.drillHoles.push(drillHole)
-      defaultProject.updatedAt = new Date()
-      
-      return prev.length > 0 
-        ? prev.map(p => p.id === 'default' ? defaultProject : p)
-        : [defaultProject]
     })
     
     setSelectedDrillHole(drillHole)
