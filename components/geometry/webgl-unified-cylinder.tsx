@@ -58,6 +58,7 @@ export default function WebGLUnifiedCylinder({
   const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
   const [controlsEnabled, setControlsEnabled] = useState(false)
   const [videoZoom, setVideoZoom] = useState(1.0) // Video zoom level (1.0 = 100%)
+  const [videoRotation, setVideoRotation] = useState(0) // Video rotation in degrees
 
   // Camera stream setup
   useEffect(() => {
@@ -622,13 +623,14 @@ export default function WebGLUnifiedCylinder({
     }
   }, [controlsEnabled])
 
-  // Update video plane zoom
+  // Update video plane zoom and rotation
   useEffect(() => {
     if (videoPlaneRef.current) {
       videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
-      console.log(`🔍 Video zoom: ${(videoZoom * 100).toFixed(0)}%`)
+      videoPlaneRef.current.rotation.z = (videoRotation * Math.PI) / 180
+      console.log(`🔍 Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}°`)
     }
-  }, [videoZoom])
+  }, [videoZoom, videoRotation])
 
   // Handle point dragging (mousemove and touchmove)
   useEffect(() => {
@@ -917,7 +919,7 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
-      {/* Video Zoom Controls */}
+      {/* Video Adjustment Controls */}
       <div
         style={{
           position: 'absolute',
@@ -925,75 +927,158 @@ export default function WebGLUnifiedCylinder({
           left: '20px',
           zIndex: 2010,
           display: 'flex',
-          flexDirection: 'column',
-          gap: '8px'
+          gap: '12px'
         }}
       >
-        <button
-          onClick={() => setVideoZoom(prev => Math.min(prev + 0.1, 3.0))}
-          style={{
-            padding: '10px 16px',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-            border: '2px solid #60a5fa',
-            borderRadius: '10px',
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          🔍+
-        </button>
-        <div
-          style={{
-            padding: '6px 12px',
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '11px',
+        {/* Zoom Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ 
+            fontSize: '11px', 
+            fontWeight: 'bold', 
+            color: 'white', 
             textAlign: 'center',
-            fontWeight: '600'
-          }}
-        >
-          {(videoZoom * 100).toFixed(0)}%
+            background: 'rgba(59, 130, 246, 0.3)',
+            padding: '4px',
+            borderRadius: '6px'
+          }}>
+            ZOOM
+          </div>
+          <button
+            onClick={() => setVideoZoom(prev => Math.min(prev + 0.1, 3.0))}
+            style={{
+              padding: '10px 16px',
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              border: '2px solid #60a5fa',
+              borderRadius: '10px',
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            +
+          </button>
+          <div
+            style={{
+              padding: '6px 12px',
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '11px',
+              textAlign: 'center',
+              fontWeight: '600'
+            }}
+          >
+            {(videoZoom * 100).toFixed(0)}%
+          </div>
+          <button
+            onClick={() => setVideoZoom(prev => Math.max(prev - 0.1, 0.5))}
+            style={{
+              padding: '10px 16px',
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              border: '2px solid #60a5fa',
+              borderRadius: '10px',
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            −
+          </button>
         </div>
-        <button
-          onClick={() => setVideoZoom(prev => Math.max(prev - 0.1, 0.5))}
-          style={{
-            padding: '10px 16px',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-            border: '2px solid #60a5fa',
-            borderRadius: '10px',
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          🔍−
-        </button>
-        <button
-          onClick={() => setVideoZoom(1.0)}
-          style={{
-            padding: '8px 12px',
-            background: 'linear-gradient(135deg, #6b7280, #4b5563)',
-            border: '1px solid #9ca3af',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          100%
-        </button>
+
+        {/* Rotation Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ 
+            fontSize: '11px', 
+            fontWeight: 'bold', 
+            color: 'white', 
+            textAlign: 'center',
+            background: 'rgba(168, 85, 247, 0.3)',
+            padding: '4px',
+            borderRadius: '6px'
+          }}>
+            ROTAR
+          </div>
+          <button
+            onClick={() => setVideoRotation(prev => (prev + 5) % 360)}
+            style={{
+              padding: '10px 16px',
+              background: 'linear-gradient(135deg, #a855f7, #9333ea)',
+              border: '2px solid #c084fc',
+              borderRadius: '10px',
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            ↻
+          </button>
+          <div
+            style={{
+              padding: '6px 12px',
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '11px',
+              textAlign: 'center',
+              fontWeight: '600'
+            }}
+          >
+            {videoRotation.toFixed(0)}°
+          </div>
+          <button
+            onClick={() => setVideoRotation(prev => (prev - 5 + 360) % 360)}
+            style={{
+              padding: '10px 16px',
+              background: 'linear-gradient(135deg, #a855f7, #9333ea)',
+              border: '2px solid #c084fc',
+              borderRadius: '10px',
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            ↺
+          </button>
+        </div>
+
+        {/* Reset All */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => {
+              setVideoZoom(1.0)
+              setVideoRotation(0)
+            }}
+            style={{
+              padding: '12px 14px',
+              background: 'linear-gradient(135deg, #6b7280, #4b5563)',
+              border: '1px solid #9ca3af',
+              borderRadius: '10px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            🔄
+          </button>
+        </div>
       </div>
 
       {/* Controls Toggle Button */}
