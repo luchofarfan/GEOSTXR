@@ -51,7 +51,7 @@ export function EdgeAlignmentOverlay({
 
   // Trigger auto-capture when well aligned for 2 seconds
   useEffect(() => {
-    if (!enabled || hasTriggeredCapture) return
+    if (!enabled || hasTriggeredCapture || !onWellAligned) return
 
     if (isWellAligned && alignmentQuality > 0.75) {
       // Start countdown if not already started
@@ -60,9 +60,7 @@ export function EdgeAlignmentOverlay({
         const timer = setTimeout(() => {
           console.log('✅ Captura automática activada - bordes perfectamente alineados')
           setHasTriggeredCapture(true)
-          if (onWellAligned) {
-            onWellAligned()
-          }
+          onWellAligned()
         }, 2000) // Wait 2 seconds of stable alignment
         setAlignmentTimer(timer)
       }
@@ -80,7 +78,7 @@ export function EdgeAlignmentOverlay({
         clearTimeout(alignmentTimer)
       }
     }
-  }, [isWellAligned, alignmentQuality, enabled, alignmentTimer, hasTriggeredCapture, onWellAligned])
+  }, [isWellAligned, alignmentQuality, enabled, hasTriggeredCapture]) // Removed alignmentTimer and onWellAligned from deps to prevent loop
 
   // Determine color based on alignment quality
   const getAlignmentColor = () => {
