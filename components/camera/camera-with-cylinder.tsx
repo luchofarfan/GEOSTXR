@@ -26,6 +26,7 @@ import { usePhotoRegistry } from '@/hooks/use-photo-registry'
 import { generateCompositeImage } from '@/lib/generate-composite-image'
 import { generateCSVReport, downloadCSV, downloadImage } from '@/lib/generate-csv-report'
 import { CylinderDetector } from '@/lib/cylinder-detection'
+import { TEST_SCENARIOS } from '@/lib/test-data-loader'
 import { GEOSTXR_CONFIG } from '@/lib/config'
 
 interface CameraWithCylinderProps {
@@ -339,6 +340,53 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
     }
   }, [trioManager])
 
+  // Load test data (synthetic planes for validation)
+  const loadTestData = useCallback(() => {
+    if (!confirm('🧪 ¿Cargar planos sintéticos para validación?\n\nEsto cargará:\n• Plano 1: α=30°, β=15°, prof=16cm\n• Plano 2: α=90°, β=40°, prof=20cm\n• Sondaje: Az=45°, Dip=-65°\n\n¿Continuar?')) {
+      return
+    }
+
+    console.log('🧪 ===== LOADING SYNTHETIC TEST DATA =====')
+    
+    // Use first test scenario
+    const scenario = TEST_SCENARIOS[0]
+    console.log(`   Scenario: "${scenario.name}"`)
+    console.log(`   ${scenario.description}`)
+    
+    // 1. Clear existing data
+    trioManager.clearAllTrios()
+    setScenePhotoId('test-synthetic')
+    setBasePhotoDataUrl(null)
+    
+    // 2. Load drill hole info
+    drillHoleInfo.updateInfo(scenario.drillHole)
+    console.log(`✓ Drill hole: ${scenario.drillHole.name} (Az=${scenario.drillHole.azimuth}°, Dip=${scenario.drillHole.dip}°)`)
+    
+    // 3. Set BOH angles
+    actions.setLine1Angle(scenario.bohAngles.line1)
+    actions.setLine2Angle(scenario.bohAngles.line2)
+    console.log(`✓ BOH angles: Line1=${scenario.bohAngles.line1}°, Line2=${scenario.bohAngles.line2}°`)
+    
+    // 4. Add structure types if not exist
+    scenario.planes.forEach(plane => {
+      const exists = structureTypesManager.structureTypes.find((t: any) => t.name === plane.structureType)
+      if (!exists) {
+        structureTypesManager.addStructureType(plane.structureType)
+        console.log(`✓ Added structure type: ${plane.structureType}`)
+      }
+    })
+    
+    // 5. Redirect to validation page with test data
+    console.log('✅ Drill hole info and BOH angles loaded')
+    console.log(`   Redirecting to validation page...`)
+    
+    alert(`✅ Datos del Sondaje Cargados!\n\n📊 Sondaje: ${scenario.drillHole.name}\n🎯 Az=${scenario.drillHole.azimuth}°, Dip=${scenario.drillHole.dip}°\n\nAhora serás redirigido a la página de validación donde podrás ver los cálculos geoespaciales de los planos sintéticos.`)
+    
+    // Redirect to validation page
+    window.location.href = '/validation'
+    
+  }, [trioManager, drillHoleInfo, actions, structureTypesManager])
+
   // Start automatic cylinder detection when video is ready
   useEffect(() => {
     // Only start detection if no photo has been captured yet
@@ -646,6 +694,7 @@ export const CameraWithCylinder: React.FC<CameraWithCylinderProps> = ({
           onOpenCustomColumns={() => setShowCustomColumnsPanel(true)}
           onOpenDrillHoleInfo={() => setShowDrillHoleInfo(true)}
           onOpenGeospatialPanel={() => setShowGeospatialPanel(true)}
+          onLoadTestData={loadTestData}
           customColumns={customColumns}
           />
       </div>

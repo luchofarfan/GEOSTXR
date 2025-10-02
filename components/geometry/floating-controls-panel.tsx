@@ -15,6 +15,7 @@ interface FloatingControlsPanelProps {
   onOpenCustomColumns?: () => void
   onOpenDrillHoleInfo?: () => void
   onOpenGeospatialPanel?: () => void
+  onLoadTestData?: () => void
   customColumns?: any
   initialPosition?: { x: number; y: number }
 }
@@ -30,6 +31,7 @@ export function FloatingControlsPanel({
   onOpenCustomColumns,
   onOpenDrillHoleInfo,
   onOpenGeospatialPanel,
+  onLoadTestData,
   customColumns,
   initialPosition = { x: 20, y: 20 }
 }: FloatingControlsPanelProps) {
@@ -200,6 +202,19 @@ export function FloatingControlsPanel({
               <span>Datos Geoespaciales</span>
             </button>
           </div>
+
+          {/* Load Test Data Button */}
+          {onLoadTestData && (
+            <div className="mb-4">
+              <button
+                onClick={onLoadTestData}
+                className="w-full py-2 px-4 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white rounded-lg font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <span>🧪</span>
+                <span>Cargar Datos de Prueba</span>
+              </button>
+            </div>
+          )}
 
           {/* Custom Columns Button */}
           <div className="mb-4">
