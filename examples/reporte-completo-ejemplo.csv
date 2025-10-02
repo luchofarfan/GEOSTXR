@@ -1,0 +1,22 @@
+# REPORTE DE MEDICIÓN ESTRUCTURAL - GeoStXR
+# Fecha: 02/10/2025, 18:45:30
+
+# === INFORMACIÓN DEL SONDAJE ===
+# Sondaje: DDH-001
+# Azimut: 45.00°
+# Inclinación: -65.00°
+# UTM Este: 345678.50 m
+# UTM Norte: 8765432.10 m
+# Cota: 2450.75 m.s.n.m.
+
+# === RESUMEN DE MEDICIÓN ===
+# Profundidad Manual: 16.00 cm (0.16 m)
+# AC (Ángulo de Calce): 7.50°
+# BOH1: 90.0°
+# BOH2: 90.0°
+# Total de Planos: 2
+
+Plano,Tipo_Estructura,Profundidad_cm,Profundidad_m,Tipo_Prof,Alpha_grados,Beta_grados,Azimuth_grados,BOH_Referencia,Dip_Real_grados,Dip_Direction_grados,UTM_Este_m,UTM_Norte_m,Elevacion_m,P1_X,P1_Y,P1_Z,P2_X,P2_Y,P2_Z,P3_X,P3_Y,P3_Z
+1,Veta,16.00,0.16,manual,30.00,15.00,105.00,BOH1,75.60,195.09,345678.55,8765432.15,2450.60,-2.6836,1.6822,14.6413,-0.5745,3.1184,14.8241,2.3582,2.1072,14.8742
+2,Diaclasa,20.00,0.20,automático,90.00,40.00,130.00,BOH2,54.37,334.53,345678.56,8765432.16,2450.57,-1.9284,2.2981,18.3421,0.8746,2.9876,20.1234,2.7891,1.5432,21.9876
+
