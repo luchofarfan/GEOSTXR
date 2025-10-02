@@ -202,9 +202,12 @@ export default function WebGLUnifiedCylinder({
     // Real camera is ~26cm from object, we match this
     const distance = 26
     
-    // Position camera along +Y axis, looking at center of cylinder
-    camera.position.set(0, distance, cylinderCenter)
-    camera.lookAt(0, 0, cylinderCenter)
+    // Position camera along +Y axis, but LOWER in Z to see bottom of cylinder
+    // Camera at z=10cm (instead of z=15) to see from z=0 upwards
+    // This ensures BOH1 (red, z=0-15) is visible at bottom of screen
+    const cameraHeightZ = 10 // Lower than center to see full cylinder from bottom
+    camera.position.set(0, distance, cameraHeightZ)
+    camera.lookAt(0, 0, cylinderCenter) // Still look at center for balanced view
     camera.up.set(0, 0, 1) // Z-axis points up (cylinder is vertical)
     
     console.log(`📐 Perspective camera: FOV=${fov}°, Distance=${distance}cm, AspectRatio=${aspectRatio.toFixed(2)}, Portrait=${isPortrait}, Mobile=${isMobile}`)
@@ -215,7 +218,7 @@ export default function WebGLUnifiedCylinder({
     if (cameraRef) {
       cameraRef.current = camera
     }
-    console.log(`Camera at (0, ${distance.toFixed(1)}, ${cylinderCenter}), looking at (0, 0, ${cylinderCenter})`)
+    console.log(`Camera at (0, ${distance.toFixed(1)}, ${cameraHeightZ}), looking at (0, 0, ${cylinderCenter})`)
 
     // Renderer with preserveDrawingBuffer for screenshot capability
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
@@ -228,7 +231,7 @@ export default function WebGLUnifiedCylinder({
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true // Smooth movement
     controls.dampingFactor = 0.05
-    controls.target.set(0, 0, cylinderCenter) // Initial target at cylinder center
+    controls.target.set(0, 0, cylinderCenter) // Look at cylinder center for balanced view
     
     // Enable panning with generous limits
     controls.enablePan = true
