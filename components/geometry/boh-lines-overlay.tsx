@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import * as THREE from 'three'
 import { GEOSTXR_CONFIG } from '@/lib/config'
+import { BOHDebugPanel } from './boh-debug-panel'
 
 interface BOHLinesOverlayProps {
   line1Angle: number
@@ -34,9 +35,14 @@ export function BOHLinesOverlay({
   const radius = cylRadius || GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
   const cylinderHeight = cylHeight || GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
   
+  console.log(`BOH Overlay - radius: ${radius}, cylinderHeight: ${cylinderHeight}, containerSize: ${containerWidth}x${containerHeight}`)
+  
   // Drag state
   const [draggingLine, setDraggingLine] = useState<'line1' | 'line2' | null>(null)
   const [hoveredLine, setHoveredLine] = useState<'line1' | 'line2' | null>(null)
+  
+  // Debug data state
+  const [debugData, setDebugData] = useState<any>(null)
   
   // Calculate 3D positions on cylinder surface
   const angle1Rad = (line1Angle * Math.PI) / 180
@@ -130,6 +136,20 @@ export function BOHLinesOverlay({
     console.log(`BOH Heights: BOH1=${boh1Height.toFixed(0)}px + BOH2=${boh2Height.toFixed(0)}px = ${totalBOHHeight.toFixed(0)}px`)
     console.log(`Cylinder screen height: ${cylinderScreenHeight.toFixed(0)}px (should match total BOH)`)
     console.log(`Height match: ${Math.abs(totalBOHHeight - cylinderScreenHeight) < 1 ? '✓ OK' : '✗ MISMATCH'}`)
+    
+    // Update debug data
+    setDebugData({
+      radius,
+      cylinderHeight,
+      containerWidth,
+      containerHeight,
+      line1Angle,
+      line2Angle,
+      boh1_3d: { x: x1, y: y1, z_bottom: 0, z_top: cylinderHeight / 2 },
+      boh2_3d: { x: x2, y: y2, z_bottom: cylinderHeight / 2, z_top: cylinderHeight },
+      boh1_2d: { bottom: boh1_bottom, top: boh1_top },
+      boh2_2d: { bottom: boh2_bottom, top: boh2_top }
+    })
   } else {
     // Fallback to approximate positioning
     const centerX = containerWidth / 2
@@ -377,6 +397,9 @@ export function BOHLinesOverlay({
           </div>
         )}
       </div>
+      
+      {/* Debug Panel - Detailed BOH information */}
+      {debugData && <BOHDebugPanel data={debugData} />}
     </div>
   )
 }
