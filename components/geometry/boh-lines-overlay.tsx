@@ -66,8 +66,8 @@ export function BOHLinesOverlay({
   const y2 = radius * Math.sin(angle2Rad) + bohOffset // Slightly closer to camera
   
   console.log(`BOH 3D positions:`)
-  console.log(`  BOH1 (${line1Angle.toFixed(1)}°): x=${x1.toFixed(2)}, y=${y1.toFixed(2)}, z=0 to ${cylinderHeight/2}`)
-  console.log(`  BOH2 (${line2Angle.toFixed(1)}°): x=${x2.toFixed(2)}, y=${y2.toFixed(2)}, z=${cylinderHeight/2} to ${cylinderHeight}`)
+  console.log(`  BOH1 RED (${line1Angle.toFixed(1)}°): x=${x1.toFixed(2)}, y=${y1.toFixed(2)}, z=${cylinderHeight/2} to ${cylinderHeight} (UPPER)`)
+  console.log(`  BOH2 GREEN (${line2Angle.toFixed(1)}°): x=${x2.toFixed(2)}, y=${y2.toFixed(2)}, z=0 to ${cylinderHeight/2} (LOWER)`)
   
   // Project 3D points to 2D screen using camera (if available)
   let line1Left = containerWidth / 2
@@ -94,28 +94,28 @@ export function BOHLinesOverlay({
     }
     
     // Project BOH positions - note camera projects Z inversely to screen Y
-    // z=0 (world bottom) → top of screen (low Y value)
-    // z=30 (world top) → bottom of screen (high Y value)
+    // z=0 (world bottom) → bottom of screen (high Y value)
+    // z=30 (world top) → top of screen (low Y value)
     // Using y1/y2 to position on cylinder surface
     
-    // BOH 1 (Red): z=0 to z=15
-    const boh1_bottom = project3DTo2D(x1, y1, 0)       // z=0 (cylinder bottom)
-    const boh1_top = project3DTo2D(x1, y1, cylinderHeight / 2) // z=15 (cylinder center)
+    // BOH 1 (Red): z=15 to z=30 (UPPER half)
+    const boh1_bottom = project3DTo2D(x1, y1, cylinderHeight / 2) // z=15 (cylinder center)
+    const boh1_top = project3DTo2D(x1, y1, cylinderHeight)        // z=30 (cylinder top)
     
-    // BOH 2 (Green): z=15 to z=30
-    const boh2_bottom = project3DTo2D(x2, y2, cylinderHeight / 2) // z=15 (cylinder center)
-    const boh2_top = project3DTo2D(x2, y2, cylinderHeight)        // z=30 (cylinder top)
+    // BOH 2 (Green): z=0 to z=15 (LOWER half)
+    const boh2_bottom = project3DTo2D(x2, y2, 0)       // z=0 (cylinder bottom)
+    const boh2_top = project3DTo2D(x2, y2, cylinderHeight / 2) // z=15 (cylinder center)
     
-    // BOH 1 (Red): z=0 to z=15 → screen top to middle
+    // BOH 1 (Red): z=15 to z=30 → screen top half (upper)
     line1Left = boh1_bottom.x
-    boh1TopY = boh1_bottom.y      // z=0 is at top of screen
-    boh1BottomY = boh1_top.y      // z=15 is at middle
+    boh1TopY = boh1_top.y         // z=30 is at top of screen
+    boh1BottomY = boh1_bottom.y   // z=15 is at middle
     boh1Height = Math.abs(boh1BottomY - boh1TopY)
     
-    // BOH 2 (Green): z=15 to z=30 → screen middle to bottom
+    // BOH 2 (Green): z=0 to z=15 → screen bottom half (lower)
     line2Left = boh2_bottom.x
-    boh2TopY = boh2_bottom.y      // z=15 is at middle
-    const boh2BottomY = boh2_top.y // z=30 is at bottom of screen
+    boh2TopY = boh2_top.y          // z=15 is at middle
+    const boh2BottomY = boh2_bottom.y // z=0 is at bottom of screen
     boh2Height = Math.abs(boh2BottomY - boh2TopY)
     
     // Debug: Verify total height matches cylinder
@@ -125,10 +125,10 @@ export function BOHLinesOverlay({
     const cylinderScreenHeight = Math.abs(cylinderScreenBottom - cylinderScreenTop)
     
     console.log(`BOH 2D Projections:`)
-    console.log(`  BOH1 bottom (z=0): screen (${boh1_bottom.x.toFixed(0)}, ${boh1_bottom.y.toFixed(0)}), screenZ=${boh1_bottom.screenZ.toFixed(3)}`)
-    console.log(`  BOH1 top (z=15): screen (${boh1_top.x.toFixed(0)}, ${boh1_top.y.toFixed(0)}), screenZ=${boh1_top.screenZ.toFixed(3)}`)
-    console.log(`  BOH2 bottom (z=15): screen (${boh2_bottom.x.toFixed(0)}, ${boh2_bottom.y.toFixed(0)}), screenZ=${boh2_bottom.screenZ.toFixed(3)}`)
-    console.log(`  BOH2 top (z=30): screen (${boh2_top.x.toFixed(0)}, ${boh2_top.y.toFixed(0)}), screenZ=${boh2_top.screenZ.toFixed(3)}`)
+    console.log(`  BOH1 RED middle (z=15): screen (${boh1_bottom.x.toFixed(0)}, ${boh1_bottom.y.toFixed(0)}), screenZ=${boh1_bottom.screenZ.toFixed(3)}`)
+    console.log(`  BOH1 RED top (z=30): screen (${boh1_top.x.toFixed(0)}, ${boh1_top.y.toFixed(0)}), screenZ=${boh1_top.screenZ.toFixed(3)}`)
+    console.log(`  BOH2 GREEN bottom (z=0): screen (${boh2_bottom.x.toFixed(0)}, ${boh2_bottom.y.toFixed(0)}), screenZ=${boh2_bottom.screenZ.toFixed(3)}`)
+    console.log(`  BOH2 GREEN middle (z=15): screen (${boh2_top.x.toFixed(0)}, ${boh2_top.y.toFixed(0)}), screenZ=${boh2_top.screenZ.toFixed(3)}`)
     console.log(`BOH Heights: BOH1=${boh1Height.toFixed(0)}px + BOH2=${boh2Height.toFixed(0)}px = ${totalBOHHeight.toFixed(0)}px`)
     console.log(`Cylinder screen height: ${cylinderScreenHeight.toFixed(0)}px (should match total BOH)`)
     console.log(`Height match: ${Math.abs(totalBOHHeight - cylinderScreenHeight) < 1 ? '✓ OK' : '✗ MISMATCH'}`)
@@ -270,7 +270,7 @@ export function BOHLinesOverlay({
       pointerEvents: isInteractive ? 'auto' : 'none',
       zIndex: 1000
     }}>
-      {/* BOH Line 1 - RED - From z=0 (bottom) to z=15 (center) */}
+      {/* BOH Line 1 - RED - From z=15 (center) to z=30 (top) - UPPER HALF */}
       {/* Wider touch area for easier mobile interaction */}
       <div 
         style={{
@@ -309,7 +309,7 @@ export function BOHLinesOverlay({
         }} />
       </div>
       
-      {/* BOH Line 2 - GREEN - From z=15 (center) to z=30 (top) */}
+      {/* BOH Line 2 - GREEN - From z=0 (bottom) to z=15 (center) - LOWER HALF */}
       {/* Wider touch area for easier mobile interaction */}
       <div 
         style={{
