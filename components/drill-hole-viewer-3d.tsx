@@ -57,20 +57,28 @@ export function DrillHoleViewer3D({ drillHole }: DrillHoleViewer3DProps) {
     const holeDipRad = (drillHole.info.dip * Math.PI) / 180
     
     // Function to calculate position along drill hole trajectory
+    // Sistema de coordenadas:
+    // Geológico: X=Este, Y=Norte, Z=Elevación
+    // Three.js: X=Este, Y=Elevación, Z=-Norte (Z+ hacia el sur)
     function calculatePositionAlongHole(depthAlongHole: number) {
       // Calculate 3D position from collar following azimuth and dip
-      // Azimuth: 0° = North, 90° = East
-      // Dip: negative = downward
+      // Azimuth: 0° = Norte, 90° = Este
+      // Dip: negativo = hacia abajo
       
       const horizontalDistance = depthAlongHole * Math.cos(holeDipRad)
-      const verticalDistance = depthAlongHole * Math.sin(holeDipRad) // Negative for downward
+      const verticalDistance = depthAlongHole * Math.sin(holeDipRad) // Negativo para dip negativo
       
-      // In Three.js: X = East, Y = Up, Z = South (negative North)
-      const x = horizontalDistance * Math.sin(holeAzimuthRad)
-      const y = verticalDistance
-      const z = -horizontalDistance * Math.cos(holeAzimuthRad) // Negative for North
+      // Componentes geológicas
+      const east = horizontalDistance * Math.sin(holeAzimuthRad)
+      const north = horizontalDistance * Math.cos(holeAzimuthRad)
+      const elevation = verticalDistance
       
-      return { x, y, z }
+      // Mapear a Three.js
+      return {
+        x: east,
+        y: elevation,  // Z geológico → Y en Three.js
+        z: -north  // Y geológico → -Z en Three.js (invertido)
+      }
     }
     
     // Draw drill hole trajectory
@@ -114,15 +122,20 @@ export function DrillHoleViewer3D({ drillHole }: DrillHoleViewer3DProps) {
         disc.position.set(position.x, position.y, position.z)
         
         // Apply geological orientation
-        // Dip: angle from horizontal (0° = horizontal, 90° = vertical)
-        // Dip Direction: azimuth direction of maximum dip
-        const dipRad = (-structure.dipReal * Math.PI) / 180 // Negative dip
+        // Dip: ángulo de buzamiento (0° = horizontal, 90° = vertical)
+        // Dip Direction: azimuth de la dirección de buzamiento máximo
+        
+        // En Three.js: Y es vertical (elevación), necesitamos rotar el disco
+        // El disco inicia en el plano XY (horizontal en Three.js)
+        const dipRad = (structure.dipReal * Math.PI) / 180
         const dipDirectionRad = (structure.dipDirection * Math.PI) / 180
         
-        // First rotate to dip direction, then apply dip angle
-        disc.rotation.order = 'YXZ' // Apply Y rotation first, then X
-        disc.rotation.y = dipDirectionRad // Rotate to dip direction
-        disc.rotation.x = Math.PI / 2 + dipRad // Start horizontal (90°), then apply dip
+        // Rotación del disco:
+        // 1. Rotar alrededor de Y (vertical) para apuntar en la dip direction
+        // 2. Inclinar desde la horizontal según el dip
+        disc.rotation.order = 'YZX'
+        disc.rotation.y = dipDirectionRad  // Apuntar en la dirección de buzamiento
+        disc.rotation.x = -dipRad  // Inclinar según el dip (negativo para inclinar hacia abajo)
         
         scene.add(disc)
         
@@ -151,23 +164,21 @@ export function DrillHoleViewer3D({ drillHole }: DrillHoleViewer3DProps) {
     })
 
     // Axes helper (larger scale)
+    // X = Este (rojo), Y = Elevación/Arriba (verde), Z = Sur/-Norte (azul)
     const axesHelper = new THREE.AxesHelper(2000)
     scene.add(axesHelper)
 
-    // Grid at surface (depth = 0)
+    // Grid horizontal en superficie (Y = 0)
+    // GridHelper crea una grilla en el plano XZ (horizontal en Three.js)
     const gridHelper = new THREE.GridHelper(10000, 20, 0x444444, 0x222222)
-    gridHelper.position.y = 0
+    gridHelper.position.y = 0  // A nivel del collar
     scene.add(gridHelper)
     
-    // Add depth reference lines
+    // Add horizontal reference planes every 50m down
     for (let depth = 5000; depth <= 50000; depth += 5000) {
-      const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-5000, -depth, 0),
-        new THREE.Vector3(5000, -depth, 0)
-      ])
-      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 })
-      const line = new THREE.Line(lineGeometry, lineMaterial)
-      scene.add(line)
+      const gridRef = new THREE.GridHelper(2000, 4, 0x333333, 0x222222)
+      gridRef.position.y = -depth  // Cada 50m hacia abajo
+      scene.add(gridRef)
     }
 
     // Animation loop
