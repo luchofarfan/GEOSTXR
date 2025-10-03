@@ -1,22 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "functions": {
-    "app/**/*.{js,ts,jsx,tsx}": {
-      "maxDuration": 30
-    }
-  },
-  "regions": ["iad1"],
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
+  "regions": ["iad1"],
   "env": {
     "NODE_ENV": "production"
   }

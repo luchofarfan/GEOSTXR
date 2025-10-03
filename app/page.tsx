@@ -94,9 +94,55 @@ function HubPageContent() {
             : p
         )
       } else {
-        return [project]
+        return [...prev, project]
       }
     })
+  }
+
+  // Sync API endpoint for PWA
+  const handlePWASync = async (drillHole: DrillHole) => {
+    console.log('📱 PWA Sync received:', drillHole)
+    
+    // Find or create project for PWA sync
+    let targetProject = projects.find(p => p.name.includes('PWA Sync'))
+    if (!targetProject) {
+      targetProject = {
+        id: `pwa-sync-${Date.now()}`,
+        name: `PWA Sync Project - ${new Date().toLocaleDateString()}`,
+        drillHoles: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        coordinateSystem: {
+          projection: 'UTM',
+          datum: 'WGS84',
+          utmZone: 19,
+          utmHemisphere: 'S',
+          epsgCode: 32719,
+          description: 'WGS84 UTM Zone 19S'
+        }
+      }
+    }
+
+    // Add drill hole to project
+    const existingIndex = targetProject.drillHoles.findIndex(dh => dh.id === drillHole.id)
+    if (existingIndex >= 0) {
+      targetProject.drillHoles[existingIndex] = drillHole
+    } else {
+      targetProject.drillHoles.push(drillHole)
+    }
+    targetProject.updatedAt = new Date()
+
+    // Update projects
+    const projectIndex = projects.findIndex(p => p.id === targetProject.id)
+    if (projectIndex >= 0) {
+      const updatedProjects = [...projects]
+      updatedProjects[projectIndex] = targetProject
+      setProjects(updatedProjects)
+    } else {
+      setProjects(prev => [...prev, targetProject])
+    }
+
+    console.log('✅ PWA data synced to Hub successfully!')
     
     setSelectedDrillHole(drillHole)
     setView('dashboard')

@@ -86,6 +86,92 @@ export function Dashboard({
     setShowCreateDrillHole(true)
   }
 
+  const handleTestPWASync = async () => {
+    try {
+      // Test API status
+      const statusResponse = await fetch('/api/sync/status')
+      const status = await statusResponse.json()
+      
+      if (statusResponse.ok) {
+        console.log('✅ API Status:', status)
+        
+        // Test sync with sample data
+        const sampleDrillHole = {
+          id: `test-sync-${Date.now()}`,
+          name: `DDH-API-TEST-${Date.now()}`,
+          info: {
+            holeName: `DDH-API-TEST-${Date.now()}`,
+            azimuth: 45,
+            dip: -60,
+            utmEast: 350000,
+            utmNorth: 6500000,
+            elevation: 2000
+          },
+          totalDepth: 50,
+          scenes: [{
+            id: `scene-${Date.now()}`,
+            depthStart: 0,
+            depthEnd: 30,
+            capturedAt: new Date(),
+            boh1Angle: 90,
+            boh2Angle: 90,
+            acAngle: 0,
+            structures: [{
+              id: `struct-${Date.now()}`,
+              structureType: 'Test Structure',
+              depth: 1000,
+              alpha: 45,
+              beta: 30,
+              ac: 15,
+              dipReal: 30,
+              dipDirection: 45,
+              utmEast: 350000,
+              utmNorth: 6500000,
+              elevationMeters: 2000,
+              color: '#FF5733'
+            }]
+          }],
+          createdAt: new Date()
+        }
+
+        const syncResponse = await fetch('/api/sync/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'geostxr-sync-2024'
+          },
+          body: JSON.stringify({
+            drillHole: sampleDrillHole,
+            timestamp: new Date().toISOString(),
+            deviceInfo: {
+              userAgent: navigator.userAgent,
+              platform: navigator.platform
+            }
+          })
+        })
+
+        const syncResult = await syncResponse.json()
+        
+        if (syncResponse.ok) {
+          console.log('✅ Sync Test Successful:', syncResult)
+          alert(`✅ API Sync Test Successful!\n\nProject: ${syncResult.data.projectId}\nDrill Hole: ${syncResult.data.drillHoleId}\nStructures: ${syncResult.data.structuresCount}`)
+          
+          // Refresh projects to show new data
+          window.location.reload()
+        } else {
+          console.error('❌ Sync Test Failed:', syncResult)
+          alert(`❌ Sync Test Failed: ${syncResult.error}`)
+        }
+      } else {
+        console.error('❌ API Status Failed:', status)
+        alert(`❌ API Status Failed: ${status.error}`)
+      }
+    } catch (error) {
+      console.error('❌ API Test Error:', error)
+      alert(`❌ API Test Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -135,6 +221,12 @@ export function Dashboard({
           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
         >
           📱 Simular Captura Android
+        </button>
+        <button
+          onClick={handleTestPWASync}
+          className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+        >
+          🔄 Probar Sync API
         </button>
       </div>
 
