@@ -221,7 +221,7 @@ export default function BOHControls({ state, actions, className = '', trioManage
                 Planos Completados ({trioManager.triosCount} / {trioManager.MAX_TRIOS})
               </h4>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {trioManager.trios.map((trio, index) => (
+                {trioManager.trios.map((trio: any, index: number) => (
                   <div
                     key={trio.id}
                     className="p-2 rounded border cursor-pointer hover:bg-gray-50 transition-colors"

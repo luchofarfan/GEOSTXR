@@ -262,7 +262,7 @@ export function usePointTrios() {
           ...trio,
           points: updatedPoints,
           // Force update by updating timestamp
-          createdAt: new Date().getTime()
+          createdAt: new Date()
         }
       })
       
@@ -370,7 +370,7 @@ export function usePointTrios() {
       id: `validation-trio-${Date.now()}`,
       points,
       color: getTrioColor(trios.length),
-      createdAt: Date.now(),
+      createdAt: new Date(),
       depth: depthCm,
       isValidation: true // Mark as validation trio - excluded from reports
     }

@@ -207,12 +207,12 @@ export function FloatingStructureTypeInput({
                   gap: '10px',
                   padding: '10px 12px',
                   background: selectedType === type.name 
-                    ? `${type.color}33` 
+                    ? `${(type as any).color || '#3b82f6'}33` 
                     : 'rgba(255,255,255,0.05)',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   border: selectedType === type.name 
-                    ? `2px solid ${type.color}` 
+                    ? `2px solid ${(type as any).color || '#3b82f6'}` 
                     : '1px solid rgba(255,255,255,0.1)',
                   transition: 'all 0.2s'
                 }}
@@ -223,13 +223,13 @@ export function FloatingStructureTypeInput({
                   value={type.name}
                   checked={selectedType === type.name}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  style={{ accentColor: type.color }}
+                  style={{ accentColor: (type as any).color || '#3b82f6' }}
                 />
                 {/* Color indicator */}
                 <div style={{
                   width: '14px',
                   height: '14px',
-                  backgroundColor: type.color,
+                  backgroundColor: (type as any).color || '#3b82f6',
                   borderRadius: '50%',
                   border: '2px solid white',
                   boxShadow: '0 0 8px rgba(0,0,0,0.5)'

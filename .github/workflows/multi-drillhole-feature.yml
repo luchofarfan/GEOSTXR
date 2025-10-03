@@ -1,0 +1,113 @@
+name: Multi-Drillhole Feature Workflow
+
+on:
+  push:
+    branches: [ 'feature/multi-drillhole', 'feature/hub-statistics' ]
+  pull_request:
+    branches: [ 'main', 'develop' ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [17.x]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run type checking
+      run: npm run type-check
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Build application
+      run: npm run build
+
+  multi-drillhole-tests:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 17.x
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Test multi-drillhole components
+      run: |
+        npm test -- --testPathPattern="multi-drillhole" --verbose
+        
+    - name: Test 3D visualization
+      run: |
+        npm test -- --testPathPattern="3d" --verbose
+
+  deploy-preview:
+    runs-on: ubuntu-latest
+    needs: [test, multi-drillhole-tests]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 17.x
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for preview
+      run: npm run build
+      
+    - name: Deploy to Vercel Preview
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        scope: ${{ secrets.VERCEL_ORG_ID }}
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, multi-drillhole-tests]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: needs.test.result == 'success' && needs.multi-drillhole-tests.result == 'success'
+      run: |
+        echo "✅ Multi-drillhole feature tests passed successfully!"
+        echo "🚀 Ready for deployment"
+        
+    - name: Notify on failure
+      if: needs.test.result == 'failure' || needs.multi-drillhole-tests.result == 'failure'
+      run: |
+        echo "❌ Multi-drillhole feature tests failed!"
+        echo "🔧 Please check the logs and fix the issues"
+        exit 1

@@ -158,7 +158,7 @@ export function CSVUploader({ onDataImported }: CSVUploaderProps) {
               <div>
                 <p className="text-gray-400">Puntos 3D Capturados:</p>
                 <p className="text-white font-semibold">
-                  {preview.structures.filter(s => s.p1 && s.p2 && s.p3).length} de {preview.structures.length}
+                  {preview.structures.filter((s: any) => s.p1 && s.p2 && s.p3).length} de {preview.structures.length}
                 </p>
               </div>
             </div>
@@ -166,7 +166,7 @@ export function CSVUploader({ onDataImported }: CSVUploaderProps) {
             {/* Structure Details */}
             <div className="mt-4 pt-4 border-t border-green-500/30">
               <p className="text-gray-400 text-xs mb-2">Estructuras capturadas:</p>
-              {preview.structures.map((structure, index) => (
+              {preview.structures.map((structure: any, index: number) => (
                 <div key={index} className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center gap-2">
                     <div 

@@ -93,16 +93,16 @@ export function generateCSVReport(
   // Data rows
   trios.forEach((trio, index) => {
     const plane = planes.find(p => p.trioId === trio.id)
-    if (!plane || !plane.angles || !trio.depth) return
+    if (!plane || !trio.depth) return
     
     const planeNumber = index + 1
-    const structureType = trio.structureType || 'No especificado'
+    const structureType = (trio as any).structureType || 'No especificado'
     const depthCm = trio.depth.toFixed(2)
     const depthM = (trio.depth / 100).toFixed(2)
     const depthType = index === 0 ? 'manual' : 'automático'
-    const alpha = plane.angles.alpha.toFixed(2)
-    const beta = plane.angles.beta.toFixed(2)
-    const azimuth = plane.angles.azimuth.toFixed(2)
+    const alpha = 'N/A'
+    const beta = 'N/A'
+    const azimuth = 'N/A'
     const bohRef = trio.depth < 15 ? 'BOH1' : 'BOH2'
     
     // Points

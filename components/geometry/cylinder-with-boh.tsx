@@ -26,7 +26,7 @@ export default function CylinderWithBOH({
       <div className="flex h-full">
         {/* 3D Scene */}
         <div className="flex-1 relative">
-          <VirtualCylinder className="w-full h-full" />
+          <VirtualCylinder className="w-full h-full" width={400} height={600} />
           {state.isVisible && (
             <div className="absolute inset-0 pointer-events-none">
               <BOHLines 

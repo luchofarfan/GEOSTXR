@@ -168,6 +168,69 @@ export function DrillHoleViewer3D({ drillHole }: DrillHoleViewer3DProps) {
     const axesHelper = new THREE.AxesHelper(2000)
     scene.add(axesHelper)
 
+    // Add axis labels
+    const createAxisLabel = (text: string, position: THREE.Vector3, color: string) => {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')!
+      canvas.width = 256
+      canvas.height = 64
+      
+      context.fillStyle = 'rgba(0, 0, 0, 0.8)'
+      context.fillRect(0, 0, canvas.width, canvas.height)
+      
+      context.fillStyle = color
+      context.font = 'bold 24px Arial'
+      context.textAlign = 'center'
+      context.fillText(text, canvas.width / 2, canvas.height / 2 + 8)
+      
+      const texture = new THREE.CanvasTexture(canvas)
+      const material = new THREE.SpriteMaterial({ map: texture })
+      const sprite = new THREE.Sprite(material)
+      sprite.position.copy(position)
+      sprite.scale.set(200, 50, 1)
+      scene.add(sprite)
+    }
+
+    // Axis labels
+    createAxisLabel('ESTE (X)', new THREE.Vector3(2500, 0, 0), '#ff0000')
+    createAxisLabel('ELEVACIÓN (Y)', new THREE.Vector3(0, 2500, 0), '#00ff00')
+    createAxisLabel('SUR (Z)', new THREE.Vector3(0, 0, -2500), '#0000ff')
+
+    // Drill Hole Information Label
+    const createInfoLabel = (text: string, position: THREE.Vector3) => {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')!
+      canvas.width = 512
+      canvas.height = 128
+      
+      context.fillStyle = 'rgba(0, 0, 0, 0.9)'
+      context.fillRect(0, 0, canvas.width, canvas.height)
+      
+      context.fillStyle = '#ffffff'
+      context.font = 'bold 20px Arial'
+      context.textAlign = 'left'
+      
+      const lines = text.split('\n')
+      lines.forEach((line, index) => {
+        context.fillText(line, 10, 25 + index * 25)
+      })
+      
+      const texture = new THREE.CanvasTexture(canvas)
+      const material = new THREE.SpriteMaterial({ map: texture })
+      const sprite = new THREE.Sprite(material)
+      sprite.position.copy(position)
+      sprite.scale.set(400, 100, 1)
+      scene.add(sprite)
+    }
+
+    // Drill hole collar information
+    const collarInfo = `${drillHole.info.holeName}
+Colar: E${drillHole.info.utmEast.toFixed(0)} N${drillHole.info.utmNorth.toFixed(0)} Z${drillHole.info.elevation.toFixed(0)}m
+Azimut: ${drillHole.info.azimuth.toFixed(1)}° | Inclinación: ${drillHole.info.dip.toFixed(1)}°
+Profundidad Total: ${drillHole.totalDepth.toFixed(0)}m`
+
+    createInfoLabel(collarInfo, new THREE.Vector3(0, 3000, 0))
+
     // Grid horizontal en superficie (Y = 0)
     // GridHelper crea una grilla en el plano XZ (horizontal en Three.js)
     const gridHelper = new THREE.GridHelper(10000, 20, 0x444444, 0x222222)
@@ -179,6 +242,35 @@ export function DrillHoleViewer3D({ drillHole }: DrillHoleViewer3DProps) {
       const gridRef = new THREE.GridHelper(2000, 4, 0x333333, 0x222222)
       gridRef.position.y = -depth  // Cada 50m hacia abajo
       scene.add(gridRef)
+    }
+
+    // Add depth labels along the drill hole trajectory
+    const createDepthLabel = (text: string, position: THREE.Vector3) => {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')!
+      canvas.width = 128
+      canvas.height = 32
+      
+      context.fillStyle = 'rgba(0, 0, 0, 0.8)'
+      context.fillRect(0, 0, canvas.width, canvas.height)
+      
+      context.fillStyle = '#ffff00'
+      context.font = 'bold 16px Arial'
+      context.textAlign = 'center'
+      context.fillText(text, canvas.width / 2, canvas.height / 2 + 5)
+      
+      const texture = new THREE.CanvasTexture(canvas)
+      const material = new THREE.SpriteMaterial({ map: texture })
+      const sprite = new THREE.Sprite(material)
+      sprite.position.copy(position)
+      sprite.scale.set(100, 25, 1)
+      scene.add(sprite)
+    }
+
+    // Add depth markers every 50m along the drill hole
+    for (let depth = 0; depth <= drillHole.totalDepth; depth += 50) {
+      const position = calculatePositionAlongHole(depth)
+      createDepthLabel(`${depth}m`, new THREE.Vector3(position.x, position.y + 100, position.z))
     }
 
     // Animation loop

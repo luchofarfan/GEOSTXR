@@ -1,0 +1,27 @@
+{
+  "name": "GeoStXR Hub",
+  "short_name": "GeoStXR",
+  "description": "Análisis y Visualización de Datos Estructurales",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["productivity", "utilities", "business"],
+  "lang": "es",
+  "scope": "/"
+}

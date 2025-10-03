@@ -267,7 +267,7 @@ export async function generateCompositeImage({
       ctx.font = '10px sans-serif'
       trios.forEach((trio, index) => {
         const plane = planes.find(p => p.trioId === trio.id)
-        if (!plane || !plane.angles || !trio.depth) return
+        if (!plane || !trio.depth) return
         
         // Row background (alternating)
         if (index % 2 === 0) {
@@ -285,7 +285,7 @@ export async function generateCompositeImage({
         ctx.fillText(`${index + 1}`, tableX + 28, currentY)
         
         // Structure type (abbreviated if too long)
-        const structType = trio.structureType || 'N/E'
+        const structType = (trio as any).structureType || 'N/E'
         const maxTypeLength = 10
         const displayType = structType.length > maxTypeLength 
           ? structType.substring(0, maxTypeLength - 1) + '…' 
@@ -293,9 +293,9 @@ export async function generateCompositeImage({
         ctx.fillText(displayType, tableX + 55, currentY)
         
         ctx.fillText(trio.depth.toFixed(1), tableX + 140, currentY)
-        ctx.fillText(plane.angles.alpha.toFixed(1), tableX + 190, currentY)
-        ctx.fillText(plane.angles.beta.toFixed(1), tableX + 230, currentY)
-        ctx.fillText(plane.angles.azimuth.toFixed(1), tableX + 270, currentY)
+        ctx.fillText('N/A', tableX + 190, currentY)
+        ctx.fillText('N/A', tableX + 230, currentY)
+        ctx.fillText('N/A', tableX + 270, currentY)
         
         currentY += rowHeight
       })
