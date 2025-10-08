@@ -68,9 +68,9 @@ export const CameraSimple: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-row w-full h-screen bg-black overflow-hidden">
+    <div className="flex w-full h-screen bg-black" style={{ display: 'flex', flexDirection: 'row' }}>
       {/* Left - Camera with Cylinder - 50% width */}
-      <div className="w-1/2 h-full relative bg-gray-800 overflow-hidden">
+      <div className="relative bg-gray-800" style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
         {/* Debug message */}
         <div className="absolute top-4 left-4 bg-yellow-600 text-white px-3 py-2 rounded z-50">
           📹 Área de Cámara
@@ -135,7 +135,7 @@ export const CameraSimple: React.FC = () => {
       </div>
 
       {/* Right - Controls Panel - 50% width */}
-      <div className="w-1/2 h-full bg-gray-900 flex flex-col p-3 gap-3 overflow-y-auto">
+      <div className="bg-gray-900 flex flex-col p-3 gap-3 overflow-y-auto" style={{ width: '50%', height: '100%' }}>
         
         {/* L1/L2 Info */}
         <div className="bg-gray-800/50 rounded p-3">
@@ -176,10 +176,13 @@ export const CameraSimple: React.FC = () => {
         {/* Actions */}
         <button
           onClick={handleResetScene}
-          className="w-full h-10 bg-gray-600 text-white rounded text-sm font-bold hover:bg-gray-700 active:bg-gray-800 shadow-lg flex items-center justify-center"
+          className="h-10 bg-gray-600 text-white rounded text-sm font-bold hover:bg-gray-700 active:bg-gray-800 shadow-lg flex items-center justify-center"
           style={{
             border: '1px solid white',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+            width: '100%',
+            maxWidth: '200px',
+            margin: '0 auto'
           }}
         >
           🔄 Reset
