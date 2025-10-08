@@ -53,10 +53,14 @@ export const CameraSimple: React.FC = () => {
   const [captureResults, setCaptureResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   
-  // Point selection managers - temporarily disabled to prevent crashes
-  // TODO: Re-enable after fixing the underlying issue
-  const trioManager = null
-  const planeManager = null
+  // Point selection managers - re-enabled with proper error handling
+  const trioManager = usePointTrios()
+  const planeManager = usePlanes()
+  
+  console.log('🔧 Managers initialized:', { 
+    trioManager: !!trioManager, 
+    planeManager: !!planeManager 
+  })
 
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
