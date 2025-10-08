@@ -1,7 +1,7 @@
 "use client"
 
-import { CameraWithCylinder } from "@/components/camera/camera-with-cylinder"
+import { CameraSimple } from "@/components/camera/camera-simple"
 
 export default function GeoStXRApp() {
-  return <CameraWithCylinder />
+  return <CameraSimple />
 }

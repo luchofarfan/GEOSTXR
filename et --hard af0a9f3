@@ -1,0 +1,20 @@
+[33m61c75f7[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m feat: Add video rotation controls to manually align feed with virtual cylinder
+[33m4a4529a[m fix: Prevent infinite re-render loop in edge alignment (error 310)
+[33m6a2a713[m feat: Add video zoom controls - zoom feed while keeping virtual cylinder size fixed
+[33m765ea29[m feat: Auto-capture photo when cylinder edges align perfectly for 2 seconds
+[33md89b8df[m fix: Flip video horizontally to correct mirror effect
+[33m19e92ce[m feat: Show full camera feed in live view, apply cylindrical mask only on captured photo
+[33m81ca2ad[m fix: Re-enable edge detection with lines limited to cylinder visible area (middle 80% of screen)
+[33me21ece7[m fix: Disable edge alignment overlay - lines were appearing outside cylinder mask
+[33mebfd187[m fix: Swap BOH Z positions - BOH1 (red) now z=15-30 upper, BOH2 (green) z=0-15 lower
+[33m486f50b[m fix: Increase camera distance to 35cm and center at z=15 to reduce perspective distortion and keep BOHs within cylinder bounds
+[33m8a17d7b[m fix: Remove debug panel to resolve React error 301 (hooks violation)
+[33m43b788e[m feat: Add visible debug panel for BOH diagnostics on mobile
+[33mbbfadda[m debug: Add detailed logging for BOH 3D positions and 2D projections
+[33mbf9ee3a[m fix: Correct BOH drag direction and add wider touch areas for mobile interaction
+[33ma6b1d67[m fix: Lower camera position to z=10 to show full cylinder from bottom (BOH red visible)
+[33m0caebf4[m fix: Increase FOV to 85deg for mobile to ensure full 30cm cylinder and both BOHs visible
+[33mfc02d56[m fix: Remove vertical flip and increase FOV to 75deg for full cylinder visibility
+[33meee6a0c[m fix: Increase FOV to 65deg for mobile portrait to show full 30cm cylinder
+[33m83a21ab[m feat: Add automatic cylinder edge detection and alignment overlay
+[33m6359fcd[m fix: Revert to background video without cylinder mapping
