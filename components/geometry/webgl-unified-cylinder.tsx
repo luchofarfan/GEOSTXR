@@ -288,7 +288,7 @@ export default function WebGLUnifiedCylinder({
     const videoTexture = new THREE.VideoTexture(video)
     videoTexture.minFilter = THREE.LinearFilter
     videoTexture.magFilter = THREE.LinearFilter
-    videoTexture.flipY = true
+    videoTexture.flipY = false // Don't flip - camera feed is already correct orientation
     videoTextureRef.current = videoTexture
 
     const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
@@ -652,6 +652,14 @@ export default function WebGLUnifiedCylinder({
 
   // NEW APPROACH: Transform CAMERA instead of objects for automatic solidary movement
   useEffect(() => {
+    console.log(`🔄 Camera transform triggered:`, {
+      videoZoom: videoZoom.toFixed(2),
+      videoRotation: videoRotation.toFixed(1),
+      isFrozen,
+      hasCamera: !!localCameraRef.current,
+      hasOriginalPos: !!originalCameraPosition.current
+    })
+    
     if (!localCameraRef.current || !originalCameraPosition.current || !originalCameraRotation.current) return
     
     const camera = localCameraRef.current
