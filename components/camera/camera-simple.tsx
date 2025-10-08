@@ -27,13 +27,16 @@ export const CameraSimple: React.FC = () => {
   const handleStartCapture = () => {
     console.log('🎬 Starting capture...')
     setIsCapturing(true)
+    // Trigger scene photo capture in WebGLUnifiedCylinder
+    const event = new CustomEvent('captureScenePhoto')
+    window.dispatchEvent(event)
   }
 
   const handleEndCapture = () => {
     console.log('🏁 Ending capture...')
     setIsCapturing(false)
     setShowResults(true)
-    // Simular resultados
+    // Simular resultados por ahora
     setCaptureResults([
       { id: 1, type: 'AC', value: 45.2, unit: '°' },
       { id: 2, type: 'BOH', value: 12.8, unit: '°' },
@@ -114,7 +117,7 @@ export const CameraSimple: React.FC = () => {
         <WebGLUnifiedCylinder
           className="w-full h-full"
           cameraRef={cameraRef}
-          isFrozen={false}
+          isFrozen={!!scenePhotoId}
           scenePhotoId={scenePhotoId}
           frozenImageDataUrl={basePhotoDataUrl}
           onScenePhotoCaptured={handleScenePhotoCaptured}
@@ -125,9 +128,14 @@ export const CameraSimple: React.FC = () => {
         />
         
         {/* Status Indicator */}
+        {isCapturing && (
+          <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-2 rounded animate-pulse">
+            🎬 Capturando...
+          </div>
+        )}
         {scenePhotoId && (
           <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-2 rounded">
-            ✅ Escena capturada
+            ✅ Escena capturada - Selecciona puntos
           </div>
         )}
       </div>
