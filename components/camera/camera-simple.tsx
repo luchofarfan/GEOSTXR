@@ -89,9 +89,9 @@ export const CameraSimple: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-row w-full h-screen bg-black">
+    <div className="flex flex-row w-full h-screen bg-black overflow-hidden">
       {/* Left - Camera with Cylinder - 50% width */}
-      <div className="w-1/2 h-full relative bg-gray-800">
+      <div className="w-1/2 h-full relative bg-gray-800 overflow-hidden">
         {/* Debug message */}
         <div className="absolute top-4 left-4 bg-yellow-600 text-white px-3 py-2 rounded z-50">
           📹 Área de Cámara
@@ -139,7 +139,14 @@ export const CameraSimple: React.FC = () => {
           autoPlay
           playsInline
           muted
-          style={{ transform: 'scaleX(-1)' }}
+          style={{ 
+            transform: 'scaleX(-1)',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0
+          }}
         />
         
         {/* WebGLUnifiedCylinder - Commented out for debugging */}
