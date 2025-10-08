@@ -75,42 +75,6 @@ export const CameraSimple: React.FC = () => {
       {/* Left - Camera with Cylinder - 50% width */}
       <div className="relative bg-gray-800" style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
         
-        {/* Capture buttons overlay - Bottom right */}
-        <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-50">
-          <button
-            onClick={handleStartCapture}
-            disabled={isCapturing}
-            className={`w-16 h-10 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
-              isCapturing 
-                ? 'bg-green-600 text-white cursor-not-allowed' 
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
-            }`}
-            style={{
-              border: '2px solid white',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.7)',
-              zIndex: 1000
-            }}
-          >
-            {isCapturing ? '🎬' : '▶️'}
-          </button>
-          
-          <button
-            onClick={handleEndCapture}
-            disabled={!isCapturing}
-            className={`w-16 h-10 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
-              !isCapturing 
-                ? 'bg-gray-500 text-white cursor-not-allowed' 
-                : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
-            }`}
-            style={{
-              border: '2px solid white',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.7)',
-              zIndex: 1000
-            }}
-          >
-            🏁
-          </button>
-        </div>
         
         
         {/* WebGLUnifiedCylinder */}
@@ -142,6 +106,41 @@ export const CameraSimple: React.FC = () => {
 
       {/* Right - Controls Panel - 50% width */}
       <div className="bg-gray-900 flex flex-col p-3 gap-3 overflow-y-auto" style={{ width: '50%', height: '100%' }}>
+        
+        {/* Capture Buttons */}
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleStartCapture}
+            disabled={isCapturing}
+            className={`w-full h-10 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
+              isCapturing 
+                ? 'bg-green-600 text-white cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+            }`}
+            style={{
+              border: '2px solid white',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.7)'
+            }}
+          >
+            {isCapturing ? '🎬 Capturando...' : '▶️ Iniciar Captura'}
+          </button>
+          
+          <button
+            onClick={handleEndCapture}
+            disabled={!isCapturing}
+            className={`w-full h-10 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
+              !isCapturing 
+                ? 'bg-gray-500 text-white cursor-not-allowed' 
+                : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
+            }`}
+            style={{
+              border: '2px solid white',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.7)'
+            }}
+          >
+            🏁 Terminar Captura
+          </button>
+        </div>
         
         {/* L1/L2 Info */}
         <div className="bg-gray-800/50 rounded p-3">
@@ -197,7 +196,7 @@ export const CameraSimple: React.FC = () => {
         {/* Instructions */}
         <div className="bg-gray-800/50 rounded p-3 flex-1 flex items-center justify-center">
           <p className="text-gray-400 text-xs text-center">
-            Usa los botones ▶️ y 🏁 en la cámara para capturar
+            Usa los botones de arriba para iniciar y terminar la captura
           </p>
         </div>
       </div>
