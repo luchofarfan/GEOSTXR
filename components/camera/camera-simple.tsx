@@ -69,7 +69,12 @@ export const CameraSimple: React.FC = () => {
   return (
     <div className="flex w-full h-screen bg-black">
       {/* Left - Camera with Cylinder - Maximized */}
-      <div className="w-1/2 relative bg-black">
+      <div className="w-1/2 relative bg-gray-800">
+        {/* Debug message */}
+        <div className="absolute top-4 left-4 bg-yellow-600 text-white px-3 py-2 rounded z-50">
+          📹 Área de Cámara
+        </div>
+        
         <WebGLUnifiedCylinder
           className="w-full h-full"
           cameraRef={cameraRef}
@@ -93,61 +98,61 @@ export const CameraSimple: React.FC = () => {
 
       {/* Right - Controls Panel */}
       <div className="w-1/2 bg-gray-900 flex flex-col p-4 overflow-y-auto">
-        {/* Capture Buttons */}
-        <div className="flex flex-col gap-3 mb-6">
+        {/* Capture Buttons - Smaller */}
+        <div className="flex flex-col gap-2 mb-4">
           <button
             onClick={handleStartCapture}
             disabled={isCapturing}
-            className={`w-full h-12 rounded text-lg font-bold shadow-lg flex items-center justify-center ${
+            className={`w-full h-8 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
               isCapturing 
                 ? 'bg-green-600 text-white cursor-not-allowed' 
                 : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
             }`}
             style={{
-              border: '2px solid white',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.5)'
+              border: '1px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
             }}
           >
-            {isCapturing ? '🎬 Capturando...' : '▶️ Iniciar Captura'}
+            {isCapturing ? '🎬' : '▶️'}
           </button>
           
           <button
             onClick={handleEndCapture}
             disabled={!isCapturing}
-            className={`w-full h-12 rounded text-lg font-bold shadow-lg flex items-center justify-center ${
+            className={`w-full h-8 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
               !isCapturing 
                 ? 'bg-gray-500 text-white cursor-not-allowed' 
                 : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
             }`}
             style={{
-              border: '2px solid white',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.5)'
+              border: '1px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
             }}
           >
-            🏁 Terminar Captura
+            🏁
           </button>
         </div>
 
-        {/* L1 and L2 Information */}
-        <div className="bg-gray-800/50 rounded p-4 mb-6">
-          <h3 className="text-white text-lg font-bold mb-3">📐 Líneas</h3>
-          <div className="text-white text-base space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-              <span className="text-lg">L1: {line1Angle.toFixed(1)}°</span>
+        {/* L1 and L2 Information - Smaller */}
+        <div className="bg-gray-800/50 rounded p-2 mb-4">
+          <h3 className="text-white text-sm font-bold mb-2">📐 Líneas</h3>
+          <div className="text-white text-sm space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span>L1: {line1Angle.toFixed(1)}°</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-              <span className="text-lg">L2: {line2Angle.toFixed(1)}°</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span>L2: {line2Angle.toFixed(1)}°</span>
             </div>
           </div>
         </div>
 
-        {/* Results Panel */}
+        {/* Results Panel - Smaller */}
         {showResults && (
-          <div className="bg-gray-800/50 rounded p-4 mb-6">
-            <h3 className="text-white text-lg font-bold mb-3">📊 Resultados</h3>
-            <div className="text-white text-base space-y-2">
+          <div className="bg-gray-800/50 rounded p-2 mb-4">
+            <h3 className="text-white text-sm font-bold mb-2">📊 Resultados</h3>
+            <div className="text-white text-sm space-y-1">
               {captureResults.map((result) => (
                 <div key={result.id} className="flex justify-between">
                   <span>{result.type}:</span>
@@ -158,13 +163,13 @@ export const CameraSimple: React.FC = () => {
           </div>
         )}
 
-        {/* Reset Button */}
+        {/* Reset Button - Smaller */}
         <button
           onClick={handleResetScene}
-          className="w-full h-12 bg-gray-600 text-white rounded text-lg font-bold hover:bg-gray-700 active:bg-gray-800 shadow-lg flex items-center justify-center"
+          className="w-full h-8 bg-gray-600 text-white rounded text-sm font-bold hover:bg-gray-700 active:bg-gray-800 shadow-lg flex items-center justify-center"
           style={{
-            border: '2px solid white',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.5)'
+            border: '1px solid white',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
           }}
         >
           🔄 Reset
