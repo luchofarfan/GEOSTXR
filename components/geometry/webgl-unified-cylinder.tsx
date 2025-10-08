@@ -52,6 +52,8 @@ export default function WebGLUnifiedCylinder({
   const orbitControlsRef = useRef<OrbitControls | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
   const videoPlaneRef = useRef<THREE.Mesh | null>(null) // Reference to video plane for zoom
+  const originalCameraPosition = useRef<THREE.Vector3 | null>(null) // Original camera position for reset
+  const originalCameraRotation = useRef<THREE.Euler | null>(null) // Original camera rotation for reset
   const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
   const ellipsesRef = useRef<Map<string, THREE.Line>>(new Map()) // Map of planeId -> Three.js Line (ellipse)
   const [isReady, setIsReady] = useState(false)
@@ -215,8 +217,12 @@ export default function WebGLUnifiedCylinder({
     camera.lookAt(0, 0, cylinderCenter) // Look at center for balanced view
     camera.up.set(0, 0, 1) // Z-axis points up (cylinder is vertical)
     
+    // Store original camera position and rotation for reset
+    originalCameraPosition.current = camera.position.clone()
+    originalCameraRotation.current = camera.rotation.clone()
+    
     console.log(`📐 Perspective camera: FOV=${fov}°, Distance=${distance}cm, AspectRatio=${aspectRatio.toFixed(2)}, Portrait=${isPortrait}, Mobile=${isMobile}`)
-    console.log(`   → Matches real camera perspective for coherent video mapping`)
+    console.log(`   → Original position saved for transformations`)
     // Use default up vector (0,1,0)
     localCameraRef.current = camera
     // Pass camera reference to parent component for composite image generation
@@ -644,49 +650,29 @@ export default function WebGLUnifiedCylinder({
     }
   }, [controlsEnabled])
 
-  // Update video plane and cylinder zoom and rotation (conditional synchronization)
+  // NEW APPROACH: Transform CAMERA instead of objects for automatic solidary movement
   useEffect(() => {
-    if (videoPlaneRef.current) {
-      if (isFrozen) {
-        // AFTER CAPTURE: Synchronized zoom/rotation (solidary)
-        videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
-        videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
-        console.log(`🔍 FROZEN: Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}° (solidary)`)
-      } else {
-        // BEFORE CAPTURE: Video follows gestures but cylinder stays independent
-        videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
-        videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
-        console.log(`📹 LIVE: Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}° (decoupled from cylinder)`)
-      }
-    }
+    if (!localCameraRef.current || !originalCameraPosition.current || !originalCameraRotation.current) return
     
-    // Apply transformations to cylinder ONLY when frozen (solidary mode)
-    if (isFrozen && sceneRef.current) {
-      console.log(`🔍 FROZEN: Looking for cylinder in scene...`)
-      const cylinder = sceneRef.current.children.find(child => 
-        child.userData && child.userData.type === 'cylinder'
-      )
-      console.log(`🔍 FROZEN: Cylinder found:`, !!cylinder)
-      if (cylinder) {
-        cylinder.scale.set(videoZoom, videoZoom, 1)
-        cylinder.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
-        console.log(`🔄 FROZEN: Cylinder synchronized with video - scale: ${videoZoom}, rotation: ${videoRotation}°`)
-      } else {
-        console.log(`❌ FROZEN: Cylinder not found! Scene children:`, sceneRef.current.children.length)
-        sceneRef.current.children.forEach((child, index) => {
-          console.log(`  Child ${index}:`, child.userData)
-        })
-      }
-    } else if (!isFrozen && sceneRef.current) {
-      // Keep cylinder in original state when not frozen (decoupled mode)
-      const cylinder = sceneRef.current.children.find(child => 
-        child.userData && child.userData.type === 'cylinder'
-      )
-      if (cylinder) {
-        cylinder.scale.set(1, 1, 1)
-        cylinder.rotation.z = 0
-        console.log(`📹 LIVE: Cylinder stays in original state (decoupled)`)
-      }
+    const camera = localCameraRef.current
+    const originalPos = originalCameraPosition.current
+    const originalRot = originalCameraRotation.current
+    
+    if (isFrozen) {
+      // AFTER CAPTURE: Transform camera for solidary zoom/rotation
+      // Zoom: Move camera closer/further (dolly in/out)
+      const zoomFactor = 1 / videoZoom // Inverse: zoom in = camera closer
+      camera.position.y = originalPos.y * zoomFactor
+      
+      // Rotation: Rotate camera around Z-axis
+      camera.rotation.z = originalRot.z + (videoRotation * Math.PI) / 180
+      
+      console.log(`🎥 FROZEN: Camera transformed - distance: ${camera.position.y.toFixed(1)}, rotation: ${videoRotation.toFixed(1)}° (SOLIDARY)`)
+    } else {
+      // BEFORE CAPTURE: Reset camera to original position
+      camera.position.copy(originalPos)
+      camera.rotation.copy(originalRot)
+      console.log(`📹 LIVE: Camera at original position (no transformations)`)
     }
   }, [videoZoom, videoRotation, isFrozen])
 
