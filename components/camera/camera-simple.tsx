@@ -2,8 +2,6 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
-import { usePointTrios } from '@/hooks/geometry/use-point-trios'
-import { usePlanes } from '@/hooks/geometry/use-planes'
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -53,16 +51,9 @@ export const CameraSimple: React.FC = () => {
   const [captureResults, setCaptureResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   
-  // Point selection managers with error handling
-  let trioManager, planeManager
-  try {
-    trioManager = usePointTrios()
-    planeManager = usePlanes()
-  } catch (error) {
-    console.error('Error initializing managers:', error)
-    trioManager = null
-    planeManager = null
-  }
+  // Point selection managers - disabled to prevent crashes
+  const trioManager = null
+  const planeManager = null
 
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
@@ -147,8 +138,8 @@ export const CameraSimple: React.FC = () => {
           onLine2AngleChange={setLine2Angle}
           trioManager={trioManager}
           planeManager={planeManager}
-          isInteractive={true}
-          enableSnapping={true}
+          isInteractive={false}
+          enableSnapping={false}
         />
         
         {/* Status Indicator */}
