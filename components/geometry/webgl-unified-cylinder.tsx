@@ -662,13 +662,20 @@ export default function WebGLUnifiedCylinder({
     
     // Apply transformations to cylinder ONLY when frozen (solidary mode)
     if (isFrozen && sceneRef.current) {
+      console.log(`🔍 FROZEN: Looking for cylinder in scene...`)
       const cylinder = sceneRef.current.children.find(child => 
         child.userData && child.userData.type === 'cylinder'
       )
+      console.log(`🔍 FROZEN: Cylinder found:`, !!cylinder)
       if (cylinder) {
         cylinder.scale.set(videoZoom, videoZoom, 1)
         cylinder.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
-        console.log(`🔄 FROZEN: Cylinder synchronized with video`)
+        console.log(`🔄 FROZEN: Cylinder synchronized with video - scale: ${videoZoom}, rotation: ${videoRotation}°`)
+      } else {
+        console.log(`❌ FROZEN: Cylinder not found! Scene children:`, sceneRef.current.children.length)
+        sceneRef.current.children.forEach((child, index) => {
+          console.log(`  Child ${index}:`, child.userData)
+        })
       }
     } else if (!isFrozen && sceneRef.current) {
       // Keep cylinder in original state when not frozen (decoupled mode)

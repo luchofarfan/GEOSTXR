@@ -93,7 +93,7 @@ export const CameraSimple: React.FC = () => {
     console.log('🆔 Setting scenePhotoId:', newScenePhotoId)
     setScenePhotoId(newScenePhotoId)
     setBasePhotoDataUrl(imageDataUrl)
-    console.log('🧊 Component should now be frozen')
+    console.log('🧊 Component should now be frozen - isFrozen will be:', !!newScenePhotoId)
   }
 
   const handleResetScene = () => {
