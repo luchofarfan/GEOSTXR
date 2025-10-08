@@ -529,17 +529,33 @@ export default function WebGLUnifiedCylinder({
 
   // Log frozen state changes for debugging
   useEffect(() => {
-    console.log('🔄 Frozen state changed:', { isFrozen })
+    console.log('🔄 Frozen state changed:', { isFrozen, scenePhotoId, frozenImageDataUrl: !!frozenImageDataUrl })
     if (isFrozen) {
       console.log('🧊 Scene is now FROZEN - video paused, overlays active')
+      if (videoRef.current) {
+        videoRef.current.pause()
+        console.log('⏸️ Video paused')
+      }
     } else {
       console.log('📹 Scene is now LIVE - video playing normally')
+      if (videoRef.current) {
+        videoRef.current.play()
+        console.log('▶️ Video resumed')
+      }
     }
   }, [isFrozen])
 
   // Listen for capture scene photo event
   useEffect(() => {
     const handleCaptureEvent = () => {
+      console.log('📸 Capture event received!')
+      console.log('Components status:', {
+        renderer: !!rendererRef.current,
+        video: !!videoRef.current,
+        scene: !!sceneRef.current,
+        camera: !!localCameraRef.current
+      })
+      
       if (!rendererRef.current || !videoRef.current || !sceneRef.current || !localCameraRef.current) {
         console.error('Cannot capture: components not ready')
         return
@@ -923,90 +939,7 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
-      {/* Video Adjustment Indicator */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '20px',
-          zIndex: 2010,
-          background: 'rgba(0,0,0,0.8)',
-          backdropFilter: 'blur(15px)',
-          padding: '12px 16px',
-          borderRadius: '12px',
-          color: 'white',
-          fontSize: '12px',
-          border: '2px solid rgba(59, 130, 246, 0.5)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          maxWidth: '200px'
-        }}
-      >
-        <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' }}>
-          🎯 Ajustar Feed
-        </div>
-        <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#d1d5db' }}>
-          <div>🤏 <strong>Pinch:</strong> Zoom ({(videoZoom * 100).toFixed(0)}%)</div>
-          <div>🔄 <strong>2 dedos rotar:</strong> {videoRotation.toFixed(0)}°</div>
-        </div>
-        {(videoZoom !== 1.0 || videoRotation !== 0) && (
-          <button
-            onClick={() => videoGestures.reset()}
-            style={{
-              marginTop: '6px',
-              padding: '8px',
-              background: 'linear-gradient(135deg, #6b7280, #4b5563)',
-              border: '1px solid #9ca3af',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-            }}
-          >
-            🔄 Reset
-          </button>
-        )}
-      </div>
 
-      {/* Controls Toggle Button */}
-      <button
-        onClick={() => setControlsEnabled(!controlsEnabled)}
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 2010,
-          padding: '12px 20px',
-          background: controlsEnabled 
-            ? 'linear-gradient(135deg, #10b981, #059669)' 
-            : 'linear-gradient(135deg, #6b7280, #4b5563)',
-          border: controlsEnabled ? '2px solid #34d399' : '2px solid #9ca3af',
-          borderRadius: '12px',
-          color: 'white',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.3s ease'
-        }}
-      >
-        <span style={{ fontSize: '18px' }}>{controlsEnabled ? '🎮' : '🔒'}</span>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2' }}>
-          <span style={{ fontSize: '12px' }}>
-            {controlsEnabled ? 'Controles Activos' : 'Controles Bloqueados'}
-          </span>
-          <span style={{ fontSize: '10px', opacity: 0.8 }}>
-            {controlsEnabled ? '1 dedo: rotar | 2 dedos: panear | pinch: zoom' : 'Click para habilitar rotación/zoom/pan'}
-          </span>
-        </div>
-      </button>
       
       {/* Three.js will render here */}
       
