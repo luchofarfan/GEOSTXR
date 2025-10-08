@@ -71,24 +71,21 @@ export const CameraSimple: React.FC = () => {
     <div className="flex w-full h-screen bg-black" style={{ display: 'flex', flexDirection: 'row' }}>
       {/* Left - Camera with Cylinder - 50% width */}
       <div className="relative bg-gray-800" style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
-        {/* Debug message */}
-        <div className="absolute top-4 left-4 bg-yellow-600 text-white px-3 py-2 rounded z-50">
-          📹 Área de Cámara
-        </div>
         
-        {/* Capture buttons overlay */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-50">
+        {/* Capture buttons overlay - Bottom right */}
+        <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-50">
           <button
             onClick={handleStartCapture}
             disabled={isCapturing}
-            className={`w-16 h-8 rounded text-xs font-bold shadow-lg flex items-center justify-center ${
+            className={`w-16 h-10 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
               isCapturing 
                 ? 'bg-green-600 text-white cursor-not-allowed' 
                 : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
             }`}
             style={{
-              border: '1px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+              border: '2px solid white',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.7)',
+              zIndex: 1000
             }}
           >
             {isCapturing ? '🎬' : '▶️'}
@@ -97,14 +94,15 @@ export const CameraSimple: React.FC = () => {
           <button
             onClick={handleEndCapture}
             disabled={!isCapturing}
-            className={`w-16 h-8 rounded text-xs font-bold shadow-lg flex items-center justify-center ${
+            className={`w-16 h-10 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
               !isCapturing 
                 ? 'bg-gray-500 text-white cursor-not-allowed' 
                 : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
             }`}
             style={{
-              border: '1px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+              border: '2px solid white',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.7)',
+              zIndex: 1000
             }}
           >
             🏁
