@@ -89,9 +89,9 @@ export const CameraSimple: React.FC = () => {
   }
 
   return (
-    <div className="flex w-full h-screen bg-black">
-      {/* Left - Camera with Cylinder - Maximized */}
-      <div className="w-1/2 relative bg-gray-800">
+    <div className="flex flex-row w-full h-screen bg-black">
+      {/* Left - Camera with Cylinder - 50% width */}
+      <div className="w-1/2 h-full relative bg-gray-800">
         {/* Debug message */}
         <div className="absolute top-4 left-4 bg-yellow-600 text-white px-3 py-2 rounded z-50">
           📹 Área de Cámara
@@ -164,13 +164,13 @@ export const CameraSimple: React.FC = () => {
         )}
       </div>
 
-      {/* Right - Controls Panel */}
-      <div className="w-1/2 bg-gray-900 flex flex-col p-4 overflow-y-auto">
-
-        {/* L1 and L2 Information - Smaller */}
-        <div className="bg-gray-800/50 rounded p-2 mb-4">
+      {/* Right - Controls Panel - 50% width */}
+      <div className="w-1/2 h-full bg-gray-900 flex flex-col p-3 gap-3 overflow-y-auto">
+        
+        {/* L1/L2 Info */}
+        <div className="bg-gray-800/50 rounded p-3">
           <h3 className="text-white text-sm font-bold mb-2">📐 Líneas</h3>
-          <div className="text-white text-sm space-y-1">
+          <div className="text-white text-sm space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-red-500 rounded-full"></div>
               <span>L1: {line1Angle.toFixed(1)}°</span>
@@ -182,9 +182,9 @@ export const CameraSimple: React.FC = () => {
           </div>
         </div>
 
-        {/* Results Panel - Smaller */}
-        {showResults && (
-          <div className="bg-gray-800/50 rounded p-2 mb-4">
+        {/* Results */}
+        {showResults ? (
+          <div className="bg-gray-800/50 rounded p-3">
             <h3 className="text-white text-sm font-bold mb-2">📊 Resultados</h3>
             <div className="text-white text-sm space-y-1">
               {captureResults.map((result) => (
@@ -195,12 +195,18 @@ export const CameraSimple: React.FC = () => {
               ))}
             </div>
           </div>
+        ) : (
+          <div className="bg-gray-800/50 rounded p-3 flex items-center justify-center">
+            <p className="text-gray-400 text-xs text-center">
+              📊 Resultados aparecerán aquí
+            </p>
+          </div>
         )}
 
-        {/* Reset Button - Smaller */}
+        {/* Actions */}
         <button
           onClick={handleResetScene}
-          className="w-full h-8 bg-gray-600 text-white rounded text-sm font-bold hover:bg-gray-700 active:bg-gray-800 shadow-lg flex items-center justify-center"
+          className="w-full h-10 bg-gray-600 text-white rounded text-sm font-bold hover:bg-gray-700 active:bg-gray-800 shadow-lg flex items-center justify-center"
           style={{
             border: '1px solid white',
             boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
@@ -208,6 +214,13 @@ export const CameraSimple: React.FC = () => {
         >
           🔄 Reset
         </button>
+        
+        {/* Instructions */}
+        <div className="bg-gray-800/50 rounded p-3 flex-1 flex items-center justify-center">
+          <p className="text-gray-400 text-xs text-center">
+            Usa los botones ▶️ y 🏁 en la cámara para capturar
+          </p>
+        </div>
       </div>
     </div>
   )
