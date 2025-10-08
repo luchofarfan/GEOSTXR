@@ -97,6 +97,41 @@ export const CameraSimple: React.FC = () => {
           📹 Área de Cámara
         </div>
         
+        {/* Capture buttons overlay */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-50">
+          <button
+            onClick={handleStartCapture}
+            disabled={isCapturing}
+            className={`w-16 h-8 rounded text-xs font-bold shadow-lg flex items-center justify-center ${
+              isCapturing 
+                ? 'bg-green-600 text-white cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+            }`}
+            style={{
+              border: '1px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+            }}
+          >
+            {isCapturing ? '🎬' : '▶️'}
+          </button>
+          
+          <button
+            onClick={handleEndCapture}
+            disabled={!isCapturing}
+            className={`w-16 h-8 rounded text-xs font-bold shadow-lg flex items-center justify-center ${
+              !isCapturing 
+                ? 'bg-gray-500 text-white cursor-not-allowed' 
+                : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
+            }`}
+            style={{
+              border: '1px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+            }}
+          >
+            🏁
+          </button>
+        </div>
+        
         {/* Simple video element for testing */}
         <video
           ref={cameraRef}
@@ -131,40 +166,6 @@ export const CameraSimple: React.FC = () => {
 
       {/* Right - Controls Panel */}
       <div className="w-1/2 bg-gray-900 flex flex-col p-4 overflow-y-auto">
-        {/* Capture Buttons - Smaller */}
-        <div className="flex flex-col gap-2 mb-4">
-          <button
-            onClick={handleStartCapture}
-            disabled={isCapturing}
-            className={`w-full h-8 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
-              isCapturing 
-                ? 'bg-green-600 text-white cursor-not-allowed' 
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
-            }`}
-            style={{
-              border: '1px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
-            }}
-          >
-            {isCapturing ? '🎬' : '▶️'}
-          </button>
-          
-          <button
-            onClick={handleEndCapture}
-            disabled={!isCapturing}
-            className={`w-full h-8 rounded text-sm font-bold shadow-lg flex items-center justify-center ${
-              !isCapturing 
-                ? 'bg-gray-500 text-white cursor-not-allowed' 
-                : 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
-            }`}
-            style={{
-              border: '1px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
-            }}
-          >
-            🏁
-          </button>
-        </div>
 
         {/* L1 and L2 Information - Smaller */}
         <div className="bg-gray-800/50 rounded p-2 mb-4">
