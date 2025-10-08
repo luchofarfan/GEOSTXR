@@ -2,6 +2,8 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
+import { usePointTrios } from '@/hooks/geometry/use-point-trios'
+import { usePlanes } from '@/hooks/geometry/use-planes'
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -51,9 +53,9 @@ export const CameraSimple: React.FC = () => {
   const [captureResults, setCaptureResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   
-  // Point selection managers - disabled to prevent crashes
-  const trioManager = null
-  const planeManager = null
+  // Point selection managers - re-enabled for point selection
+  const trioManager = usePointTrios()
+  const planeManager = usePlanes()
 
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
@@ -138,8 +140,8 @@ export const CameraSimple: React.FC = () => {
           onLine2AngleChange={setLine2Angle}
           trioManager={trioManager}
           planeManager={planeManager}
-          isInteractive={false}
-          enableSnapping={false}
+          isInteractive={!!scenePhotoId}
+          enableSnapping={!!scenePhotoId}
         />
         
         {/* Status Indicator */}
@@ -150,7 +152,7 @@ export const CameraSimple: React.FC = () => {
         )}
         {scenePhotoId && (
           <div className="absolute top-4 right-4 bg-green-600 text-white px-3 py-2 rounded">
-            ✅ Escena capturada - Selecciona puntos
+            ✅ Escena capturada - Zoom/rotación solidarios - Selecciona puntos
           </div>
         )}
       </div>
