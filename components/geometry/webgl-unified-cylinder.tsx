@@ -389,6 +389,7 @@ export default function WebGLUnifiedCylinder({
 
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial)
     cylinder.position.set(0, 0, cylinderHeight / 2) // Move to z=0 to z=30 range
+    cylinder.userData = { type: 'cylinder' } // Add userData for identification
     scene.add(cylinder)
     
     console.log('✅ Cylinder created with custom UV-mapped video texture')
@@ -643,12 +644,25 @@ export default function WebGLUnifiedCylinder({
     }
   }, [controlsEnabled])
 
-  // Update video plane zoom and rotation
+  // Update video plane and cylinder zoom and rotation (synchronized)
   useEffect(() => {
     if (videoPlaneRef.current) {
+      // Apply zoom and rotation to video plane
       videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
-      videoPlaneRef.current.rotation.z = (videoRotation * Math.PI) / 180
+      videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
       console.log(`🔍 Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}°`)
+    }
+    
+    // Apply same transformations to cylinder to keep them synchronized
+    if (sceneRef.current) {
+      const cylinder = sceneRef.current.children.find(child => 
+        child.userData && child.userData.type === 'cylinder'
+      )
+      if (cylinder) {
+        cylinder.scale.set(videoZoom, videoZoom, 1)
+        cylinder.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
+        console.log(`🔄 Cylinder synchronized with video`)
+      }
     }
   }, [videoZoom, videoRotation])
 

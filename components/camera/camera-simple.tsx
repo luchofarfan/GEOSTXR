@@ -2,6 +2,8 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
+import { usePointTrios } from '@/hooks/geometry/use-point-trios'
+import { usePlanes } from '@/hooks/geometry/use-planes'
 
 export const CameraSimple: React.FC = () => {
   const cameraRef = useRef<any>(null)
@@ -14,9 +16,9 @@ export const CameraSimple: React.FC = () => {
   const [captureResults, setCaptureResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   
-  // Point selection managers - temporarily disabled
-  // const trioManager = usePointTrios()
-  // const planeManager = usePlanes()
+  // Point selection managers
+  const trioManager = usePointTrios()
+  const planeManager = usePlanes()
 
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
@@ -98,10 +100,10 @@ export const CameraSimple: React.FC = () => {
           line2Angle={line2Angle}
           onLine1AngleChange={setLine1Angle}
           onLine2AngleChange={setLine2Angle}
-          trioManager={undefined}
-          planeManager={undefined}
-          isInteractive={false}
-          enableSnapping={false}
+          trioManager={trioManager}
+          planeManager={planeManager}
+          isInteractive={true}
+          enableSnapping={true}
         />
         
         {/* Status Indicator */}
