@@ -5,6 +5,43 @@ import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
 import { usePointTrios } from '@/hooks/geometry/use-point-trios'
 import { usePlanes } from '@/hooks/geometry/use-planes'
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex w-full h-screen bg-black items-center justify-center">
+          <div className="text-white text-center p-4">
+            <h2 className="text-xl font-bold mb-2">Error en la aplicación</h2>
+            <p className="text-sm">Por favor, recarga la página</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              Recargar
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 export const CameraSimple: React.FC = () => {
   const cameraRef = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -16,9 +53,16 @@ export const CameraSimple: React.FC = () => {
   const [captureResults, setCaptureResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   
-  // Point selection managers
-  const trioManager = usePointTrios()
-  const planeManager = usePlanes()
+  // Point selection managers with error handling
+  let trioManager, planeManager
+  try {
+    trioManager = usePointTrios()
+    planeManager = usePlanes()
+  } catch (error) {
+    console.error('Error initializing managers:', error)
+    trioManager = null
+    planeManager = null
+  }
 
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
@@ -82,7 +126,8 @@ export const CameraSimple: React.FC = () => {
   }
 
   return (
-    <div className="flex w-full h-screen bg-black" style={{ display: 'flex', flexDirection: 'row' }}>
+    <ErrorBoundary>
+      <div className="flex w-full h-screen bg-black" style={{ display: 'flex', flexDirection: 'row' }}>
       {/* Left - Camera with Cylinder - 50% width */}
       <div className="relative bg-gray-800" style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
         
@@ -215,6 +260,7 @@ export const CameraSimple: React.FC = () => {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
