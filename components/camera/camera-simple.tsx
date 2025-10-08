@@ -17,29 +17,8 @@ export const CameraSimple: React.FC = () => {
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
     
-    const initializeCamera = async () => {
-      try {
-        console.log('📱 Requesting camera access...')
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            facingMode: 'environment'
-          }
-        })
-        
-        if (cameraRef.current) {
-          cameraRef.current.srcObject = stream
-          console.log('✅ Camera stream set')
-        }
-      } catch (error) {
-        console.error('❌ Camera error:', error)
-      }
-    }
-    
     const timer = setTimeout(() => {
       setIsLoading(false)
-      initializeCamera()
     }, 2000)
     
     return () => clearTimeout(timer)
@@ -132,25 +111,9 @@ export const CameraSimple: React.FC = () => {
           </button>
         </div>
         
-        {/* Simple video element for testing */}
-        <video
-          ref={cameraRef}
-          className="w-full h-full object-cover"
-          autoPlay
-          playsInline
-          muted
-          style={{ 
-            transform: 'scaleX(-1)',
-            maxWidth: '100%',
-            maxHeight: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0
-          }}
-        />
         
-        {/* WebGLUnifiedCylinder - Commented out for debugging */}
-        {/* <WebGLUnifiedCylinder
+        {/* WebGLUnifiedCylinder */}
+        <WebGLUnifiedCylinder
           className="w-full h-full"
           cameraRef={cameraRef}
           isFrozen={false}
@@ -161,7 +124,7 @@ export const CameraSimple: React.FC = () => {
           line2Angle={line2Angle}
           onLine1AngleChange={setLine1Angle}
           onLine2AngleChange={setLine2Angle}
-        /> */}
+        />
         
         {/* Status Indicator */}
         {scenePhotoId && (
