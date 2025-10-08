@@ -282,7 +282,7 @@ export default function WebGLUnifiedCylinder({
     const videoTexture = new THREE.VideoTexture(video)
     videoTexture.minFilter = THREE.LinearFilter
     videoTexture.magFilter = THREE.LinearFilter
-    videoTexture.flipY = false
+    videoTexture.flipY = true
     videoTextureRef.current = videoTexture
 
     const radius = GEOSTXR_CONFIG.CYLINDER.RADIUS
