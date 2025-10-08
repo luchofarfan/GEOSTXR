@@ -721,7 +721,7 @@ export default function WebGLUnifiedCylinder({
   useEffect(() => {
     if (!isReady || !sceneRef.current || !planeManager) return
 
-    console.log(`🎨 Ellipses useEffect triggered - Updating ${planeManager.planes.length} ellipse(s)`)
+    console.log(`🎨 Ellipses useEffect triggered - Updating ${planeManager?.planes?.length || 0} ellipse(s)`)
 
     const scene = sceneRef.current
     const currentEllipses = ellipsesRef.current
@@ -847,7 +847,7 @@ export default function WebGLUnifiedCylinder({
     }
 
     // Block interaction if first trio exists but has no depth
-    if (trioManager.normalTrios.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) {
+    if (trioManager?.normalTrios?.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) {
       console.log('⚠️ Please enter depth for first trio before continuing')
       const panel = document.querySelector('.boh-controls')
       if (panel) {
@@ -907,7 +907,7 @@ export default function WebGLUnifiedCylinder({
         minHeight: '100vh',
         cursor: draggingPoint 
           ? 'grabbing' 
-          : (trioManager && trioManager.canAddMoreTrios && !(trioManager.normalTrios.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) 
+          : (trioManager && trioManager.canAddMoreTrios && !(trioManager?.normalTrios?.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) 
             ? 'crosshair' 
             : 'not-allowed')
       }}
