@@ -644,27 +644,44 @@ export default function WebGLUnifiedCylinder({
     }
   }, [controlsEnabled])
 
-  // Update video plane and cylinder zoom and rotation (synchronized)
+  // Update video plane and cylinder zoom and rotation (conditional synchronization)
   useEffect(() => {
     if (videoPlaneRef.current) {
-      // Apply zoom and rotation to video plane
-      videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
-      videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
-      console.log(`🔍 Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}°`)
+      if (isFrozen) {
+        // AFTER CAPTURE: Synchronized zoom/rotation (solidary)
+        videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
+        videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
+        console.log(`🔍 FROZEN: Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}° (solidary)`)
+      } else {
+        // BEFORE CAPTURE: Independent zoom/rotation (decoupled)
+        videoPlaneRef.current.scale.set(1, 1, 1) // Reset to original scale
+        videoPlaneRef.current.rotation.z = 0 // Reset to original rotation
+        console.log(`📹 LIVE: Video independent from gestures (decoupled)`)
+      }
     }
     
-    // Apply same transformations to cylinder to keep them synchronized
-    if (sceneRef.current) {
+    // Apply same transformations to cylinder to keep them synchronized ONLY when frozen
+    if (isFrozen && sceneRef.current) {
       const cylinder = sceneRef.current.children.find(child => 
         child.userData && child.userData.type === 'cylinder'
       )
       if (cylinder) {
         cylinder.scale.set(videoZoom, videoZoom, 1)
         cylinder.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
-        console.log(`🔄 Cylinder synchronized with video`)
+        console.log(`🔄 FROZEN: Cylinder synchronized with video`)
+      }
+    } else if (!isFrozen && sceneRef.current) {
+      // Reset cylinder when not frozen
+      const cylinder = sceneRef.current.children.find(child => 
+        child.userData && child.userData.type === 'cylinder'
+      )
+      if (cylinder) {
+        cylinder.scale.set(1, 1, 1)
+        cylinder.rotation.z = 0
+        console.log(`📹 LIVE: Cylinder reset to original state`)
       }
     }
-  }, [videoZoom, videoRotation])
+  }, [videoZoom, videoRotation, isFrozen])
 
   // Handle point dragging (mousemove and touchmove)
   useEffect(() => {
