@@ -653,14 +653,14 @@ export default function WebGLUnifiedCylinder({
         videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
         console.log(`🔍 FROZEN: Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}° (solidary)`)
       } else {
-        // BEFORE CAPTURE: Independent zoom/rotation (decoupled)
-        videoPlaneRef.current.scale.set(1, 1, 1) // Reset to original scale
-        videoPlaneRef.current.rotation.z = 0 // Reset to original rotation
-        console.log(`📹 LIVE: Video independent from gestures (decoupled)`)
+        // BEFORE CAPTURE: Video follows gestures but cylinder stays independent
+        videoPlaneRef.current.scale.set(videoZoom, videoZoom, 1)
+        videoPlaneRef.current.rotation.z = (-videoRotation * Math.PI) / 180 // Invert rotation
+        console.log(`📹 LIVE: Video zoom: ${(videoZoom * 100).toFixed(0)}%, rotation: ${videoRotation.toFixed(1)}° (decoupled from cylinder)`)
       }
     }
     
-    // Apply same transformations to cylinder to keep them synchronized ONLY when frozen
+    // Apply transformations to cylinder ONLY when frozen (solidary mode)
     if (isFrozen && sceneRef.current) {
       const cylinder = sceneRef.current.children.find(child => 
         child.userData && child.userData.type === 'cylinder'
@@ -671,14 +671,14 @@ export default function WebGLUnifiedCylinder({
         console.log(`🔄 FROZEN: Cylinder synchronized with video`)
       }
     } else if (!isFrozen && sceneRef.current) {
-      // Reset cylinder when not frozen
+      // Keep cylinder in original state when not frozen (decoupled mode)
       const cylinder = sceneRef.current.children.find(child => 
         child.userData && child.userData.type === 'cylinder'
       )
       if (cylinder) {
         cylinder.scale.set(1, 1, 1)
         cylinder.rotation.z = 0
-        console.log(`📹 LIVE: Cylinder reset to original state`)
+        console.log(`📹 LIVE: Cylinder stays in original state (decoupled)`)
       }
     }
   }, [videoZoom, videoRotation, isFrozen])
