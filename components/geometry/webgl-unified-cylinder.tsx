@@ -716,11 +716,13 @@ export default function WebGLUnifiedCylinder({
       
       if (intersects.length > 0) {
         const point = intersects[0].point
-        trioManager.updatePointPosition(draggingPoint.trioId, draggingPoint.pointId, { 
-          x: point.x, 
-          y: point.y, 
-          z: point.z 
-        })
+        if (trioManager?.updatePointPosition) {
+          trioManager.updatePointPosition(draggingPoint.trioId, draggingPoint.pointId, { 
+            x: point.x, 
+            y: point.y, 
+            z: point.z 
+          })
+        }
       }
     }
 
@@ -766,7 +768,7 @@ export default function WebGLUnifiedCylinder({
 
     // Remove ellipses that no longer exist
     currentEllipses.forEach((line, planeId) => {
-      const planeExists = planeManager.planes.some((p: any) => p.id === planeId)
+      const planeExists = planeManager?.planes?.some((p: any) => p.id === planeId)
       if (!planeExists) {
         scene.remove(line)
         line.geometry.dispose()
@@ -781,7 +783,7 @@ export default function WebGLUnifiedCylinder({
     })
 
     // Add or update ellipses
-    planeManager.planes.forEach((plane: any) => {
+    planeManager?.planes?.forEach((plane: any) => {
       if (!plane.ellipsePoints || plane.ellipsePoints.length === 0) return
 
       let ellipseLine = currentEllipses.get(plane.id)
@@ -927,7 +929,9 @@ export default function WebGLUnifiedCylinder({
       const point = intersects[0].point
       console.log(`✓ Intersected at 3D: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
       
-      trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
+      if (trioManager?.addPoint) {
+        trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
+      }
     } else {
       console.log('✗ No intersection with cylinder')
     }
@@ -945,9 +949,9 @@ export default function WebGLUnifiedCylinder({
         minHeight: '100vh',
         cursor: draggingPoint 
           ? 'grabbing' 
-          : (trioManager && trioManager.canAddMoreTrios && !(trioManager?.normalTrios?.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) 
+          : (trioManager?.canAddMoreTrios && !(trioManager?.normalTrios?.length > 0 && trioManager.normalTrios[0] && !trioManager.normalTrios[0].depth) 
             ? 'crosshair' 
-            : 'not-allowed')
+            : 'default')
       }}
     >
       {/* Hidden video element (used as texture) */}
@@ -1012,16 +1016,16 @@ export default function WebGLUnifiedCylinder({
             {/* HTML Overlay for Point Trios */}
             {containerSize.width > 0 && isReady && trioManager && (
               <PointMarkersOverlay
-                trios={trioManager.trios}
-                currentTrio={trioManager.currentTrio}
-                selectedTrioId={trioManager.selectedTrioId}
+                trios={trioManager?.trios || []}
+                currentTrio={trioManager?.currentTrio || null}
+                selectedTrioId={trioManager?.selectedTrioId || null}
                 containerWidth={containerSize.width}
                 containerHeight={containerSize.height}
                 camera={localCameraRef.current || undefined}
                 draggingPoint={draggingPoint}
                 onPointClick={(trioId, pointId) => {
                   console.log(`Point clicked: trio=${trioId}, point=${pointId}`)
-                  trioManager.selectTrio(trioId)
+                  trioManager?.selectTrio?.(trioId)
                 }}
                 onPointDragStart={(trioId, pointId) => {
                   console.log(`Point drag started: trio=${trioId}, point=${pointId}`)
