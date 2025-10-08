@@ -348,37 +348,6 @@ export function BOHLinesOverlay({
         }} />
       </div>
       
-      {/* Debug info */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        color: 'white',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        padding: '8px 12px',
-        borderRadius: '6px',
-        fontSize: '12px',
-        fontFamily: 'monospace',
-        pointerEvents: 'none',
-        userSelect: 'none'
-      }}>
-        <div style={{ marginBottom: '4px' }}>
-          🔴 L1: {line1Angle.toFixed(1)}° {draggingLine === 'line1' ? '🖐️' : hoveredLine === 'line1' ? '👆' : ''}
-        </div>
-        <div>
-          🟢 L2: {line2Angle.toFixed(1)}° {draggingLine === 'line2' ? '🖐️' : hoveredLine === 'line2' ? '👆' : ''}
-        </div>
-        {isInteractive && !draggingLine && !hoveredLine && (
-          <div style={{ marginTop: '6px', fontSize: '10px', color: '#aaa' }}>
-            💡 Arrastra las líneas horizontalmente
-          </div>
-        )}
-        {enableSnapping && (
-          <div style={{ marginTop: '4px', fontSize: '10px', color: '#4ade80' }}>
-            🧲 Snapping: 1°
-          </div>
-        )}
-      </div>
       
     </div>
   )
