@@ -383,12 +383,12 @@ export default function WebGLUnifiedCylinder({
     
     cylinderUVs.needsUpdate = true
 
-    // Cylinder material: Transparent, only for raycasting (point selection)
+    // Cylinder material: More visible for user reference
     // Video is shown as flat background, not mapped on cylinder
     const cylinderMaterial = new THREE.MeshBasicMaterial({
       color: 0x0066CC,
       transparent: true,
-      opacity: 0.15, // Very transparent - just for reference
+      opacity: 0.4, // More visible - user can see the cylinder outline
       side: THREE.DoubleSide,
       depthWrite: false
     })
