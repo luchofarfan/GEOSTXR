@@ -1,0 +1,40 @@
+[33m2af2820[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/develop[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Force Vercel rebuild for test-simple page
+[33md059d2f[m Add extensive debug: axes, origin sphere, point positions
+[33me350498[m CRITICAL FIX: Use half radius for cylinder, points and ellipse
+[33m51daec6[m Add simple working cylinder component for testing
+[33m670bc48[m FINAL FIX: Correct point selection with proper scale mapping
+[33m5db6d38[m FIX: Divide ellipse radius by 2 to match visual cylinder size
+[33m7bf2b41[m Add debug cylinder to identify radius scale issue
+[33m82cb96c[m[33m ([m[1;32mworking-with-managers[m[33m)[m feat: Re-enable point selection managers
+[33m95c240d[m fix: Correct video feed orientation and add camera transform logging
+[33mab1b459[m feat: Transform camera instead of objects for automatic solidary movement
+[33m9b84939[m fix: Disable managers to prevent crashes
+[33mcaf6c3a[m feat: Optimize layout - 75% cylinder, 25% compact controls
+[33mbaca60b[m feat: Re-enable point selection managers with robust null checks
+[33m92b914c[m fix: Add robust null checks for managers to prevent crashes
+[33mad0aff4[m fix: Reactivar selección de puntos y sincronización solidaria
+[33mf2e5793[m debug: Add detailed logging for cylinder-video synchronization
+[33m6c0d06e[m fix: Enable zoom/rotation in LIVE mode - video follows gestures, cylinder stays independent
+[33m2f5efdc[m feat: Implement conditional zoom/rotation - decoupled before capture, solidary after capture
+[33m49d21e2[m fix: Completely disable managers to prevent crashes
+[33mb7b1308[m fix: Add ErrorBoundary and error handling for managers to prevent crashes
+[33m1b525e0[m feat: Re-enable point selection and synchronize cylinder with video for zoom/rotation
+[33m657dcaf[m fix: Add null checks for managers and temporarily disable point selection
+[33m791f160[m fix: Remove UI elements that occupy cylinder space - Ajustar Feed and Controles Bloqueados
+[33m7883773[m fix: Move capture buttons from camera area to right control panel
+[33m451d7d9[m feat: Connect capture buttons to WebGLUnifiedCylinder and enable point selection flow
+[33m497dd29[m fix: Remove L1/L2 info overlay that interferes with capture buttons
+[33me3c8aaa[m fix: Correct camera feed orientation by setting videoTexture.flipY = true
+[33m4276b13[m fix: Move capture buttons to bottom-right corner and remove debug message
+[33ma9b3920[m fix: Force 50/50 layout with inline CSS and constrain Reset button
+[33m28bbd17[m feat: Enable WebGLUnifiedCylinder for camera feed and virtual cylinder
+[33m6c2f2ae[m fix: Constrain video feed to 50% left container
+[33m4e1f247[m feat: Optimize 50/50 vertical split layout for mobile device
+[33ma0ccef2[m fix: Move capture buttons to camera area with high z-index
+[33m19f984d[m debug: Use simple video element instead of WebGLUnifiedCylinder
+[33mdcb5f51[m ui: Make buttons smaller and add debug message for camera area
+[33m3056e55[m feat: Add complete controls with 50/50 layout - cylinder left, controls right
+[33md7bf96e[m feat: Add simple camera component to avoid crashes
+[33maf0a9f3[m feat: Replace buttons with gesture controls - pinch zoom and 2-finger rotation for video feed
+[33m61c75f7[m feat: Add video rotation controls to manually align feed with virtual cylinder
+[33m4a4529a[m fix: Prevent infinite re-render loop in edge alignment (error 310)

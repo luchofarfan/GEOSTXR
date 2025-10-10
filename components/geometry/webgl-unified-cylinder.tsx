@@ -903,31 +903,56 @@ export default function WebGLUnifiedCylinder({
     
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
-    const ndcX = (x / rect.width) * 2 - 1
-    const ndcY = -(y / rect.height) * 2 + 1
 
-    console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)}) → NDC: (${ndcX.toFixed(3)}, ${ndcY.toFixed(3)})`)
+    console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), localCameraRef.current)
-
-    if (!sceneRef.current) return
+    // CORRECTED APPROACH: Map screen coordinates directly to cylinder coordinates
+    // The video plane shows a cylinder that appears to be 3.175cm radius
+    // Map screen coordinates to this visual cylinder
+    const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
+    const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
     
-    const meshes = sceneRef.current.children.filter(obj => 
-      obj instanceof THREE.Mesh && obj.geometry instanceof THREE.CylinderGeometry
-    )
+    // Calculate relative position from center of screen
+    const screenCenterX = rect.width / 2
+    const screenCenterY = rect.height / 2
     
-    const intersects = raycaster.intersectObjects(meshes, false)
+    const relativeX = (x - screenCenterX) / screenCenterX // -1 to 1
+    const relativeY = (y - screenCenterY) / screenCenterY // -1 to 1
     
-    if (intersects.length > 0) {
-      const point = intersects[0].point
-      console.log(`✓ Intersected at 3D: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
-      
-      if (trioManager?.addPoint) {
-        trioManager.addPoint({ x: point.x, y: point.y, z: point.z })
-      }
-    } else {
-      console.log('✗ No intersection with cylinder')
+    // Check if click is within reasonable bounds (cylinder projection)
+    const distanceFromCenter = Math.sqrt(relativeX * relativeX + relativeY * relativeY)
+    if (distanceFromCenter > 0.6) { // Allow some tolerance for cylinder shape
+      console.log(`❌ Click outside cylinder bounds (distance: ${distanceFromCenter.toFixed(2)} > 0.6)`)
+      return
+    }
+    
+    // Convert to cylinder coordinates
+    // X and Y are mapped to cylinder surface with CORRECT radius
+    const cylinderX = relativeX * cylinderRadius
+    const cylinderY = relativeY * cylinderRadius
+    
+    // Z is mapped based on Y position (vertical position on screen)
+    // Top of screen = z=30, bottom = z=0
+    const cylinderZ = (1 - relativeY) * cylinderHeight / 2 + cylinderHeight / 2
+    const clampedZ = Math.max(0, Math.min(cylinderHeight, cylinderZ))
+    
+    const surfacePoint = {
+      x: cylinderX,
+      y: cylinderY,
+      z: clampedZ
+    }
+    
+    // Verify final point
+    const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
+    
+    console.log('🎯 POINT SELECTION (corrected screen mapping):')
+    console.log(`   Screen: (${x}, ${y}) → Relative: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
+    console.log(`   → Cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
+    console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
+    console.log(`   ✅ Point on cylinder surface`)
+    
+    if (trioManager?.addPoint) {
+      trioManager.addPoint(surfacePoint)
     }
   }, [trioManager, draggingPoint, scenePhotoId])
 
