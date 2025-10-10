@@ -914,12 +914,13 @@ export default function WebGLUnifiedCylinder({
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
     
     // Create fixed test points that are guaranteed to be on cylinder surface
+    // CORRECTED: Use exact cylinder radius (3.175 cm)
     const testPoints = [
       { x: cylinderRadius, y: 0, z: 15 }, // Front center (3.175, 0, 15)
       { x: 0, y: cylinderRadius, z: 15 }, // Right side (0, 3.175, 15)
       { x: -cylinderRadius, y: 0, z: 15 }, // Back center (-3.175, 0, 15)
-      { x: cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Front-right diagonal
-      { x: -cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Back-right diagonal
+      { x: cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Front-right diagonal (2.245, 2.245, 15)
+      { x: -cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Back-right diagonal (-2.245, 2.245, 15)
       { x: 0, y: -cylinderRadius, z: 15 } // Left side (0, -3.175, 15)
     ]
     
@@ -934,6 +935,7 @@ export default function WebGLUnifiedCylinder({
     console.log(`   Screen click: (${x}, ${y})`)
     console.log(`   Using test point ${currentPointCount + 1}/6:`, selectedPoint)
     console.log(`   Point radius: ${pointRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
+    console.log(`   Cylinder radius from config: ${GEOSTXR_CONFIG.CYLINDER.RADIUS}cm`)
     console.log(`   ✅ Point guaranteed on cylinder surface`)
     
     if (trioManager?.addPoint) {
