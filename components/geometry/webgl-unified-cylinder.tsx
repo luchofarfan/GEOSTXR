@@ -52,6 +52,7 @@ export default function WebGLUnifiedCylinder({
   const orbitControlsRef = useRef<OrbitControls | null>(null)
   const videoTextureRef = useRef<THREE.VideoTexture | null>(null)
   const videoPlaneRef = useRef<THREE.Mesh | null>(null) // Reference to video plane for zoom
+  const pointsRef = useRef<Set<THREE.Mesh>>(new Set()) // Set of Three.js Mesh (points)
   const originalCameraPosition = useRef<THREE.Vector3 | null>(null) // Original camera position for reset
   const originalCameraRotation = useRef<THREE.Euler | null>(null) // Original camera rotation for reset
   const planesRef = useRef<Map<string, THREE.Mesh>>(new Map()) // Map of planeId -> Three.js Mesh
@@ -508,6 +509,87 @@ export default function WebGLUnifiedCylinder({
       console.log('useEffect cleanup called')
     }
   }, [])
+
+  // Render points directly in WebGL (instead of HTML overlays)
+  useEffect(() => {
+    if (!isReady || !sceneRef.current || !trioManager) return
+
+    console.log(`🎯 Points useEffect triggered - Updating points`)
+
+    const scene = sceneRef.current
+    const currentPoints = pointsRef.current
+
+    // Remove all existing points
+    currentPoints.forEach((pointMesh) => {
+      scene.remove(pointMesh)
+      pointMesh.geometry.dispose()
+      if (Array.isArray(pointMesh.material)) {
+        pointMesh.material.forEach(m => m.dispose())
+      } else {
+        pointMesh.material.dispose()
+      }
+    })
+    currentPoints.clear()
+
+    // Add points from completed trios
+    if (trioManager.trios) {
+      trioManager.trios.forEach((trio) => {
+        trio.points.forEach((point, pointIndex) => {
+          const geometry = new THREE.SphereGeometry(0.15, 8, 6) // Small sphere
+          const material = new THREE.MeshBasicMaterial({ 
+            color: trio.color || '#3B82F6',
+            transparent: true,
+            opacity: 0.9
+          })
+          
+          const pointMesh = new THREE.Mesh(geometry, material)
+          pointMesh.position.set(point.x, point.y, point.z)
+          pointMesh.userData = { 
+            type: 'point', 
+            trioId: trio.id, 
+            pointId: point.id,
+            pointIndex 
+          }
+          pointMesh.renderOrder = 5 // Render on top
+          
+          scene.add(pointMesh)
+          currentPoints.add(pointMesh)
+          
+          console.log(`✅ Point ${point.id} rendered at (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+        })
+      })
+    }
+
+    // Add points from current trio
+    if (trioManager.currentTrio) {
+      trioManager.currentTrio.points.forEach((point, pointIndex) => {
+        const geometry = new THREE.SphereGeometry(0.15, 8, 6) // Small sphere
+        const material = new THREE.MeshBasicMaterial({ 
+          color: trioManager.currentTrio.color || '#3B82F6',
+          transparent: true,
+          opacity: 0.9
+        })
+        
+        const pointMesh = new THREE.Mesh(geometry, material)
+        pointMesh.position.set(point.x, point.y, point.z)
+        pointMesh.userData = { 
+          type: 'point', 
+          trioId: trioManager.currentTrio.id, 
+          pointId: point.id,
+          pointIndex,
+          isCurrent: true
+        }
+        pointMesh.renderOrder = 5 // Render on top
+        
+        scene.add(pointMesh)
+        currentPoints.add(pointMesh)
+        
+        console.log(`✅ Current point ${point.id} rendered at (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
+      })
+    }
+
+    console.log(`🎯 WebGL points updated: ${currentPoints.size} points rendered`)
+  }, [isReady, trioManager?.trios, trioManager?.currentTrio])
 
   // BOH lines are now rendered via HTML overlay - no 3D geometry needed
 
@@ -1022,26 +1104,8 @@ export default function WebGLUnifiedCylinder({
               />
             )}
 
-            {/* HTML Overlay for Point Trios */}
-            {containerSize.width > 0 && isReady && trioManager && (
-              <PointMarkersOverlay
-                trios={trioManager?.trios || []}
-                currentTrio={trioManager?.currentTrio || null}
-                selectedTrioId={trioManager?.selectedTrioId || null}
-                containerWidth={containerSize.width}
-                containerHeight={containerSize.height}
-                camera={localCameraRef.current || undefined}
-                draggingPoint={draggingPoint}
-                onPointClick={(trioId, pointId) => {
-                  console.log(`Point clicked: trio=${trioId}, point=${pointId}`)
-                  trioManager?.selectTrio?.(trioId)
-                }}
-                onPointDragStart={(trioId, pointId) => {
-                  console.log(`Point drag started: trio=${trioId}, point=${pointId}`)
-                  setDraggingPoint({ trioId, pointId })
-                }}
-              />
-            )}
+            {/* Points are now rendered directly in WebGL - no HTML overlay needed */}
+            {/* PointMarkersOverlay disabled to avoid 2D projection issues */}
     </div>
   )
 }
