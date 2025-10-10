@@ -906,11 +906,13 @@ export default function WebGLUnifiedCylinder({
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    // CORRECTED APPROACH: Map screen coordinates directly to cylinder coordinates
-    // The video plane shows a cylinder that appears to be 3.175cm radius
-    // Map screen coordinates to this visual cylinder
+    // CORRECTED APPROACH: Map screen coordinates to cylinder coordinates
+    // Account for video plane being 15% larger than cylinder
     const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
+    
+    // Video plane is 15% larger than cylinder (planeHeight = cylinderHeight * 1.15)
+    const videoPlaneScale = 1.15
     
     // Calculate relative position from center of screen
     const screenCenterX = rect.width / 2
@@ -926,10 +928,14 @@ export default function WebGLUnifiedCylinder({
       return
     }
     
-    // Convert to cylinder coordinates
+    // Convert to cylinder coordinates, accounting for video plane scale
+    // Scale down the coordinates to match the actual cylinder size
+    const scaledX = relativeX / videoPlaneScale
+    const scaledY = relativeY / videoPlaneScale
+    
     // X and Y are mapped to cylinder surface with CORRECT radius
-    const cylinderX = relativeX * cylinderRadius
-    const cylinderY = relativeY * cylinderRadius
+    const cylinderX = scaledX * cylinderRadius
+    const cylinderY = scaledY * cylinderRadius
     
     // Z is mapped based on Y position (vertical position on screen)
     // Top of screen = z=30, bottom = z=0
@@ -945,8 +951,10 @@ export default function WebGLUnifiedCylinder({
     // Verify final point
     const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
     
-    console.log('🎯 POINT SELECTION (corrected screen mapping):')
+    console.log('🎯 POINT SELECTION (video plane scale corrected):')
     console.log(`   Screen: (${x}, ${y}) → Relative: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
+    console.log(`   Video plane scale: ${videoPlaneScale} (15% larger than cylinder)`)
+    console.log(`   Scaled coordinates: (${scaledX.toFixed(3)}, ${scaledY.toFixed(3)})`)
     console.log(`   → Cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
     console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
     console.log(`   ✅ Point on cylinder surface`)
