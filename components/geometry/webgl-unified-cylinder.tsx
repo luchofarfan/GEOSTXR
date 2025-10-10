@@ -906,37 +906,40 @@ export default function WebGLUnifiedCylinder({
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    // TEST APPROACH: Use fixed test points to verify the system works
-    // These points are guaranteed to be on the cylinder surface
+    // FORCE RESET: Clear any existing points and use new test points
+    // This ensures we're using the correct radius (3.175 cm)
     const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
     
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
+    console.log(`🔧 FORCING RESET: Using new test points with correct radius`)
     
-    // Create fixed test points that are guaranteed to be on cylinder surface
-    // CORRECTED: Use exact cylinder radius (3.175 cm)
+    // FORCE CLEAR: Clear any existing trios to start fresh
+    if (trioManager?.clearAllTrios) {
+      trioManager.clearAllTrios()
+      console.log('🗑️ Cleared all existing trios')
+    }
+    
+    // Create EXACT test points with correct radius (3.175 cm)
     const testPoints = [
       { x: cylinderRadius, y: 0, z: 15 }, // Front center (3.175, 0, 15)
       { x: 0, y: cylinderRadius, z: 15 }, // Right side (0, 3.175, 15)
       { x: -cylinderRadius, y: 0, z: 15 }, // Back center (-3.175, 0, 15)
-      { x: cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Front-right diagonal (2.245, 2.245, 15)
-      { x: -cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Back-right diagonal (-2.245, 2.245, 15)
-      { x: 0, y: -cylinderRadius, z: 15 } // Left side (0, -3.175, 15)
     ]
     
-    // Get current point count to select appropriate test point
-    const currentPointCount = trioManager?.trios?.[0]?.points?.length || 0
-    const selectedPoint = testPoints[currentPointCount % testPoints.length]
+    // Use only first 3 points to create one trio
+    const pointIndex = Math.min(2, testPoints.length - 1) // 0, 1, or 2
+    const selectedPoint = testPoints[pointIndex]
     
     // Verify the point is on cylinder surface
     const pointRadius = Math.sqrt(selectedPoint.x * selectedPoint.x + selectedPoint.y * selectedPoint.y)
     
-    console.log('🎯 POINT SELECTION (FIXED TEST POINTS):')
+    console.log('🎯 POINT SELECTION (FORCED RESET WITH CORRECT RADIUS):')
     console.log(`   Screen click: (${x}, ${y})`)
-    console.log(`   Using test point ${currentPointCount + 1}/6:`, selectedPoint)
+    console.log(`   Using test point ${pointIndex + 1}/3:`, selectedPoint)
     console.log(`   Point radius: ${pointRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
     console.log(`   Cylinder radius from config: ${GEOSTXR_CONFIG.CYLINDER.RADIUS}cm`)
-    console.log(`   ✅ Point guaranteed on cylinder surface`)
+    console.log(`   ✅ Point guaranteed on cylinder surface with CORRECT radius`)
     
     if (trioManager?.addPoint) {
       trioManager.addPoint(selectedPoint)
