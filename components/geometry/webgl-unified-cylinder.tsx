@@ -906,82 +906,57 @@ export default function WebGLUnifiedCylinder({
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    // NEW APPROACH: Raycast against the video plane that user actually sees
-    // This gives us the exact 3D intersection point on the video plane
-    const ndcX = (x / rect.width) * 2 - 1
-    const ndcY = -(y / rect.height) * 2 + 1
-
-    console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)}) → NDC: (${ndcX.toFixed(3)}, ${ndcY.toFixed(3)})`)
-
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), localCameraRef.current)
-
-    if (!sceneRef.current) return
+    // SIMPLE DIRECT APPROACH: Map screen coordinates directly to cylinder
+    // No complex raycasting - just direct coordinate mapping
+    const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
+    const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
     
-    // Raycast against the video plane (what user actually sees)
-    const videoPlane = videoPlaneRef.current
-    if (!videoPlane) {
-      console.warn('❌ No video plane available for raycasting')
+    console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
+    
+    // Calculate relative position from center of screen
+    const screenCenterX = rect.width / 2
+    const screenCenterY = rect.height / 2
+    
+    const relativeX = (x - screenCenterX) / screenCenterX // -1 to 1
+    const relativeY = (y - screenCenterY) / screenCenterY // -1 to 1
+    
+    console.log(`Relative position: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
+    
+    // Check if click is within reasonable bounds
+    const distanceFromCenter = Math.sqrt(relativeX * relativeX + relativeY * relativeY)
+    if (distanceFromCenter > 0.5) { // Allow reasonable bounds for cylinder
+      console.log(`❌ Click outside cylinder bounds (distance: ${distanceFromCenter.toFixed(2)} > 0.5)`)
       return
     }
     
-    const intersects = raycaster.intersectObject(videoPlane, false)
+    // DIRECT MAPPING: Map screen coordinates to cylinder coordinates
+    // This is the simplest possible approach
+    const cylinderX = relativeX * cylinderRadius
+    const cylinderY = relativeY * cylinderRadius
     
-    if (intersects.length > 0) {
-      // The intersection point from raycaster (on video plane)
-      const intersectionPoint = intersects[0].point
-      
-      // Now project this point to the cylinder surface
-      const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
-      const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
-      
-      // Calculate the radius of the intersection point
-      const actualRadius = Math.sqrt(intersectionPoint.x * intersectionPoint.x + intersectionPoint.y * intersectionPoint.y)
-      
-      // Check if click is within cylinder bounds
-      if (actualRadius > cylinderRadius * 1.5) {
-        console.log(`❌ Click outside cylinder (radius: ${actualRadius.toFixed(2)}cm > ${cylinderRadius * 1.5}cm)`)
-        return
-      }
-      
-      if (intersectionPoint.z < -1 || intersectionPoint.z > cylinderHeight + 1) {
-        console.log(`❌ Click outside cylinder height (z: ${intersectionPoint.z.toFixed(2)}cm, range: 0-${cylinderHeight}cm)`)
-        return
-      }
-      
-      // Project to exact cylinder surface
-      let surfacePoint
-      if (actualRadius > 0.01) {
-        // Normalize and scale to exact radius
-        surfacePoint = {
-          x: (intersectionPoint.x / actualRadius) * cylinderRadius,
-          y: (intersectionPoint.y / actualRadius) * cylinderRadius,
-          z: Math.max(0, Math.min(cylinderHeight, intersectionPoint.z)) // Clamp to cylinder height
-        }
-      } else {
-        // Point is on axis, place at front
-        surfacePoint = {
-          x: cylinderRadius,
-          y: 0,
-          z: Math.max(0, Math.min(cylinderHeight, intersectionPoint.z))
-        }
-      }
-      
-      // Verify final point
-      const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
-      
-      console.log('🎯 POINT SELECTION (video plane raycast):')
-      console.log(`   Video plane intersection: (${intersectionPoint.x.toFixed(3)}, ${intersectionPoint.y.toFixed(3)}, ${intersectionPoint.z.toFixed(3)})`)
-      console.log(`   Plane radius: ${actualRadius.toFixed(3)}cm`)
-      console.log(`   → Projected to cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
-      console.log(`   → Cylinder radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
-      console.log(`   ✅ Point on cylinder surface`)
-      
-      if (trioManager?.addPoint) {
-        trioManager.addPoint(surfacePoint)
-      }
-    } else {
-      console.log('✗ No intersection with video plane')
+    // Z coordinate: map from screen Y to cylinder height
+    // Screen top (relativeY = -1) → cylinder top (z = 30)
+    // Screen bottom (relativeY = 1) → cylinder bottom (z = 0)
+    const cylinderZ = (1 - relativeY) * cylinderHeight / 2 + cylinderHeight / 2
+    const clampedZ = Math.max(0, Math.min(cylinderHeight, cylinderZ))
+    
+    const surfacePoint = {
+      x: cylinderX,
+      y: cylinderY,
+      z: clampedZ
+    }
+    
+    // Verify final point is on cylinder surface
+    const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
+    
+    console.log('🎯 POINT SELECTION (direct mapping):')
+    console.log(`   Screen: (${x}, ${y}) → Relative: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
+    console.log(`   → Cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
+    console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
+    console.log(`   ✅ Point on cylinder surface`)
+    
+    if (trioManager?.addPoint) {
+      trioManager.addPoint(surfacePoint)
     }
   }, [trioManager, draggingPoint, scenePhotoId])
 
