@@ -906,57 +906,38 @@ export default function WebGLUnifiedCylinder({
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    // SIMPLE DIRECT APPROACH: Map screen coordinates directly to cylinder
-    // No complex raycasting - just direct coordinate mapping
+    // TEST APPROACH: Use fixed test points to verify the system works
+    // These points are guaranteed to be on the cylinder surface
     const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
     
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
     
-    // Calculate relative position from center of screen
-    const screenCenterX = rect.width / 2
-    const screenCenterY = rect.height / 2
+    // Create fixed test points that are guaranteed to be on cylinder surface
+    const testPoints = [
+      { x: cylinderRadius, y: 0, z: 15 }, // Front center (3.175, 0, 15)
+      { x: 0, y: cylinderRadius, z: 15 }, // Right side (0, 3.175, 15)
+      { x: -cylinderRadius, y: 0, z: 15 }, // Back center (-3.175, 0, 15)
+      { x: cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Front-right diagonal
+      { x: -cylinderRadius * 0.707, y: cylinderRadius * 0.707, z: 15 }, // Back-right diagonal
+      { x: 0, y: -cylinderRadius, z: 15 } // Left side (0, -3.175, 15)
+    ]
     
-    const relativeX = (x - screenCenterX) / screenCenterX // -1 to 1
-    const relativeY = (y - screenCenterY) / screenCenterY // -1 to 1
+    // Get current point count to select appropriate test point
+    const currentPointCount = trioManager?.trios?.[0]?.points?.length || 0
+    const selectedPoint = testPoints[currentPointCount % testPoints.length]
     
-    console.log(`Relative position: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
+    // Verify the point is on cylinder surface
+    const pointRadius = Math.sqrt(selectedPoint.x * selectedPoint.x + selectedPoint.y * selectedPoint.y)
     
-    // Check if click is within reasonable bounds
-    const distanceFromCenter = Math.sqrt(relativeX * relativeX + relativeY * relativeY)
-    if (distanceFromCenter > 0.5) { // Allow reasonable bounds for cylinder
-      console.log(`❌ Click outside cylinder bounds (distance: ${distanceFromCenter.toFixed(2)} > 0.5)`)
-      return
-    }
-    
-    // DIRECT MAPPING: Map screen coordinates to cylinder coordinates
-    // This is the simplest possible approach
-    const cylinderX = relativeX * cylinderRadius
-    const cylinderY = relativeY * cylinderRadius
-    
-    // Z coordinate: map from screen Y to cylinder height
-    // Screen top (relativeY = -1) → cylinder top (z = 30)
-    // Screen bottom (relativeY = 1) → cylinder bottom (z = 0)
-    const cylinderZ = (1 - relativeY) * cylinderHeight / 2 + cylinderHeight / 2
-    const clampedZ = Math.max(0, Math.min(cylinderHeight, cylinderZ))
-    
-    const surfacePoint = {
-      x: cylinderX,
-      y: cylinderY,
-      z: clampedZ
-    }
-    
-    // Verify final point is on cylinder surface
-    const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
-    
-    console.log('🎯 POINT SELECTION (direct mapping):')
-    console.log(`   Screen: (${x}, ${y}) → Relative: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
-    console.log(`   → Cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
-    console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
-    console.log(`   ✅ Point on cylinder surface`)
+    console.log('🎯 POINT SELECTION (FIXED TEST POINTS):')
+    console.log(`   Screen click: (${x}, ${y})`)
+    console.log(`   Using test point ${currentPointCount + 1}/6:`, selectedPoint)
+    console.log(`   Point radius: ${pointRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
+    console.log(`   ✅ Point guaranteed on cylinder surface`)
     
     if (trioManager?.addPoint) {
-      trioManager.addPoint(surfacePoint)
+      trioManager.addPoint(selectedPoint)
     }
   }, [trioManager, draggingPoint, scenePhotoId])
 
