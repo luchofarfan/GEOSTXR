@@ -61,6 +61,7 @@ export default function WebGLUnifiedCylinder({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
   const [controlsEnabled, setControlsEnabled] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
   
   // Video gestures (pinch zoom and rotation)
   const videoGestures = useVideoGestures(containerRef)
@@ -99,7 +100,9 @@ export default function WebGLUnifiedCylinder({
             console.log('✅ Any camera accessed successfully')
           } catch (anyErr) {
             console.error('❌ No camera available:', anyErr)
-            alert('❌ Error de Cámara\n\nNo se pudo acceder a la cámara.\n\nVerifica:\n1. Permisos de Chrome para cámara\n2. Que no esté siendo usada por otra app\n3. Configuración del dispositivo')
+            const errorMsg = `Error accediendo a la cámara: ${anyErr instanceof Error ? anyErr.message : 'Desconocido'}`
+            setCameraError(errorMsg)
+            alert('❌ Error de Cámara\n\nNo se pudo acceder a la cámara.\n\nVerifica:\n1. Permisos de Chrome para cámara\n2. Que no esté siendo usada por otra app\n3. Configuración del dispositivo\n4. Que estés en HTTPS')
             return
           }
         }
@@ -1099,6 +1102,56 @@ export default function WebGLUnifiedCylinder({
           pointerEvents: 'none'
         }}>
           🧊 VIDEO PAUSADO
+        </div>
+      )}
+      
+      {/* Loading Indicator */}
+      {!isReady && !cameraError && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(0,0,0,0.9)',
+          color: 'white',
+          padding: '30px',
+          borderRadius: '15px',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          zIndex: 99999,
+          textAlign: 'center',
+          border: '3px solid white'
+        }}>
+          <div style={{ marginBottom: '15px', fontSize: '40px' }}>📱</div>
+          Iniciando cámara...<br/>
+          <span style={{ fontSize: '14px', fontWeight: 'normal' }}>
+            Por favor permite el acceso
+          </span>
+        </div>
+      )}
+      
+      {/* Camera Error Message */}
+      {cameraError && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(255,0,0,0.95)',
+          color: 'white',
+          padding: '20px',
+          borderRadius: '10px',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          zIndex: 99999,
+          maxWidth: '80%',
+          textAlign: 'center',
+          border: '3px solid white'
+        }}>
+          ❌ Error de Cámara<br/>
+          <span style={{ fontSize: '14px', fontWeight: 'normal' }}>
+            {cameraError}
+          </span>
         </div>
       )}
       
