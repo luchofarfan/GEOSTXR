@@ -1110,45 +1110,42 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
-      {/* Visual Debug Panel - ALWAYS visible for diagnosis */}
+      {/* EMERGENCY DEBUG PANEL - SUPER VISIBLE */}
       <div style={{
-        position: 'absolute',
-        top: '50px',
-        left: '10px',
-        background: 'rgba(0, 0, 0, 0.9)',
-        color: 'white',
-        padding: '10px',
-        borderRadius: '6px',
-        fontSize: '12px',
-        fontFamily: 'monospace',
-        lineHeight: '1.5',
-        zIndex: 9999,
-        maxWidth: '220px',
+        position: 'fixed',
+        top: '80px',
+        right: '10px',
+        background: '#FF0000',
+        color: '#FFFFFF',
+        padding: '15px',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        fontFamily: 'Arial, sans-serif',
+        lineHeight: '1.8',
+        zIndex: 99999,
+        minWidth: '200px',
         pointerEvents: 'none',
-        border: '2px solid #4ADE80'
+        border: '4px solid #FFFF00',
+        boxShadow: '0 0 20px rgba(255,255,0,0.8)'
       }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#4ADE80' }}>
-          🔍 DEBUG INFO
+        <div style={{ marginBottom: '8px', fontSize: '16px' }}>
+          🔴 DEBUG v2
         </div>
-        <div style={{ marginBottom: '3px', fontSize: '11px' }}>
-          🎯 Cylinder: {GEOSTXR_CONFIG.CYLINDER.RADIUS}cm
+        <div style={{ marginBottom: '5px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '4px' }}>
+          Cylinder: {GEOSTXR_CONFIG.CYLINDER.RADIUS}cm
         </div>
-        <div style={{ marginBottom: '3px', fontSize: '11px' }}>
-          📏 Height: {GEOSTXR_CONFIG.CYLINDER.HEIGHT}cm
+        <div style={{ marginBottom: '5px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '4px' }}>
+          Height: {GEOSTXR_CONFIG.CYLINDER.HEIGHT}cm
         </div>
-        <div style={{ marginBottom: '3px', fontSize: '11px', borderTop: '1px solid #4ADE80', paddingTop: '4px', marginTop: '4px' }}>
+        <div style={{ marginBottom: '5px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '4px' }}>
           Points: {trioManager?.currentTrio?.points?.length || 0}/3
         </div>
         {debugInfo.length > 0 && debugInfo.slice(1).map((info, index) => (
-          <div key={index} style={{ marginBottom: '3px', fontSize: '11px' }}>
+          <div key={index} style={{ marginBottom: '4px', background: 'rgba(0,0,0,0.3)', padding: '4px', borderRadius: '3px', fontSize: '12px' }}>
             {info}
           </div>
         ))}
-        {debugInfo.length === 0 && (
-          <div style={{ marginTop: '4px', fontSize: '10px', color: '#888' }}>
-            Waiting for points...
-          </div>
-        )}
       </div>
       
 
