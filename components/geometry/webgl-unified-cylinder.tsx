@@ -535,7 +535,7 @@ export default function WebGLUnifiedCylinder({
     if (trioManager.trios) {
       trioManager.trios.forEach((trio) => {
         trio.points.forEach((point, pointIndex) => {
-          const geometry = new THREE.SphereGeometry(0.15, 8, 6) // Small sphere
+          const geometry = new THREE.SphereGeometry(0.5, 16, 16) // Larger sphere for visibility
           const material = new THREE.MeshBasicMaterial({ 
             color: trio.color || '#3B82F6',
             transparent: true,
@@ -563,7 +563,7 @@ export default function WebGLUnifiedCylinder({
     // Add points from current trio
     if (trioManager.currentTrio) {
       trioManager.currentTrio.points.forEach((point, pointIndex) => {
-        const geometry = new THREE.SphereGeometry(0.15, 8, 6) // Small sphere
+        const geometry = new THREE.SphereGeometry(0.5, 16, 16) // Larger sphere for visibility
         const material = new THREE.MeshBasicMaterial({ 
           color: trioManager.currentTrio.color || '#3B82F6',
           transparent: true,

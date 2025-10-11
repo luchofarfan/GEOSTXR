@@ -4,7 +4,7 @@ export const GEOSTXR_CONFIG = {
   CYLINDER: {
     DIAMETER: 6.35, // cm
     HEIGHT: 30, // cm
-    RADIUS: 1.5875, // cm (HALF of original to test if this fixes the double radius issue)
+    RADIUS: 3.175, // cm
     AXIS_ALIGNMENT: 'z' as const,
     COLOR: 0x00BFFF, // Blue color
     OPACITY: 0.3, // 30% opacity for better visibility over camera feed
