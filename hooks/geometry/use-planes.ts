@@ -262,6 +262,11 @@ export function usePlanes(
   useEffect(() => {
     const newPlanes: Plane[] = []
     
+    if (!trios || trios.length === 0) {
+      setPlanes([])
+      return
+    }
+    
     console.log(`🔄 Recalculating ${trios.length} plane(s) and ellipse(s)...`)
     
     trios.forEach(trio => {

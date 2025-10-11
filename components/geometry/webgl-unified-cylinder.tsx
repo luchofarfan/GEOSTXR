@@ -1012,57 +1012,62 @@ export default function WebGLUnifiedCylinder({
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    // DIRECT SCREEN MAPPING: Map screen coordinates directly to cylinder
-    // No complex calculations - just direct proportional mapping
+    // RAYCASTING APPROACH: Cast ray from camera through click point to cylinder
     const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
     
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
-    console.log(`🎯 DIRECT SCREEN MAPPING: Converting screen to cylinder coordinates`)
+    console.log(`🎯 RAYCASTING: Cast ray from camera to cylinder surface`)
     
-    // Get screen dimensions
-    const screenWidth = rect.width
-    const screenHeight = rect.height
+    // Create raycaster
+    const raycaster = new THREE.Raycaster()
     
-    // Calculate relative position from center (0 to 1 scale)
-    const relativeX = (x - screenWidth / 2) / (screenWidth / 2) // -1 to 1
-    const relativeY = (y - screenHeight / 2) / (screenHeight / 2) // -1 to 1
+    // Convert screen coordinates to normalized device coordinates (-1 to 1)
+    const mouse = new THREE.Vector2()
+    mouse.x = (x / rect.width) * 2 - 1
+    mouse.y = -(y / rect.height) * 2 + 1
     
-    // Check if click is within reasonable bounds
-    const distanceFromCenter = Math.sqrt(relativeX * relativeX + relativeY * relativeY)
-    if (distanceFromCenter > 0.8) {
-      console.log(`❌ Click outside reasonable bounds (distance: ${distanceFromCenter.toFixed(2)} > 0.8)`)
+    console.log(`   Screen: (${x}, ${y}) → NDC: (${mouse.x.toFixed(3)}, ${mouse.y.toFixed(3)})`)
+    
+    // Set raycaster to use camera and mouse position
+    raycaster.setFromCamera(mouse, localCameraRef.current)
+    
+    // Find the cylinder mesh in the scene
+    const cylinderMesh = sceneRef.current?.children.find(child => 
+      child.userData.type === 'cylinder'
+    )
+    
+    if (!cylinderMesh) {
+      console.log('❌ No cylinder mesh found for raycasting')
       return
     }
     
-    // DIRECT MAPPING: Convert screen coordinates to cylinder coordinates
-    // Scale screen coordinates to cylinder dimensions
-    const cylinderX = relativeX * cylinderRadius
-    const cylinderY = relativeY * cylinderRadius
+    // Intersect ray with cylinder
+    const intersects = raycaster.intersectObject(cylinderMesh, false)
     
-    // Z coordinate: map screen Y to cylinder height
-    // Screen top (relativeY = -1) → cylinder top (z = 30)
-    // Screen bottom (relativeY = 1) → cylinder bottom (z = 0)
-    const cylinderZ = (1 - relativeY) * cylinderHeight / 2 + cylinderHeight / 2
-    const clampedZ = Math.max(0, Math.min(cylinderHeight, cylinderZ))
-    
-    const surfacePoint = {
-      x: cylinderX,
-      y: cylinderY,
-      z: clampedZ
-    }
-    
-    // Verify final point
-    const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
-    
-    console.log('🎯 DIRECT SCREEN MAPPING RESULT:')
-    console.log(`   Screen: (${x}, ${y}) → Relative: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
-    console.log(`   → Cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
-    console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
-    console.log(`   → Distance from center: ${distanceFromCenter.toFixed(3)}`)
+    if (intersects.length > 0) {
+      const intersectionPoint = intersects[0].point
+      
+      // Use the intersection point directly (it's on the cylinder surface)
+      const surfacePoint = {
+        x: intersectionPoint.x,
+        y: intersectionPoint.y,
+        z: Math.max(0, Math.min(cylinderHeight, intersectionPoint.z))
+      }
+      
+      // Verify final point
+      const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
+      
+      console.log('🎯 RAYCASTING RESULT:')
+      console.log(`   Intersection: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
+      console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
+      console.log(`   ✅ Point on cylinder surface via raycasting`)
       
       if (trioManager?.addPoint) {
         trioManager.addPoint(surfacePoint)
+      }
+    } else {
+      console.log('❌ No intersection with cylinder')
     }
   }, [trioManager, draggingPoint, scenePhotoId])
 
