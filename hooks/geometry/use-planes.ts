@@ -110,41 +110,56 @@ export function calculatePlaneDepth(equation: PlaneEquation): number | null {
 }
 
 /**
- * Calculate alpha angle (α): angle between plane and Z-axis
- * α = angle between plane normal and Z-axis
- * Returns angle in degrees (0° = perpendicular to Z, 90° = parallel to Z)
+ * Calculate alpha angle (α): angle between PLANE and Z-axis (borehole axis)
+ * 
+ * IMPORTANT: α is the angle between the PLANE and the Z-axis, NOT the normal vector.
+ * 
+ * Method:
+ * 1. Calculate angle θ between normal vector and Z-axis: θ = acos(|nz| / |n|)
+ * 2. Calculate α as complementary angle: α = 90° - θ
+ * 
+ * Result:
+ * - α = 0°: Plane is PERPENDICULAR to Z-axis (horizontal plane)
+ * - α = 90°: Plane is PARALLEL to Z-axis (vertical plane)
  */
 export function calculateAlphaAngle(equation: PlaneEquation): number {
   const { normal } = equation
   
-  // Angle between normal vector and Z-axis (0, 0, 1)
-  // cos(α) = |nz| / |n|
+  // Step 1: Calculate angle θ between normal vector and Z-axis (0, 0, 1)
+  // cos(θ) = |nz| / |n|
   const normalMagnitude = Math.sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
   
   if (normalMagnitude === 0) return 0
   
-  const cosAlpha = Math.abs(normal.z) / normalMagnitude
-  const alphaRad = Math.acos(Math.max(-1, Math.min(1, cosAlpha))) // Clamp to [-1, 1]
-  const alphaDeg = (alphaRad * 180) / Math.PI
+  const cosTheta = Math.abs(normal.z) / normalMagnitude
+  const thetaRad = Math.acos(Math.max(-1, Math.min(1, cosTheta))) // Clamp to [-1, 1]
+  const thetaDeg = (thetaRad * 180) / Math.PI
   
-  // Return complementary angle (90° - angle with Z) to get dip angle
-  // 0° = horizontal plane, 90° = vertical plane
-  const dipAngle = 90 - alphaDeg
+  // Step 2: Calculate α as complementary angle (angle between PLANE and Z-axis)
+  // α = 90° - θ
+  const alpha = 90 - thetaDeg
   
-  console.log(`Alpha angle: ${dipAngle.toFixed(2)}° (dip from horizontal)`)
+  console.log(`✓ α (alpha): ${alpha.toFixed(2)}° - Angle between PLANE and Z-axis (not normal)`)
+  console.log(`  (θ normal-to-Z: ${thetaDeg.toFixed(2)}°, α = 90° - θ)`)
   
-  return dipAngle
+  return alpha
 }
 
 /**
- * Calculate beta angle (β): angle of plane dip in the direction of BOH line
- * β measures how the plane tilts relative to the radial direction at the BOH position
+ * Calculate beta angle (β): angle between BOH line and the dip direction of the ellipse
+ * 
+ * β is the angle between:
+ * 1. The BOH line (vertical line on cylinder surface)
+ * 2. The dip direction (direction of steepest descent of the plane, projected onto cylinder surface)
+ * 
+ * Method:
+ * 1. Calculate dip direction: perpendicular to strike, in direction of normal's XY component
+ * 2. Project dip direction onto cylinder surface at BOH angular position
+ * 3. Calculate angle between BOH (vertical) and projected dip direction
  * 
  * Interpretation:
- * - 0° = plane is perpendicular to the BOH radial direction (plane faces the BOH)
- * - 90° = plane is parallel to the BOH radial direction (plane runs along BOH)
- * 
- * This is dynamic: changes when BOH angle changes (70-110°)
+ * - β = 0°: Dip direction is parallel to BOH (plane dips along BOH line)
+ * - β = 90°: Dip direction is perpendicular to BOH (plane dips perpendicular to BOH)
  */
 export function calculateBetaAngle(
   equation: PlaneEquation,
@@ -153,33 +168,44 @@ export function calculateBetaAngle(
 ): number {
   const { normal } = equation
   
-  // BOH radial direction at angular position (pointing outward from cylinder center)
-  const bohAngleRad = (bohAngle * Math.PI) / 180
-  const radialDirection = {
-    x: Math.cos(bohAngleRad),
-    y: Math.sin(bohAngleRad),
-    z: 0
+  // Step 1: Calculate dip direction (direction of steepest descent)
+  // Dip direction is the horizontal projection of the normal vector
+  const dipDirectionXY = {
+    x: normal.x,
+    y: normal.y
   }
   
-  // Calculate dot product between plane normal and radial direction
-  const dotProduct = normal.x * radialDirection.x + normal.y * radialDirection.y + normal.z * radialDirection.z
-  const normalMag = Math.sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
-  const radialMag = Math.sqrt(radialDirection.x ** 2 + radialDirection.y ** 2 + radialDirection.z ** 2)
+  const dipMagnitudeXY = Math.sqrt(dipDirectionXY.x ** 2 + dipDirectionXY.y ** 2)
   
-  if (normalMag === 0 || radialMag === 0) return 0
+  if (dipMagnitudeXY < 0.0001) {
+    // Plane is horizontal, no preferred dip direction
+    console.log(`β (beta): N/A - Plane is horizontal (normal parallel to Z)`)
+    return 0
+  }
   
-  // Angle between normal and radial direction
-  const cosBeta = dotProduct / (normalMag * radialMag)
-  const betaRad = Math.acos(Math.max(-1, Math.min(1, cosBeta)))
-  const betaDeg = (betaRad * 180) / Math.PI
+  // Normalize dip direction
+  const dipDirectionNormalized = {
+    x: dipDirectionXY.x / dipMagnitudeXY,
+    y: dipDirectionXY.y / dipMagnitudeXY
+  }
   
-  // β is the angle of the plane relative to the radial direction
-  // We want the angle of inclination, so:
-  // - If normal is perpendicular to radial → β = 0° (plane faces BOH)
-  // - If normal is parallel to radial → β = 90° (plane along BOH)
-  const beta = Math.abs(90 - betaDeg)
+  // Step 2: Calculate azimuth of dip direction (0-360°)
+  const dipAzimuthRad = Math.atan2(dipDirectionNormalized.y, dipDirectionNormalized.x)
+  let dipAzimuthDeg = (dipAzimuthRad * 180) / Math.PI
+  if (dipAzimuthDeg < 0) dipAzimuthDeg += 360
   
-  console.log(`Beta (BOH at ${bohAngle}°, radial dir: [${radialDirection.x.toFixed(2)}, ${radialDirection.y.toFixed(2)}, ${radialDirection.z.toFixed(2)}]): ${beta.toFixed(2)}°`)
+  // Step 3: BOH angular position
+  let bohAzimuthDeg = bohAngle
+  if (bohAzimuthDeg < 0) bohAzimuthDeg += 360
+  
+  // Step 4: Calculate β as angular difference between dip direction and BOH
+  // β is the angle between the dip direction and the BOH line
+  let beta = Math.abs(dipAzimuthDeg - bohAzimuthDeg)
+  
+  // Normalize to 0-180° range
+  if (beta > 180) beta = 360 - beta
+  
+  console.log(`✓ β (beta): ${beta.toFixed(2)}° - Angle between BOH@${bohAngle.toFixed(1)}° and dip direction@${dipAzimuthDeg.toFixed(1)}°`)
   
   return beta
 }
@@ -262,7 +288,10 @@ export function usePlanes(
   useEffect(() => {
     const newPlanes: Plane[] = []
     
+    console.log(`🔄 usePlanes useEffect triggered with trios:`, trios)
+    
     if (!trios || trios.length === 0) {
+      console.log(`   No trios available, setting empty planes`)
       setPlanes([])
       return
     }
@@ -283,15 +312,24 @@ export function usePlanes(
       const ellipsePoints = calculateEllipsePoints(equation, cylinderRadius, 64)
       console.log(`  ⭕ Ellipse recalculated for trio ${trio.id} with ${ellipsePoints.length} points`)
       
-      // Calculate plane depth (Z-axis intersection)
-      const planeDepth = calculatePlaneDepth(equation)
+      // Calculate center of ellipse (average of all ellipse points)
+      let ellipseCenterZ = 0
+      if (ellipsePoints.length > 0) {
+        ellipseCenterZ = ellipsePoints.reduce((sum, p) => sum + p.z, 0) / ellipsePoints.length
+      }
       
-      // Determine which BOH line this plane corresponds to
-      // BOH1 (line1): z=0 to z=15 (bottom half)
-      // BOH2 (line2): z=15 to z=30 (top half)
-      const correspondingBOH = planeDepth !== null && planeDepth < 15 ? line1Angle : line2Angle
-      const bohLabel = planeDepth !== null && planeDepth < 15 ? 'BOH1' : 'BOH2'
-      const bohAngleValue = planeDepth !== null && planeDepth < 15 ? line1Angle : line2Angle
+      // Determine which BOH line is closer to the ellipse center
+      // BOH1 RED (line1): z=15 to z=30 (UPPER half)
+      // BOH2 GREEN (line2): z=0 to z=15 (LOWER half)
+      const distanceToBOH1 = Math.abs(ellipseCenterZ - 22.5) // BOH1 (RED) center at z=22.5 (upper)
+      const distanceToBOH2 = Math.abs(ellipseCenterZ - 7.5)  // BOH2 (GREEN) center at z=7.5 (lower)
+      
+      const correspondingBOH = distanceToBOH1 < distanceToBOH2 ? line1Angle : line2Angle
+      const bohLabel = distanceToBOH1 < distanceToBOH2 ? 'BOH1 (RED, upper)' : 'BOH2 (GREEN, lower)'
+      const bohAngleValue = correspondingBOH
+      
+      // Calculate plane depth (Z-axis intersection) for reference
+      const planeDepth = calculatePlaneDepth(equation)
       
       // Calculate angles - ALWAYS RECALCULATE for dynamic β update
       const alpha = calculateAlphaAngle(equation)
@@ -300,7 +338,12 @@ export function usePlanes(
       
       const angles: PlaneAngles = { alpha, beta, azimuth }
       
-      console.log(`✓ Plane ${trio.id} - α: ${alpha.toFixed(2)}°, β: ${beta.toFixed(2)}° (vs ${bohLabel}@${bohAngleValue}°), Azimuth: ${azimuth.toFixed(2)}°`)
+      console.log(`✓ Plane ${trio.id}:`)
+      console.log(`   Ellipse center Z: ${ellipseCenterZ.toFixed(2)}cm`)
+      console.log(`   Distance to BOH1 (RED, z=15-30, center 22.5): ${distanceToBOH1.toFixed(2)}cm`)
+      console.log(`   Distance to BOH2 (GREEN, z=0-15, center 7.5): ${distanceToBOH2.toFixed(2)}cm`)
+      console.log(`   → Using ${bohLabel} @ ${bohAngleValue.toFixed(1)}° (closest to ellipse)`)
+      console.log(`   α: ${alpha.toFixed(2)}°, β: ${beta.toFixed(2)}°, Azimuth: ${azimuth.toFixed(2)}°`)
       
       // Create/update plane
       const newPlane: Plane = {
@@ -316,6 +359,9 @@ export function usePlanes(
       
       newPlanes.push(newPlane)
     })
+    
+    console.log(`🔄 Generated ${newPlanes.length} plane(s) from ${trios.length} trio(s)`)
+    console.log(`   Planes:`, newPlanes.map(p => ({ id: p.id, ellipsePoints: p.ellipsePoints?.length || 0 })))
     
     setPlanes(newPlanes)
   }, [trios, cylinderRadius, line1Angle, line2Angle]) // Recalculate when BOH angles change

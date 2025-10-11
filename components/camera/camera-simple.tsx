@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import WebGLUnifiedCylinder from '@/components/geometry/webgl-unified-cylinder'
 import { usePointTrios } from '@/hooks/geometry/use-point-trios'
 import { usePlanes } from '@/hooks/geometry/use-planes'
+import { GEOSTXR_CONFIG } from '@/lib/config'
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -55,7 +56,12 @@ export const CameraSimple: React.FC = () => {
   
   // Point selection managers - Re-enabled for point selection
   const trioManager = usePointTrios()
-  const planeManager = usePlanes()
+  const planeManager = usePlanes(
+    trioManager.trios,
+    GEOSTXR_CONFIG.CYLINDER.RADIUS,
+    line1Angle,
+    line2Angle
+  )
 
   useEffect(() => {
     console.log('🎬 CameraSimple: Component mounted')
@@ -140,8 +146,8 @@ export const CameraSimple: React.FC = () => {
           onLine2AngleChange={setLine2Angle}
           trioManager={trioManager}
           planeManager={planeManager}
-          isInteractive={!!scenePhotoId}
-          enableSnapping={!!scenePhotoId}
+          isInteractive={true}
+          enableSnapping={false}
         />
         
         {/* Status Indicator */}
@@ -210,26 +216,48 @@ export const CameraSimple: React.FC = () => {
           </div>
         </div>
 
-        {/* Results */}
-        {showResults ? (
-          <div className="bg-gray-800/50 rounded p-1.5">
-            <h3 className="text-white text-xs font-bold mb-1">📊 Resultados</h3>
-            <div className="text-white text-xs space-y-0.5">
-              {captureResults.map((result) => (
-                <div key={result.id} className="flex justify-between">
-                  <span>{result.type}:</span>
-                  <span className="font-bold">{result.value} {result.unit}</span>
+        {/* Results - Measurements Panel */}
+        <div className="bg-gray-800/50 rounded p-2 max-h-64 overflow-y-auto">
+          <h3 className="text-white text-xs font-bold mb-2 sticky top-0 bg-gray-800/90 pb-1">📊 Mediciones</h3>
+          
+          {planeManager?.planes && planeManager.planes.length > 0 ? (
+            <div className="space-y-2">
+              {planeManager.planes.map((plane, index) => (
+                <div 
+                  key={plane.id} 
+                  className="bg-gray-700/50 rounded p-1.5 border-l-4"
+                  style={{ borderLeftColor: plane.color }}
+                >
+                  <div className="text-white text-xs font-bold mb-1">
+                    Trio {index + 1}
+                  </div>
+                  <div className="text-white text-xs space-y-0.5">
+                    {plane.angles && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>α (alfa):</span>
+                          <span className="font-bold">{plane.angles.alpha.toFixed(1)}°</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>β (beta):</span>
+                          <span className="font-bold">{plane.angles.beta.toFixed(1)}°</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>AC:</span>
+                          <span className="font-bold">{Math.abs(line1Angle - line2Angle).toFixed(1)}°</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
-          <div className="bg-gray-800/50 rounded p-1.5 flex items-center justify-center">
-            <p className="text-gray-400 text-xs text-center">
-              📊 Resultados
+          ) : (
+            <p className="text-gray-400 text-xs text-center py-4">
+              Selecciona 3 puntos para<br/>generar mediciones
             </p>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Actions */}
         <button
