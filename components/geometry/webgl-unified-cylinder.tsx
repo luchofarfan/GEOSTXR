@@ -1105,6 +1105,24 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
+      {/* Version Indicator - Confirms deployment */}
+      <div style={{
+        position: 'fixed',
+        bottom: '10px',
+        right: '10px',
+        background: 'rgba(0,255,0,0.9)',
+        color: 'black',
+        padding: '5px 10px',
+        borderRadius: '5px',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        zIndex: 99999,
+        pointerEvents: 'none',
+        border: '2px solid black'
+      }}>
+        v4.0-FIXED
+      </div>
+      
       {/* Loading Indicator */}
       {!isReady && !cameraError && (
         <div style={{
