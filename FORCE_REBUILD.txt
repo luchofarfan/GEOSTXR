@@ -1,0 +1,4 @@
+Force Vercel rebuild - timestamp: 2025-01-11T20:00:00Z
+This file forces Vercel to rebuild the entire application.
+All fixes should be included in this deployment.
+
