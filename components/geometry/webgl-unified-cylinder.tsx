@@ -60,6 +60,7 @@ export default function WebGLUnifiedCylinder({
   const [isReady, setIsReady] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [draggingPoint, setDraggingPoint] = useState<{ trioId: string; pointId: string } | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string[]>([])
   const [controlsEnabled, setControlsEnabled] = useState(false)
   
   // Video gestures (pinch zoom and rotation)
@@ -530,6 +531,10 @@ export default function WebGLUnifiedCylinder({
       }
     })
     currentPoints.clear()
+    
+    // Reset debug info
+    const newDebugInfo: string[] = []
+    newDebugInfo.push(`🎯 Cylinder Radius: ${GEOSTXR_CONFIG.CYLINDER.RADIUS}cm`)
 
     // Add points from completed trios
     if (trioManager.trios) {
@@ -561,6 +566,9 @@ export default function WebGLUnifiedCylinder({
           const radiusMatch = Math.abs(pointRadius - cylinderRadius) < 0.1
           console.log(`✅ Point ${point.id} rendered at (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
           console.log(`   📏 Point radius: ${pointRadius.toFixed(3)}cm vs Cylinder radius: ${cylinderRadius}cm ${radiusMatch ? '✅ MATCH' : '❌ MISMATCH'}`)
+          
+          // Add to visual debug
+          newDebugInfo.push(`P${pointIndex + 1}: r=${pointRadius.toFixed(2)}cm ${radiusMatch ? '✅' : '❌'}`)
         })
       })
     }
@@ -595,10 +603,16 @@ export default function WebGLUnifiedCylinder({
         const radiusMatch = Math.abs(pointRadius - cylinderRadius) < 0.1
         console.log(`✅ Current point ${point.id} rendered at (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`)
         console.log(`   📏 Point radius: ${pointRadius.toFixed(3)}cm vs Cylinder radius: ${cylinderRadius}cm ${radiusMatch ? '✅ MATCH' : '❌ MISMATCH'}`)
+        
+        // Add to visual debug
+        newDebugInfo.push(`P${pointIndex + 1}: r=${pointRadius.toFixed(2)}cm ${radiusMatch ? '✅' : '❌'}`)
       })
     }
 
     console.log(`🎯 WebGL points updated: ${currentPoints.size} points rendered`)
+    
+    // Update debug info state
+    setDebugInfo(newDebugInfo)
   }, [isReady, trioManager?.trios, trioManager?.currentTrio])
 
   // BOH lines are now rendered via HTML overlay - no 3D geometry needed
@@ -1093,6 +1107,35 @@ export default function WebGLUnifiedCylinder({
           pointerEvents: 'none'
         }}>
           🧊 VIDEO PAUSADO
+        </div>
+      )}
+      
+      {/* Visual Debug Panel - Shows info without console */}
+      {debugInfo.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '50px',
+          left: '10px',
+          background: 'rgba(0, 0, 0, 0.9)',
+          color: 'white',
+          padding: '10px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          lineHeight: '1.5',
+          zIndex: 9999,
+          maxWidth: '220px',
+          pointerEvents: 'none',
+          border: '2px solid #4ADE80'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#4ADE80' }}>
+            🔍 DEBUG
+          </div>
+          {debugInfo.map((info, index) => (
+            <div key={index} style={{ marginBottom: '3px', fontSize: '11px' }}>
+              {info}
+            </div>
+          ))}
         </div>
       )}
       
