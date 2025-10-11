@@ -1110,34 +1110,46 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
-      {/* Visual Debug Panel - Shows info without console */}
-      {debugInfo.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '50px',
-          left: '10px',
-          background: 'rgba(0, 0, 0, 0.9)',
-          color: 'white',
-          padding: '10px',
-          borderRadius: '6px',
-          fontSize: '12px',
-          fontFamily: 'monospace',
-          lineHeight: '1.5',
-          zIndex: 9999,
-          maxWidth: '220px',
-          pointerEvents: 'none',
-          border: '2px solid #4ADE80'
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#4ADE80' }}>
-            🔍 DEBUG
-          </div>
-          {debugInfo.map((info, index) => (
-            <div key={index} style={{ marginBottom: '3px', fontSize: '11px' }}>
-              {info}
-            </div>
-          ))}
+      {/* Visual Debug Panel - ALWAYS visible for diagnosis */}
+      <div style={{
+        position: 'absolute',
+        top: '50px',
+        left: '10px',
+        background: 'rgba(0, 0, 0, 0.9)',
+        color: 'white',
+        padding: '10px',
+        borderRadius: '6px',
+        fontSize: '12px',
+        fontFamily: 'monospace',
+        lineHeight: '1.5',
+        zIndex: 9999,
+        maxWidth: '220px',
+        pointerEvents: 'none',
+        border: '2px solid #4ADE80'
+      }}>
+        <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#4ADE80' }}>
+          🔍 DEBUG INFO
         </div>
-      )}
+        <div style={{ marginBottom: '3px', fontSize: '11px' }}>
+          🎯 Cylinder: {GEOSTXR_CONFIG.CYLINDER.RADIUS}cm
+        </div>
+        <div style={{ marginBottom: '3px', fontSize: '11px' }}>
+          📏 Height: {GEOSTXR_CONFIG.CYLINDER.HEIGHT}cm
+        </div>
+        <div style={{ marginBottom: '3px', fontSize: '11px', borderTop: '1px solid #4ADE80', paddingTop: '4px', marginTop: '4px' }}>
+          Points: {trioManager?.currentTrio?.points?.length || 0}/3
+        </div>
+        {debugInfo.length > 0 && debugInfo.slice(1).map((info, index) => (
+          <div key={index} style={{ marginBottom: '3px', fontSize: '11px' }}>
+            {info}
+          </div>
+        ))}
+        {debugInfo.length === 0 && (
+          <div style={{ marginTop: '4px', fontSize: '10px', color: '#888' }}>
+            Waiting for points...
+          </div>
+        )}
+      </div>
       
 
       
