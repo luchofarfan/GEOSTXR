@@ -988,43 +988,57 @@ export default function WebGLUnifiedCylinder({
 
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
 
-    // FORCE RESET: Clear any existing points and use new test points
-    // This ensures we're using the correct radius (3.175 cm)
+    // DIRECT SCREEN MAPPING: Map screen coordinates directly to cylinder
+    // No complex calculations - just direct proportional mapping
     const cylinderRadius = GEOSTXR_CONFIG.CYLINDER.RADIUS // 3.175 cm
     const cylinderHeight = GEOSTXR_CONFIG.CYLINDER.HEIGHT // 30 cm
     
     console.log(`Click at screen: (${x.toFixed(0)}, ${y.toFixed(0)})`)
-    console.log(`🔧 FORCING RESET: Using new test points with correct radius`)
+    console.log(`🎯 DIRECT SCREEN MAPPING: Converting screen to cylinder coordinates`)
     
-    // FORCE CLEAR: Clear any existing trios to start fresh
-    if (trioManager?.clearAllTrios) {
-      trioManager.clearAllTrios()
-      console.log('🗑️ Cleared all existing trios')
+    // Get screen dimensions
+    const screenWidth = rect.width
+    const screenHeight = rect.height
+    
+    // Calculate relative position from center (0 to 1 scale)
+    const relativeX = (x - screenWidth / 2) / (screenWidth / 2) // -1 to 1
+    const relativeY = (y - screenHeight / 2) / (screenHeight / 2) // -1 to 1
+    
+    // Check if click is within reasonable bounds
+    const distanceFromCenter = Math.sqrt(relativeX * relativeX + relativeY * relativeY)
+    if (distanceFromCenter > 0.8) {
+      console.log(`❌ Click outside reasonable bounds (distance: ${distanceFromCenter.toFixed(2)} > 0.8)`)
+      return
     }
     
-    // Create EXACT test points with correct radius (3.175 cm)
-    const testPoints = [
-      { x: cylinderRadius, y: 0, z: 15 }, // Front center (3.175, 0, 15)
-      { x: 0, y: cylinderRadius, z: 15 }, // Right side (0, 3.175, 15)
-      { x: -cylinderRadius, y: 0, z: 15 }, // Back center (-3.175, 0, 15)
-    ]
+    // DIRECT MAPPING: Convert screen coordinates to cylinder coordinates
+    // Scale screen coordinates to cylinder dimensions
+    const cylinderX = relativeX * cylinderRadius
+    const cylinderY = relativeY * cylinderRadius
     
-    // Use only first 3 points to create one trio
-    const pointIndex = Math.min(2, testPoints.length - 1) // 0, 1, or 2
-    const selectedPoint = testPoints[pointIndex]
+    // Z coordinate: map screen Y to cylinder height
+    // Screen top (relativeY = -1) → cylinder top (z = 30)
+    // Screen bottom (relativeY = 1) → cylinder bottom (z = 0)
+    const cylinderZ = (1 - relativeY) * cylinderHeight / 2 + cylinderHeight / 2
+    const clampedZ = Math.max(0, Math.min(cylinderHeight, cylinderZ))
     
-    // Verify the point is on cylinder surface
-    const pointRadius = Math.sqrt(selectedPoint.x * selectedPoint.x + selectedPoint.y * selectedPoint.y)
+    const surfacePoint = {
+      x: cylinderX,
+      y: cylinderY,
+      z: clampedZ
+    }
     
-    console.log('🎯 POINT SELECTION (FORCED RESET WITH CORRECT RADIUS):')
-    console.log(`   Screen click: (${x}, ${y})`)
-    console.log(`   Using test point ${pointIndex + 1}/3:`, selectedPoint)
-    console.log(`   Point radius: ${pointRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
-    console.log(`   Cylinder radius from config: ${GEOSTXR_CONFIG.CYLINDER.RADIUS}cm`)
-    console.log(`   ✅ Point guaranteed on cylinder surface with CORRECT radius`)
+    // Verify final point
+    const finalRadius = Math.sqrt(surfacePoint.x * surfacePoint.x + surfacePoint.y * surfacePoint.y)
+    
+    console.log('🎯 DIRECT SCREEN MAPPING RESULT:')
+    console.log(`   Screen: (${x}, ${y}) → Relative: (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)})`)
+    console.log(`   → Cylinder: (${surfacePoint.x.toFixed(3)}, ${surfacePoint.y.toFixed(3)}, ${surfacePoint.z.toFixed(3)})`)
+    console.log(`   → Radius: ${finalRadius.toFixed(3)}cm (target: ${cylinderRadius}cm)`)
+    console.log(`   → Distance from center: ${distanceFromCenter.toFixed(3)}`)
     
     if (trioManager?.addPoint) {
-      trioManager.addPoint(selectedPoint)
+      trioManager.addPoint(surfacePoint)
     }
   }, [trioManager, draggingPoint, scenePhotoId])
 
