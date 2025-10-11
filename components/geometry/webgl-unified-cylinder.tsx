@@ -1110,6 +1110,26 @@ export default function WebGLUnifiedCylinder({
         </div>
       )}
       
+      {/* VERSION INDICATOR - Confirms deployment */}
+      <div style={{
+        position: 'fixed',
+        top: '5px',
+        right: '5px',
+        background: '#00FF00',
+        color: '#000000',
+        padding: '8px 12px',
+        borderRadius: '4px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        fontFamily: 'Arial, sans-serif',
+        zIndex: 99999,
+        pointerEvents: 'none',
+        border: '3px solid #000000',
+        boxShadow: '0 0 15px rgba(0,255,0,0.8)'
+      }}>
+        v3.0 - {new Date().toISOString().slice(0,16)}
+      </div>
+      
       {/* EMERGENCY DEBUG PANEL - SUPER VISIBLE */}
       <div style={{
         position: 'fixed',
@@ -1130,7 +1150,7 @@ export default function WebGLUnifiedCylinder({
         boxShadow: '0 0 20px rgba(255,255,0,0.8)'
       }}>
         <div style={{ marginBottom: '8px', fontSize: '16px' }}>
-          🔴 DEBUG v2
+          🔴 DEBUG v3
         </div>
         <div style={{ marginBottom: '5px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '4px' }}>
           Cylinder: {GEOSTXR_CONFIG.CYLINDER.RADIUS}cm
