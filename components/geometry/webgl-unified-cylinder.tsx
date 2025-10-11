@@ -355,7 +355,10 @@ export default function WebGLUnifiedCylinder({
 
     // Create cylinder (radius and cylinderHeight already defined above)
     // Cylinder from z=0 to z=30, centered at z=15
-    const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 64, 1, true) // 64 segments, open-ended
+    // TEST: Double the visual cylinder radius to see if it matches points/ellipse
+    const visualRadius = radius * 2 // DOUBLED for testing
+    console.log(`🔍 TEST: Visual cylinder radius DOUBLED: ${radius}cm → ${visualRadius}cm`)
+    const cylinderGeometry = new THREE.CylinderGeometry(visualRadius, visualRadius, cylinderHeight, 64, 1, true) // 64 segments, open-ended
     cylinderGeometry.rotateX(Math.PI / 2) // Align with Z-axis (vertical)
     
     // Custom UV mapping for proper video projection onto cylinder
@@ -402,13 +405,13 @@ export default function WebGLUnifiedCylinder({
     console.log('✅ Cylinder created with custom UV-mapped video texture')
 
     // Borders - Black lines at the edges of the cylinder
-    // From z=0 (bottom) to z=30 (top), at x=±radius
+    // From z=0 (bottom) to z=30 (top), at x=±visualRadius (DOUBLED)
     const borderMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 })
     
     const frontBorder = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(radius, 0, 0),      // Bottom at z=0
-        new THREE.Vector3(radius, 0, cylinderHeight)  // Top at z=30
+        new THREE.Vector3(visualRadius, 0, 0),      // Bottom at z=0
+        new THREE.Vector3(visualRadius, 0, cylinderHeight)  // Top at z=30
       ]),
       borderMaterial
     )
@@ -416,8 +419,8 @@ export default function WebGLUnifiedCylinder({
     
     const backBorder = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-radius, 0, 0),     // Bottom at z=0
-        new THREE.Vector3(-radius, 0, cylinderHeight) // Top at z=30
+        new THREE.Vector3(-visualRadius, 0, 0),     // Bottom at z=0
+        new THREE.Vector3(-visualRadius, 0, cylinderHeight) // Top at z=30
       ]),
       borderMaterial
     )
@@ -425,7 +428,7 @@ export default function WebGLUnifiedCylinder({
 
     // Semicircles at top and bottom to mark cylinder extremes
     // Connect the two vertical border lines with arcs
-    // Front borders are at (±radius, 0), so arc should go from right to left through front
+    // Front borders are at (±visualRadius, 0), so arc should go from right to left through front
     const bottomArcPoints = []
     const topArcPoints = []
     const arcSegments = 48 // More segments for smoother arc
@@ -434,8 +437,8 @@ export default function WebGLUnifiedCylinder({
     // This creates a semicircle on the visible front side
     for (let i = 0; i <= arcSegments; i++) {
       const angle = (Math.PI * i) / arcSegments // 0° to 180°
-      const x = radius * Math.cos(angle)      // Goes from +radius to -radius
-      const y = radius * Math.sin(angle)      // Goes from 0 through +radius back to 0
+      const x = visualRadius * Math.cos(angle)      // Goes from +visualRadius to -visualRadius
+      const y = visualRadius * Math.sin(angle)      // Goes from 0 through +visualRadius back to 0
       bottomArcPoints.push(new THREE.Vector3(x, y, 0)) // z=0 (bottom)
       topArcPoints.push(new THREE.Vector3(x, y, cylinderHeight)) // z=30 (top)
     }
@@ -453,7 +456,7 @@ export default function WebGLUnifiedCylinder({
     scene.add(topArc)
 
     console.log(`Cylinder positioned: z=0 to z=${cylinderHeight}cm, centered at z=${cylinderHeight/2}cm`)
-    console.log(`Borders at x=±${radius}cm, from z=0 to z=${cylinderHeight}cm`)
+    console.log(`🔍 TEST: Borders at x=±${visualRadius}cm (DOUBLED from ${radius}cm), from z=0 to z=${cylinderHeight}cm`)
     console.log(`Semicircles added at z=0 (bottom) and z=${cylinderHeight}cm (top)`)
 
     // BOH Lines now rendered via HTML overlay (no 3D geometry)
